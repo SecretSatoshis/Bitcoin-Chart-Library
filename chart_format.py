@@ -2062,6 +2062,164 @@ chart_promo = {
   }]
 }
 
+# Bitcoin Relative Valuation
+chart_rv = {
+  'x_data':
+  'time',
+  'y_data': [{
+    'name': 'PriceUSD',
+    'data': 'PriceUSD',
+    'yaxis': 'y'
+  },  {
+    'name': 'Silver',
+    'data': 'silver_mc_btc_price',
+    'yaxis': 'y'
+  },  {
+    'name': 'Gold',
+    'data': 'gold_mc_btc_price',
+    'yaxis': 'y'
+  },  {
+    'name': 'Apple',
+    'data': 'AAPL_mc_btc_price',
+    'yaxis': 'y'
+  },  {
+    'name': 'United States',
+    'data': 'United_States_btc_price',
+    'yaxis': 'y'
+  },  {
+    'name': 'United Kingdom',
+    'data': 'United_Kingdom_btc_price',
+    'yaxis': 'y'
+  }
+  ],
+  'title':
+  "Bitcoin Price Relative Valuation",
+  'title_desc':
+  "Bitcoin Price (USD) With Price Moving Averages",
+  'x_label':
+  "Date",
+  'y1_label':
+  "Bitcoin Price (USD)",
+  'y2_label':
+  "",
+  'filename':
+  "Bitcoin_RV",
+  'chart_type':
+  'line',
+  'events': [{
+    'name': 'Halving',
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Launch',
+    'dates': ['2010-07-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Hack',
+    'dates': ['2011-06-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Bankruptcy',
+    'dates': ['2014-02-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'BitLicense',
+    'dates': ['2015-08-08'],
+    'orientation': 'v'
+  }, {
+    'name': 'CME Futures Launch',
+    'dates': ['2017-12-17'],
+    'orientation': 'v'
+  }, {
+    'name': 'Bitcoin Winter',
+    'dates': ['2018-12-15'],
+    'orientation': 'v'
+  }, {
+    'name': 'Coinbase IPO',
+    'dates': ['2021-04-14'],
+    'orientation': 'v'
+  }, {
+    'name': 'FTX Bankruptcy',
+    'dates': ['2022-11-11'],
+    'orientation': 'v'
+  }]
+}
+
+# Bitcoin On-Chain
+chart_on_chain = {
+  'x_data':
+  'time',
+  'y_data': [{
+    'name': 'PriceUSD',
+    'data': 'PriceUSD',
+    'yaxis': 'y'
+  },  {
+    'name': 'NVT Price 30 Day MA',
+    'data': '30_day_ma_nvt_price',
+    'yaxis': 'y'
+  },  {
+    'name': 'Thermocap Multiple 8x',
+    'data': 'thermocap_multiple_8',
+    'yaxis': 'y'
+  },  {
+    'name': 'Realized Price',
+    'data': 'realised_price',
+    'yaxis': 'y'
+  }
+  ],
+  'title':
+  "Bitcoin Price On-Chain Value",
+  'title_desc':
+  "Bitcoin Price (USD) With Price Moving Averages",
+  'x_label':
+  "Date",
+  'y1_label':
+  "Bitcoin Price (USD)",
+  'y2_label':
+  "",
+  'filename':
+  "Bitcoin_On_Chain",
+  'chart_type':
+  'line',
+  'events': [{
+    'name': 'Halving',
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Launch',
+    'dates': ['2010-07-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Hack',
+    'dates': ['2011-06-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Bankruptcy',
+    'dates': ['2014-02-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'BitLicense',
+    'dates': ['2015-08-08'],
+    'orientation': 'v'
+  }, {
+    'name': 'CME Futures Launch',
+    'dates': ['2017-12-17'],
+    'orientation': 'v'
+  }, {
+    'name': 'Bitcoin Winter',
+    'dates': ['2018-12-15'],
+    'orientation': 'v'
+  }, {
+    'name': 'Coinbase IPO',
+    'dates': ['2021-04-14'],
+    'orientation': 'v'
+  }, {
+    'name': 'FTX Bankruptcy',
+    'dates': ['2022-11-11'],
+    'orientation': 'v'
+  }]
+}
+
 # List Of All Chart Templates
 chart_templates = [
   chart_supply, chart_transactions, chart_hashrate, chart_price,
@@ -2069,7 +2227,8 @@ chart_templates = [
   chart_transaction_size, chart_transaction_fee_USD, chart_address_balance,
   chart_supply_age, chart_thermocap_multiple, chart_realizedcap_multiple,
   chart_nvt_price, chart_1_year_supply, macro_supply, chart_NUPL,
-  chart_price_ma, chart_m0, chart_equities, chart_gold, chart_promo
+  chart_price_ma, chart_m0, chart_equities, chart_gold, chart_promo, 
+  chart_rv, chart_on_chain
 ]
 
 # Map the chart types to their respective functions
