@@ -11,30 +11,28 @@ def gather_data_from_coinmetrics(endpoint):
     data['time'] = pd.to_datetime(data['time'])
     return data
 
-# Function to fetch data from the Yahoo Finance API
-def get_stock_prices(tickers, start_date):
-    data = pd.DataFrame()
-    for category, ticker_list in tickers.items():
-        for ticker in ticker_list:
-            try:
-                stock = si.get_data(ticker, start_date=start_date)
-                stock = stock[['close']]  # Keep only the 'close' column
-                stock.columns = [ticker + '_close']  # Rename the column
-                stock = stock.resample('D').ffill()  # Resample to fill missing days
-                if data.empty:
-                    data = stock
-                else:
-                    data = data.join(stock)
-            except Exception as e:
-                print(f"Could not fetch data for {ticker} in category {category}. Reason: {str(e)}")
-    data.reset_index(inplace=True)
-    data.rename(columns={'index': 'time'}, inplace=True)  # rename 'date' to 'time'
-    data['time'] = pd.to_datetime(data['time'])  # convert to datetime type
-    print("Yahoo Finance Price Data Call Completed")
-    return data
+def get_price(tickers, start_date):
+  data = pd.DataFrame()
+  for category, ticker_list in tickers.items():
+      for ticker in ticker_list:
+          try:
+              stock = si.get_data(ticker, start_date=start_date)
+              stock = stock[['close']]  # Keep only the 'close' column
+              stock.columns = [ticker + '_close']  # Rename the column
+              stock = stock.resample('D').ffill()  # Resample to fill missing days
+              if data.empty:
+                  data = stock
+              else:
+                  data = data.join(stock)
+          except Exception as e:
+              print(f"Could not fetch data for {ticker} in category {category}. Reason: {str(e)}")
+  data.reset_index(inplace=True)
+  data.rename(columns={'index': 'time'}, inplace=True)  # rename 'date' to 'time'
+  data['time'] = pd.to_datetime(data['time'])  # convert to datetime type
+  print("Yahoo Finance Price Data Call Completed")
+  return data
 
-# Function to fetch data from the Yahoo Finance API
-def get_market_caps(tickers, start_date):
+def get_marketcap(tickers, start_date):
   date_range = pd.date_range(start=start_date, end=pd.to_datetime('today'))
   data = pd.DataFrame(date_range, columns=['time'])
 
@@ -46,7 +44,7 @@ def get_market_caps(tickers, start_date):
     try:
       quote_table = si.get_quote_table(ticker)
       market_cap_str = quote_table["Market Cap"]
-
+  
       # Convert market cap to numeric
       if 'T' in market_cap_str:
         market_cap = float(market_cap_str.replace('T', '')) * 1e12
@@ -58,7 +56,7 @@ def get_market_caps(tickers, start_date):
         market_cap = float(market_cap_str.replace('K', '')) * 1e3
       else:
         market_cap = float(market_cap_str)
-
+  
       # Create a new column for this ticker's market cap and backfill it with the current market cap
       data[f'{ticker}_MarketCap'] = [market_cap
                                      ] + [None] * (len(date_range) - 1)
@@ -69,13 +67,13 @@ def get_market_caps(tickers, start_date):
       data[f'{ticker}_MarketCap'] = [None] * len(date_range)
   print("Yahoo Finance Marketcap Data Call Completed")
   return data
-
+  
 # Function to gather data from all APIs and merge the resulting DataFrames
 def gather_data(tickers, start_date):
     coindata = gather_data_from_coinmetrics('btc.csv')
     coindata['time'] = pd.to_datetime(coindata['time'])  # convert to datetime type
-    stock_prices = get_stock_prices(tickers, start_date)
-    market_caps = get_market_caps(tickers, start_date)
+    stock_prices = get_price(tickers, start_date)
+    market_caps = get_marketcap(tickers, start_date)
     data = pd.merge(coindata, stock_prices, on='time', how='left')
     data = pd.merge(data, market_caps, on='time', how='left')
     return data
