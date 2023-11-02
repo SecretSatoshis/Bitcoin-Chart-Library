@@ -4,12 +4,11 @@ import pandas as pd
 
 # Create Line Chart Functoin
 def create_line_chart(chart_template, selected_metrics):
+  #selected_metrics = selected_metrics[selected_metrics.index >= pd.to_datetime("2018-01-01")]
   # unpack variables from the chart template
-  x = selected_metrics[chart_template['x_data']]
-  x_data = chart_template['x_data']
+  x = selected_metrics.index
   y_data = chart_template['y_data']
   title = chart_template['title']
-  title_desc = chart_template['title_desc']
   x_label = chart_template['x_label']
   y1_label = chart_template['y1_label']
   y2_label = chart_template['y2_label']
@@ -19,8 +18,8 @@ def create_line_chart(chart_template, selected_metrics):
 
   # Define Colors For Line Charts Items
   colors = [
-    '#7149C6', '#0079FF', '#FF0060', '#22A699', '#8c564b', '#e377c2',
-    '#7f7f7f', '#bcbd22', '#17becf'
+      '#7149C6', '#0079FF', '#FF0060', '#22A699', '#8c564b', '#e377c2',
+      '#7f7f7f', '#bcbd22', '#17becf'
   ]
 
   # Create an empty Plotly Figure object
@@ -28,146 +27,96 @@ def create_line_chart(chart_template, selected_metrics):
 
   # Add line traces to the figure for each item in y_data
   for i, y_item in enumerate(y_data):
-    line_color = colors[
-      i % len(colors)] if y_item['data'] != 'PriceUSD' else '#FF9900'
-    fig.add_trace(
-      go.Scatter(x=x,
-                 y=selected_metrics[y_item['data']],
-                 mode='lines',
-                 name=y_item['name'],
-                 line=dict(color=line_color),
-                 yaxis=y_item['yaxis'],
-                 hovertemplate=None))
-    
+      line_color = colors[i % len(colors)] if y_item['data'] != 'PriceUSD' else '#FF9900'
+      fig.add_trace(
+          go.Scatter(x=x,
+                     y=selected_metrics[y_item['data']],
+                     mode='lines',
+                     name=y_item['name'],
+                     line=dict(color=line_color),
+                     yaxis=y_item['yaxis'],
+                     hovertemplate='%{y:,.2f}<extra></extra>'))
+
   # Update the layout of the figure with various styling options
   fig.update_layout(
-    title=dict(text=title, x=0.5, xanchor='center', y=1),
-    xaxis_title=x_label,
-    yaxis_title=y1_label,
-    yaxis2=dict(title=y2_label, overlaying='y', side='right', showgrid=False),
-    plot_bgcolor='rgba(255, 255, 255, 1)',
-    xaxis=dict(showgrid=False,
-               tickformat='%B-%d-%Y',
-               rangeslider_visible=False,
-               rangeselector=dict(buttons=list([
-                 dict(count=1, label="1m", step="month", stepmode="backward"),
-                 dict(count=6, label="6m", step="month", stepmode="backward"),
-                 dict(count=1, label="YTD", step="year", stepmode="todate"),
-                 dict(count=1, label="1y", step="year", stepmode="backward"),
-                 dict(count=2, label="2y", step="year", stepmode="backward"),
-                 dict(count=3, label="3y", step="year", stepmode="backward"),
-                 dict(count=5, label="5y", step="year", stepmode="backward"),
-                 dict(count=10, label="10y", step="year", stepmode="backward"),
-                 dict(step="all")
-               ]))),
-    yaxis=dict(showgrid=False, type='log'),
-    hovermode='x',
-    autosize=True,
-    legend=dict(orientation='h',
-                yanchor='bottom',
-                y=-0.15,
-                xanchor='center',
-                x=0.5),
-    template='plotly_white',
-    updatemenus=[
-      go.layout.Updatemenu(buttons=list([
-        dict(label="Y1-axis: Linear",
-             method="relayout",
-             args=["yaxis.type", "linear"]),
-        dict(label="Y1-axis: Log",
-             method="relayout",
-             args=["yaxis.type", "log"]),
-        dict(label="Y2-axis: Linear",
-             method="relayout",
-             args=["yaxis2.type", "linear"]),
-        dict(label="Y2-axis: Log",
-             method="relayout",
-             args=["yaxis2.type", "log"])
-      ]),
-                           showactive=False,
-                           type="buttons",
-                           direction="right",
-                           x=-0.1,
-                           xanchor="left",
-                           y=-0.15,
-                           yanchor="top")
-    ],
-    width=1400,
-    height=700,
-    margin=dict(
-      l=0,
-      r=0,
-      b=0,
-      t=0,
-      pad=0
-    ),
-    font=dict(family="PT Sans Narrow", size=14, color="black"))
+      title=dict(text=title, x=0.5, xanchor='center', y=1),
+      xaxis_title=x_label,
+      yaxis_title=y1_label,
+      yaxis=dict(showgrid=False, type=y1_type, autorange=True),
+      yaxis2=dict(title=y2_label, overlaying='y', side='right', showgrid=False, type=y2_type, autorange=True),
+      plot_bgcolor='rgba(255, 255, 255, 1)',
+      xaxis=dict(showgrid=False,
+                tickformat='%B-%d-%Y',
+                rangeslider_visible=False,
+                rangeselector=dict(buttons=list([
+                     dict(count=1, label="1m", step="month", stepmode="backward"),
+                     dict(count=6, label="6m", step="month", stepmode="backward"),
+                     dict(count=1, label="YTD", step="year", stepmode="todate"),
+                     dict(count=1, label="1y", step="year", stepmode="backward"),
+                     dict(count=2, label="2y", step="year", stepmode="backward"),
+                     dict(count=3, label="3y", step="year", stepmode="backward"),
+                     dict(count=5, label="5y", step="year", stepmode="backward"),
+                     dict(count=10, label="10y", step="year", stepmode="backward"),
+                     dict(step="all")
+                 ])),
+                autorange=True),
+      hovermode='x',
+      autosize=True,
+      legend=dict(orientation='h', yanchor='bottom', y=-0.15, xanchor='center', x=0.5),
+      template='plotly_white',
+      updatemenus=[
+          go.layout.Updatemenu(buttons=list([
+              dict(label="Y1-axis: Linear", method="relayout", args=["yaxis.type", "linear"]),
+              dict(label="Y1-axis: Log", method="relayout", args=["yaxis.type", "log"]),
+              dict(label="Y2-axis: Linear", method="relayout", args=["yaxis2.type", "linear"]),
+              dict(label="Y2-axis: Log", method="relayout", args=["yaxis2.type", "log"])
+          ]), showactive=False, type="buttons", direction="right", x=-0.1, xanchor="left", y=-0.15, yanchor="top")
+      ],
+      width=1400,
+      height=700,
+      margin=dict(l=0, r=0, b=0, t=0, pad=0),
+      font=dict(family="PT Sans Narrow", size=14, color="black")
+  )
 
-  # Update the primary y-axis with specific tick format stops and type
-  fig.update_yaxes(
-    tickformatstops=[
-      dict(dtickrange=[0, 1],
-           value=".2f"),  # Decimal notation for moderate values
-      dict(dtickrange=[1, None],
-           value=".2s")  # SI notation (e.g., K, M, B) for large values
-    ],
-    type=y1_type,
-    autorange=True)
+  fig.update_layout(yaxis=dict(tickformat=",.2f"))
 
-  # Update the secondary y-axis with specific tick format stops and type
-  fig.update_layout(yaxis2=dict(
-    tickformatstops=[
-      dict(dtickrange=[0, 1],
-           value=".2f"),  # Decimal notation for moderate values
-      dict(dtickrange=[1, None],
-           value=".2s")  # SI notation (e.g., K, M, B) for large values
-    ],
-    type=y2_type,
-    autorange=True,
-    overlaying='y',
-    side='right',
-    showgrid=False))
-
-  # Automatically compute the x-axis range
-  fig.update_xaxes(autorange=True)
 
   # Add event annotations and lines to the figure
   if 'events' in chart_template:
-    for event in chart_template['events']:
-      # The rest of your code...
-      event_dates = pd.to_datetime(event['dates'])
-      orientation = event.get('orientation', 'v')
-      for date in event_dates:
-        if orientation == 'v':  # vertical line
-          fig.add_shape(type="line",
-                        xref="x",
-                        yref="paper",
-                        x0=date.strftime("%Y-%m-%d"),
-                        y0=0,
-                        x1=date.strftime("%Y-%m-%d"),
-                        y1=1,
-                        line=dict(color="black", width=1, dash="dash"))
-        elif orientation == 'h':  # horizontal line
-          y_value = event.get('y_value', None)
-          if y_value:  # make sure y_value is provided and is not zero
-            fig.add_shape(type="line",
-                          xref="paper",
-                          yref="y",
-                          x0=0,
-                          y0=y_value,
-                          x1=1,
-                          y1=y_value,
-                          line=dict(color="black", width=1, dash="dash"))
-        fig.add_annotation(
-          x=date.strftime("%Y-%m-%d"),
-          y=5,  # Place the annotation at the bottom of the y-axis
-          text=event['name'],
-          showarrow=False,
-          font=dict(color="black"),
-          xanchor="right",
-          yanchor=
-          "top"  # Align the top edge of the annotation with the y position
-        )
+      for event in chart_template['events']:
+          event_dates = pd.to_datetime(event['dates'])
+          orientation = event.get('orientation', 'v')
+          for date in event_dates:
+              if orientation == 'v':  # vertical line
+                  fig.add_shape(type="line",
+                                xref="x",
+                                yref="paper",
+                                x0=date.strftime("%Y-%m-%d"),
+                                y0=0,
+                                x1=date.strftime("%Y-%m-%d"),
+                                y1=1,
+                                line=dict(color="black", width=1, dash="dash"))
+              elif orientation == 'h':  # horizontal line
+                  y_value = event.get('y_value', None)
+                  if y_value:  # make sure y_value is provided and is not zero
+                      fig.add_shape(type="line",
+                                    xref="paper",
+                                    yref="y",
+                                    x0=0,
+                                    y0=y_value,
+                                    x1=1,
+                                    y1=y_value,
+                                    line=dict(color="black", width=1, dash="dash"))
+              fig.add_annotation(
+                  x=date.strftime("%Y-%m-%d"),
+                  y=5,  # Place the annotation at the bottom of the y-axis
+                  text=event['name'],
+                  showarrow=False,
+                  font=dict(color="black"),
+                  xanchor="right",
+                  yanchor="top"  # Align the top edge of the annotation with the y position
+              )
+
   # Add watermark annotation to the figure
   fig.add_annotation(
       xref="paper",
@@ -176,16 +125,14 @@ def create_line_chart(chart_template, selected_metrics):
       y=0.5,
       text="SecretSatoshis.com",
       showarrow=False,
-      font=dict(
-          size=50,
-          color="rgba(128, 128, 128, 0.5)"
-      ),
+      font=dict(size=50, color="rgba(128, 128, 128, 0.5)"),
       align="center",
-  )      
+  )
+
   # Save the chart as an HTML file
   filepath = 'Charts/' + filename + '.html'
   pio.write_html(fig, file=filepath, auto_open=False)
-  
+
   # Return the figure
   return fig
 
@@ -217,14 +164,12 @@ chart_supply = {
   ],
   'title':
   "Bitcoin Supply & Daily Issuance",
-  'title_desc':
-  "Bitcoin Supply and Daily Issuance",
   'x_label':
   "Date",
   'y1_label':
   "Bitcoin Supply",
   'y2_label':
-  "New Bitcoins Issued Each Day",
+  "New Bitcoins Created Each Day",
   'filename':
   "Bitcoin_Supply",
   'chart_type':
@@ -242,7 +187,7 @@ chart_transactions = {
   'time',
   'y_data': [
     {
-      'name': 'Tx Count',
+      'name': 'Transaction Count',
       'data': 'TxCnt',
       'yaxis': 'y2'
     },
@@ -259,14 +204,12 @@ chart_transactions = {
   ],
   'title':
   "Bitcoin Transactions",
-  'title_desc':
-  "Bitcoin Transactions",
   'x_label':
   "Date",
   'y1_label':
   "Bitcoin Price",
   'y2_label':
-  "Number Of Transactions",
+  "Daily Transactions",
   'filename':
   "Bitcoin_Transactions",
   'chart_type':
@@ -333,8 +276,6 @@ chart_hashrate = {
   ],
   'title':
   "Bitcoin Hashrate",
-  'title_desc':
-  "Bitcoin Hashrate",
   'x_label':
   "Date",
   'y1_label':
@@ -389,24 +330,22 @@ chart_price = {
   'x_data':
   'time',
   'y_data': [{
-    'name': 'PriceUSD',
+    'name': 'Bitcoin Price USD',
     'data': 'PriceUSD',
     'yaxis': 'y'
   }, {
-    'name': 'Marketcap USD',
+    'name': 'Bitcoin Marketcap USD',
     'data': 'CapMrktCurUSD',
     'yaxis': 'y2'
   }],
   'title':
   "Bitcoin Price",
-  'title_desc':
-  "Bitcoin Price (USD)",
   'x_label':
   "Date",
   'y1_label':
   "Bitcoin Price (USD)",
   'y2_label':
-  "Bitcoin Market Cap | G = Billion",
+  "Bitcoin Market Cap (USD)",
   'filename':
   "Bitcoin_Price",
   'chart_type':
@@ -460,30 +399,28 @@ chart_transferred_value = {
   'log',
   'y_data': [
     {
-      'name': 'PriceUSD',
+      'name': 'Bitcoin Price',
       'data': 'PriceUSD',
       'yaxis': 'y'
     },
     {
-      'name': 'Transfer Volume',
+      'name': 'Transaction Volume',
       'data': 'TxTfrValAdjUSD',
       'yaxis': 'y2'
     },
     {
-      'name': 'Transfer Volume 30 Day MA',
+      'name': 'Transaction Volume 30 Day MA',
       'data': '30_day_ma_TxTfrValAdjUSD',
       'yaxis': 'y2'
     },
     {
-      'name': 'Transfer Volume 365 Day MA',
+      'name': 'Transaction Volume 365 Day MA',
       'data': '365_day_ma_TxTfrValAdjUSD',
       'yaxis': 'y2'
     },
   ],
   'title':
-  "Bitcoin Transaction Volume ",
-  'title_desc':
-  "Bitcoin Transaction Value (Adjusted)",
+  "Bitcoin Transaction Volume",
   'x_label':
   "Date",
   'y1_label':
@@ -491,7 +428,7 @@ chart_transferred_value = {
   'y2_label':
   "Transaction Volume",
   'filename':
-  "Bitcoin_Transferred_Value",
+  "Bitcoin_Transaction_Value",
   'chart_type':
   'line',
   'events': [{
@@ -543,29 +480,27 @@ chart_miner_revenue = {
   'log',
   'y_data': [
     {
-      'name': 'PriceUSD',
+      'name': 'Bitcoin Price',
       'data': 'PriceUSD',
       'yaxis': 'y'
     },
     {
-      'name': 'Daily Miner Revenue',
+      'name': 'Miner Revenue',
       'data': 'RevUSD',
       'yaxis': 'y2'
     },
     {
       'name': 'Miner Revenue 30 Day MA',
-      'data': '30_day_ma_MinerRevenue',
+      'data': '30_day_ma_RevUSD',
       'yaxis': 'y2'
     },
     {
       'name': 'Miner Revenue 365 Day MA',
-      'data': '365_day_ma_MinerRevenue',
+      'data': '365_day_ma_RevUSD',
       'yaxis': 'y2'
     },
   ],
   'title':
-  "Bitcoin Miner Revenue",
-  'title_desc':
   "Bitcoin Miner Revenue",
   'x_label':
   "Date",
@@ -622,7 +557,7 @@ chart_active_addresses = {
   'time',
   'y_data': [
     {
-      'name': 'PriceUSD',
+      'name': 'Bitcoin Price',
       'data': 'PriceUSD',
       'yaxis': 'y'
     },
@@ -643,8 +578,6 @@ chart_active_addresses = {
     },
   ],
   'title':
-  "Bitcoin Active Addresses",
-  'title_desc':
   "Bitcoin Active Addresses",
   'x_label':
   "Date",
@@ -704,7 +637,7 @@ chart_transaction_size = {
   'y2_type':
   'log',
   'y_data': [{
-    'name': 'PriceUSD',
+    'name': 'Bitcoin Price',
     'data': 'PriceUSD',
     'yaxis': 'y'
   }, {
@@ -712,14 +645,12 @@ chart_transaction_size = {
     'data': '30_day_ma_TxTfrValMeanUSD',
     'yaxis': 'y2'
   }, {
-    'name': '30 Day Med Tx Value',
+    'name': '30 Day Median Tx Value',
     'data': '30_day_ma_TxTfrValMedUSD',
     'yaxis': 'y2'
   }],
   'title':
   "Bitcoin Transaction Size ",
-  'title_desc':
-  "Bitcoin Transaction Size",
   'x_label':
   "Date",
   'y1_label':
@@ -775,26 +706,24 @@ chart_transaction_fee_USD = {
   'time',
   'y_data': [
     {
-      'name': 'PriceUSD',
+      'name': 'Bitcoin Price',
       'data': 'PriceUSD',
       'yaxis': 'y'
     },
     {
-      'name': 'Fees Paid USD',
+      'name': 'Fees Paid (USD)',
       'data': 'FeeTotUSD',
       'yaxis': 'y2'
     },
   ],
   'title':
   "Bitcoin Fees In Usd",
-  'title_desc':
-  "Total Fee In USD",
   'x_label':
   "Date",
   'y1_label':
   "Bitcoin Price",
   'y2_label':
-  "Fees In USD",
+  "Fees In US Dollars",
   'filename':
   "Bitcoin_Transaction_Fee",
   'chart_type':
@@ -844,12 +773,12 @@ chart_address_balance = {
   'time',
   'y_data': [
     {
-      'name': 'PriceUSD',
+      'name': 'Bitcoin Price',
       'data': 'PriceUSD',
       'yaxis': 'y'
     },
     {
-      'name': 'Total Address Balance',
+      'name': 'Total Bitcoin Addresses',
       'data': 'AdrBalCnt',
       'yaxis': 'y2'
     },
@@ -886,8 +815,6 @@ chart_address_balance = {
   ],
   'title':
   "Address Balances",
-  'title_desc':
-  "Address Balance Breakdown",
   'x_label':
   "Date",
   'y1_label':
@@ -943,7 +870,7 @@ chart_supply_age = {
   'time',
   'y_data': [
     {
-      'name': 'PriceUSD',
+      'name': 'Bitcoin Price',
       'data': 'PriceUSD',
       'yaxis': 'y'
     },
@@ -1010,14 +937,12 @@ chart_supply_age = {
   ],
   'title':
   "Supply Age",
-  'title_desc':
-  "Active Supply Age Breakdown",
   'x_label':
   "Date",
   'y1_label':
   "Bitcoin Price",
   'y2_label':
-  "Amount Of Bitcoin",
+  "Supply Of Bitcoin",
   'filename':
   "Bitcoin_Supply_Age",
   'chart_type':
@@ -1070,7 +995,7 @@ chart_realizedcap_multiple = {
   'y2_type':
   'log',
   'y_data': [{
-    'name': 'PriceUSD',
+    'name': 'Bitcoin Price',
     'data': 'PriceUSD',
     'yaxis': 'y'
   }, {
@@ -1082,11 +1007,11 @@ chart_realizedcap_multiple = {
     'data': 'mvrv_ratio',
     'yaxis': 'y2'
   }, {
-    'name': 'Realized Price 3x',
+    'name': '3x Realized Price',
     'data': 'realizedcap_multiple_3',
     'yaxis': 'y'
   }, {
-    'name': 'Realized Price 5x',
+    'name': '5x Realized Price',
     'data': 'realizedcap_multiple_5',
     'yaxis': 'y'
   }, {
@@ -1096,8 +1021,6 @@ chart_realizedcap_multiple = {
   }],
   'title':
   "Bitcoin Realized Price",
-  'title_desc':
-  "Bitcoin Realized Price and Realized Price Multiples",
   'x_label':
   "Date",
   'y1_label':
@@ -1152,23 +1075,23 @@ chart_thermocap_multiple = {
   'x_data':
   'time',
   'y_data': [{
-    'name': 'PriceUSD',
+    'name': 'Bitcoin Price',
     'data': 'PriceUSD',
     'yaxis': 'y'
   }, {
-    'name': 'Thermocap Multiple 4x',
+    'name': '4x Thermocap Multiple',
     'data': 'thermocap_multiple_4',
     'yaxis': 'y'
   }, {
-    'name': 'Thermocap Multiple 8x',
+    'name': '8x Thermocap Multiple',
     'data': 'thermocap_multiple_8',
     'yaxis': 'y'
   }, {
-    'name': 'Thermocap Multiple 16x',
+    'name': '16x Thermocap Multiple',
     'data': 'thermocap_multiple_16',
     'yaxis': 'y'
   }, {
-    'name': 'Thermocap Multiple 32x',
+    'name': '32x Thermocap Multiple',
     'data': 'thermocap_multiple_32',
     'yaxis': 'y'
   }, {
@@ -1177,9 +1100,7 @@ chart_thermocap_multiple = {
     'yaxis': 'y2'
   }],
   'title':
-  "Bitcoin Thermocap Multiples",
-  'title_desc':
-  "Bitcoin Thermocap Breakdown",
+  "Bitcoin Thermocap Multiple",
   'x_label':
   "Date",
   'y1_label':
@@ -1234,7 +1155,7 @@ chart_nvt_price = {
   'x_data':
   'time',
   'y_data': [{
-    'name': 'PriceUSD',
+    'name': 'Bitcoin Price',
     'data': 'PriceUSD',
     'yaxis': 'y'
   }, {
@@ -1248,8 +1169,6 @@ chart_nvt_price = {
   }],
   'title':
   "Bitcoin NVT Price",
-  'title_desc':
-  "Bitcoin NVT Price And Ratios",
   'x_label':
   "Date",
   'y1_label':
@@ -1305,7 +1224,7 @@ chart_1_year_supply = {
   'time',
   'y_data': [
     {
-      'name': 'PriceUSD',
+      'name': 'Bitcoin Price',
       'data': 'PriceUSD',
       'yaxis': 'y'
     },
@@ -1317,14 +1236,12 @@ chart_1_year_supply = {
   ],
   'title':
   "Bitcoin 1+ Year Actice Supply",
-  'title_desc':
-  "Bitcoin 1+ Year Actice Supply Breakdown",
   'x_label':
   "Date",
   'y1_label':
   "Bitcoin Price",
   'y2_label':
-  "1+ Year Supply Ratio",
+  "1+ Year Supply Percentage",
   'filename':
   "Bitcoin_1_Year_Supply",
   'chart_type':
@@ -1373,7 +1290,7 @@ macro_supply = {
   'x_data':
   'time',
   'y_data': [{
-    'name': 'PriceUSD',
+    'name': 'Bitcoin Price',
     'data': 'PriceUSD',
     'yaxis': 'y'
   }, {
@@ -1411,14 +1328,12 @@ macro_supply = {
   }],
   'title':
   "Bitcoin Macro Supply",
-  'title_desc':
-  "Bitcoin Supply Breakdown",
   'x_label':
   "Date",
   'y1_label':
   "Bitcoin Price",
   'y2_label':
-  "Bitcoins Held",
+  "Bitcoins Supply",
   'filename':
   "Bitcoin_Macro_Supply",
   'chart_type':
@@ -1468,19 +1383,17 @@ chart_NUPL = {
   'time',
   'y_data': [
     {
-      'name': 'PriceUSD',
+      'name': 'Bitcoin Price',
       'data': 'PriceUSD',
       'yaxis': 'y'
     },
     {
-      'name': 'NUPL',
+      'name': 'Net Unrealized Profit Loss',
       'data': 'nupl',
       'yaxis': 'y2'
     },
   ],
   'title':
-  "Bitcoin Net Unrealized Profit Loss Ratio",
-  'title_desc':
   "Bitcoin Net Unrealized Profit Loss Ratio",
   'x_label':
   "Date",
@@ -1536,7 +1449,7 @@ chart_price_ma = {
   'x_data':
   'time',
   'y_data': [{
-    'name': 'PriceUSD',
+    'name': 'Bitcoin Price',
     'data': 'PriceUSD',
     'yaxis': 'y'
   }, {
@@ -1558,8 +1471,6 @@ chart_price_ma = {
   }],
   'title':
   "Bitcoin Price Moving Averages",
-  'title_desc':
-  "Bitcoin Price (USD) With Price Moving Averages",
   'x_label':
   "Date",
   'y1_label':
@@ -1637,8 +1548,6 @@ chart_drawdowns = {
   ],
   'title':
   "Bitcoin Drawdowns",
-  'title_desc':
-  "Bitcoin Drawdowns by Cycle",
   'x_label':
   "Days since ATH",
   'y1_label':
@@ -1679,10 +1588,8 @@ chart_halvings = {
   ],
   'title':
   "Bitcoin Halvings",
-  'title_desc':
-  "Bitcoin Returns by Halving Era",
   'x_label':
-  "Days since Halving",
+  "Days Since Halving",
   'y1_label':
   "Return (%)",
   'y2_label':
@@ -1698,7 +1605,7 @@ chart_m0 = {
   'x_data':
   'time',
   'y_data': [{
-    'name': 'PriceUSD',
+    'name': 'Bitcoin Price',
     'data': 'PriceUSD',
     'yaxis': 'y'
   }, {
@@ -1739,9 +1646,7 @@ chart_m0 = {
     'yaxis': 'y'
   }],
   'title':
-  "Bitcoin Price M0 Money Supply",
-  'title_desc':
-  "Bitcoin Price (USD) With Price Moving Averages",
+  "Bitcoin Price VS M0 Money Supply",
   'x_label':
   "Date",
   'y1_label':
@@ -1796,7 +1701,7 @@ chart_equities = {
   'x_data':
   'time',
   'y_data': [{
-    'name': 'PriceUSD',
+    'name': 'Bitcoin Price',
     'data': 'PriceUSD',
     'yaxis': 'y'
   }, {
@@ -1804,7 +1709,7 @@ chart_equities = {
     'data': 'AAPL_mc_btc_price',
     'yaxis': 'y'
   }, {
-    'name': 'MSFt',
+    'name': 'MSFT',
     'data': 'MSFT_mc_btc_price',
     'yaxis': 'y'
   }, {
@@ -1841,13 +1746,11 @@ chart_equities = {
     'yaxis': 'y'
   }],
   'title':
-  "Bitcoin Price Vs Equities Market Cap",
-  'title_desc':
-  "Bitcoin Price (USD) Vs Market Capitalizations of Various Equities",
+  "Bitcoin Price VS Equities Market Cap",
   'x_label':
   "Date",
   'y1_label':
-  "Market Cap / Bitcoin Price (USD)",
+  "Bitcoin Price (USD)",
   'y2_label':
   "",
   'filename':
@@ -1898,42 +1801,40 @@ chart_gold = {
   'x_data':
   'time',
   'y_data': [{
-    'name': 'PriceUSD',
+    'name': 'Bitcoin Price',
     'data': 'PriceUSD',
     'yaxis': 'y'
   }, {
     'name': 'Gold Marketcap',
-    'data': 'gold_mc_btc_price',
+    'data': 'gold_marketcap_btc_price',
     'yaxis': 'y'
   }, {
     'name': 'Silver Marketcap',
-    'data': 'silver_mc_btc_price',
+    'data': 'silver_marketcap_btc_price',
     'yaxis': 'y'
   }, {
     'name': 'Gold Jewellery',
-    'data': 'gold_jewellery_mc_btc_price',
+    'data': 'gold_jewellery_marketcap_btc_price',
     'yaxis': 'y'
   }, {
     'name': 'Gold Private Investment',
-    'data': 'gold_private_investment_mc_btc_price',
+    'data': 'gold_private_investment_marketcap_btc_price',
     'yaxis': 'y'
   }, {
     'name': 'Gold Country Holdings',
-    'data': 'gold_country_holdings_mc_btc_price',
+    'data': 'gold_country_holdings_marketcap_btc_price',
     'yaxis': 'y'
   }, {
     'name': 'Gold Other / Industrial',
-    'data': 'gold_other_mc_btc_price',
+    'data': 'gold_other_marketcap_btc_price',
     'yaxis': 'y'
   }],
   'title':
-  "Bitcoin Price Vs Gold Market Cap",
-  'title_desc':
-  "Bitcoin Price (USD) Vs Gold Market Capitalizations (in billion USD)",
+  "Bitcoin Price VS Gold Market Cap",
   'x_label':
   "Date",
   'y1_label':
-  "Market Cap / Bitcoin Price (USD)",
+  "Bitcoin Price (USD)",
   'y2_label':
   "",
   'filename':
@@ -1984,7 +1885,7 @@ chart_promo = {
   'x_data':
   'time',
   'y_data': [{
-    'name': 'PriceUSD',
+    'name': 'Bitcoin Price',
     'data': 'PriceUSD',
     'yaxis': 'y'
   },{
@@ -2010,9 +1911,7 @@ chart_promo = {
       'yaxis': 'y2'
     }],
   'title':
-  "Secret Satoshis Chart Example",
-  'title_desc':
-  "",
+  "Bitcoin 101",
   'x_label':
   "Date",
   'y1_label':
@@ -2067,16 +1966,16 @@ chart_rv = {
   'x_data':
   'time',
   'y_data': [{
-    'name': 'PriceUSD',
+    'name': 'Bitcoin Price',
     'data': 'PriceUSD',
     'yaxis': 'y'
   },  {
     'name': 'Silver',
-    'data': 'silver_mc_btc_price',
+    'data': 'silver_marketcap_btc_price',
     'yaxis': 'y'
   },  {
     'name': 'Gold',
-    'data': 'gold_mc_btc_price',
+    'data': 'gold_marketcap_btc_price',
     'yaxis': 'y'
   },  {
     'name': 'Apple',
@@ -2094,8 +1993,6 @@ chart_rv = {
   ],
   'title':
   "Bitcoin Price Relative Valuation",
-  'title_desc':
-  "Bitcoin Price (USD) With Price Moving Averages",
   'x_label':
   "Date",
   'y1_label':
@@ -2150,7 +2047,7 @@ chart_on_chain = {
   'x_data':
   'time',
   'y_data': [{
-    'name': 'PriceUSD',
+    'name': 'Bitcoin Price',
     'data': 'PriceUSD',
     'yaxis': 'y'
   },  {
@@ -2158,19 +2055,25 @@ chart_on_chain = {
     'data': '30_day_ma_nvt_price',
     'yaxis': 'y'
   },  {
-    'name': 'Thermocap Multiple 8x',
+    'name': '8x Thermocap Multiple',
     'data': 'thermocap_multiple_8',
     'yaxis': 'y'
   },  {
+      'name': '16x Thermocap Multiple',
+      'data': 'thermocap_multiple_16',
+      'yaxis': 'y'
+  },  {
     'name': 'Realized Price',
     'data': 'realised_price',
+    'yaxis': 'y'
+  },  {
+    'name': '3x Realized Price',
+    'data': 'realizedcap_multiple_3',
     'yaxis': 'y'
   }
   ],
   'title':
   "Bitcoin Price On-Chain Value",
-  'title_desc':
-  "Bitcoin Price (USD) With Price Moving Averages",
   'x_label':
   "Date",
   'y1_label':
@@ -2220,6 +2123,571 @@ chart_on_chain = {
   }]
 }
 
+# Bitcoin YTD Retrun Comparison
+ytd_return = {
+  'x_data': 'time',
+  'y_data': [
+    {
+      'name': 'Bitcoin',
+      'data': 'PriceUSD_YTD_change',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'Nasdaq',
+      'data': '^IXIC_close_YTD_change',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'S&P500',
+      'data': '^GSPC_close_YTD_change',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'XLF Financials ETF',
+      'data': 'XLF_close_YTD_change',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'XLE Energy ETF',
+      'data': 'XLE_close_YTD_change',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'FANG+ ETF',
+      'data': 'FANG.AX_close_YTD_change',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'BITQ Crypto Industry ETF',
+      'data': 'BITQ_close_YTD_change',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'Gold Futures',
+      'data': 'GC=F_close_YTD_change',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'US Dollar Futures',
+      'data': 'DX=F_close_YTD_change',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'TLT Treasury Bond ETF',
+      'data': 'TLT_close_YTD_change',
+      'yaxis': 'y'
+    }
+  ],
+  'title': "Year To Date Return",
+  'x_label': "Date",
+  'y1_label': "Year To Date Return (Percentage)",
+  'y2_label': "",
+  'filename': "Bitcoin_YTD_Return_Comparison",
+  'chart_type': 'line'
+}
+
+# Bitcoin YTD Retrun Comparison
+mtd_return = {
+  'x_data': 'time',
+  'y_data': [
+    {
+      'name': 'Bitcoin',
+      'data': 'PriceUSD_MTD_change',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'Nasdaq',
+      'data': '^IXIC_close_MTD_change',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'S&P500',
+      'data': '^GSPC_close_MTD_change',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'XLF Financials ETF',
+      'data': 'XLF_close_MTD_change',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'XLE Energy ETF',
+      'data': 'XLE_close_MTD_change',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'FANG+ ETF',
+      'data': 'FANG.AX_close_MTD_change',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'BITQ Crypto Industry ETF',
+      'data': 'BITQ_close_MTD_change',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'Gold Futures',
+      'data': 'GC=F_close_MTD_change',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'US Dollar Futures',
+      'data': 'DX=F_close_MTD_change',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'TLT Treasury Bond ETF',
+      'data': 'TLT_close_MTD_change',
+      'yaxis': 'y'
+    }
+  ],
+  'title': "Month To Date Return Comparison",
+  'x_label': "Date",
+  'y1_label': "Month To Date Return (Percentage)",
+  'y2_label': "",
+  'filename': "Bitcoin_MTD_Return_Comparison",
+  'chart_type': 'line'
+}
+
+# Bitcoin CAGR Comparison
+cagr_comparison = {
+  'x_data': 'time',
+  'y_data': [
+    {
+      'name': 'Bitcoin',
+      'data': 'PriceUSD_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'Nasdaq',
+      'data': '^IXIC_close_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'S&P500',
+      'data': '^GSPC_close_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'XLF Financials ETF',
+      'data': 'XLF_close_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'XLE Energy ETF',
+      'data': 'XLE_close_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'FANG+ ETF',
+      'data': 'FANG.AX_close_2_Year_CAGR',  # Using 2-Year CAGR as provided in the template
+      'yaxis': 'y'
+    },
+    {
+      'name': 'BITQ Crypto Industry ETF',
+      'data': 'BITQ_close_2_Year_CAGR',  # Using 2-Year CAGR as provided in the template
+      'yaxis': 'y'
+    },
+    {
+      'name': 'Gold Futures',
+      'data': 'GC=F_close_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'US Dollar Futures',
+      'data': 'DX=F_close_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'TLT Treasury Bond ETF',
+      'data': 'TLT_close_4_Year_CAGR',
+      'yaxis': 'y'
+    }
+  ],
+  'title': "4 Year Compound Annual Growth Rate Comparison",
+  'x_label': "Date",
+  'y1_label': "4 Year CAGR (Percentage)",
+  'y2_label': "",
+  'filename': "Bitcoin_CAGR_Comparison",
+  'chart_type': 'line',
+}
+
+# Hashrate Chart
+chart_sats_per_dollar = {
+  'x_data':
+  'time',
+  'y_data': [
+    {
+      'name': 'Satoshis Per Dollar',
+      'data': 'sat_per_dollar',
+      'yaxis': 'y1'
+    },
+    {
+      'name': 'Bitcoin Price',
+      'data': 'PriceUSD',
+      'yaxis': 'y2'
+    }
+  ],
+  'title':
+  "Satoshis Per Dollar",
+  'x_label':
+  "Date",
+  'y1_label':
+  "Satoshis Per Dollar | Amount Of Bitcoin You Can Purchase Per $1",
+  'y2_label':
+  "1 Full Bitcion Price",
+  'filename':
+  "Bitcoin_Sats_Per_Dollar",
+  'chart_type':
+  'line',
+  'events': [{
+    'name': 'Halving',
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Launch',
+    'dates': ['2010-07-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Hack',
+    'dates': ['2011-06-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Bankrupt',
+    'dates': ['2014-02-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'BitLicense',
+    'dates': ['2015-08-08'],
+    'orientation': 'v'
+  }, {
+    'name': 'CME Futures',
+    'dates': ['2017-12-17'],
+    'orientation': 'v'
+  }, {
+    'name': 'Bitcoin Winter',
+    'dates': ['2018-12-15'],
+    'orientation': 'v'
+  }, {
+    'name': 'Coinbase IPO',
+    'dates': ['2021-04-14'],
+    'orientation': 'v'
+  }, {
+    'name': 'FTX Bankrupt',
+    'dates': ['2022-11-11'],
+    'orientation': 'v'
+  }]
+}
+
+# Bitcoin Promo Chart
+chart_hashrate_price= {
+  'x_data':
+  'time',
+  'y_data': [{
+    'name': 'Bitcoin Price',
+    'data': 'PriceUSD',
+    'yaxis': 'y'
+  },{
+    'name': 'Hash Rate',
+    'data': 'HashRate',
+    'yaxis': 'y2'
+  },{
+      'name': 'Hash Rate 30 Day MA',
+      'data': '30_day_ma_HashRate',
+      'yaxis': 'y2'
+    },
+    {
+      'name': 'Hash Rate 365 Day MA',
+      'data': '365_day_ma_HashRate',
+      'yaxis': 'y2'
+    }],
+  'title':
+  "Bitcoin Price & Hashrate",
+  'x_label':
+  "Date",
+  'y1_label':
+  "Bitcoin Price (USD)",
+  'y2_label':
+  "HashRate",
+  'filename':
+  "Bitcoin_Hashrate_Price",
+  'chart_type':
+  'line',
+  'events': [{
+    'name': 'Halving',
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Launch',
+    'dates': ['2010-07-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Hack',
+    'dates': ['2011-06-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Bankruptcy',
+    'dates': ['2014-02-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'BitLicense',
+    'dates': ['2015-08-08'],
+    'orientation': 'v'
+  }, {
+    'name': 'CME Futures Launch',
+    'dates': ['2017-12-17'],
+    'orientation': 'v'
+  }, {
+    'name': 'Bitcoin Winter',
+    'dates': ['2018-12-15'],
+    'orientation': 'v'
+  }, {
+    'name': 'Coinbase IPO',
+    'dates': ['2021-04-14'],
+    'orientation': 'v'
+  }, {
+    'name': 'FTX Bankruptcy',
+    'dates': ['2022-11-11'],
+    'orientation': 'v'
+  }]
+}
+
+# Transaction Chart
+chart_transactions_volume = {
+  'x_data':
+  'time',
+  'y_data': [
+    {
+      'name': 'Tx Count',
+      'data': 'TxCnt',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'Tx Count 30 Day MA',
+      'data': '30_day_ma_TxCnt',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'Tx Count 365 Day MA',
+      'data': '365_day_ma_TxCnt',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'Transaction Volume',
+      'data': 'TxTfrValAdjUSD',
+      'yaxis': 'y2'
+    },
+    {
+      'name': 'Transaction Volume 30 Day MA',
+      'data': '30_day_ma_TxTfrValAdjUSD',
+      'yaxis': 'y2'
+    },
+    {
+      'name': 'Transaction Volume 365 Day MA',
+      'data': '365_day_ma_TxTfrValAdjUSD',
+      'yaxis': 'y2'
+    }
+  ],
+  'title':
+  "Bitcoin Transaction Count & Transaction Volume",
+  'x_label':
+  "Date",
+  'y1_label':
+  "Transaction Count",
+  'y2_label':
+  "Transaction Volume",
+  'filename':
+  "Bitcoin_Transactions_Volume",
+  'chart_type':
+  'line',
+  'events': [{
+    'name': 'Halving',
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Launch',
+    'dates': ['2010-07-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Hack',
+    'dates': ['2011-06-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Bankrupt',
+    'dates': ['2014-02-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'BitLicense',
+    'dates': ['2015-08-08'],
+    'orientation': 'v'
+  }, {
+    'name': 'CME Futures',
+    'dates': ['2017-12-17'],
+    'orientation': 'v'
+  }, {
+    'name': 'Bitcoin Winter',
+    'dates': ['2018-12-15'],
+    'orientation': 'v'
+  }, {
+    'name': 'Coinbase IPO',
+    'dates': ['2021-04-14'],
+    'orientation': 'v'
+  }, {
+    'name': 'FTX Bankrupt',
+    'dates': ['2022-11-11'],
+    'orientation': 'v'
+  }]
+}
+
+# Address Balance Count USD Chart
+chart_address_balance_comp = {
+  'x_data':
+  'time',
+  'y_data': [
+    {
+      'name': 'Bitcon Price',
+      'data': 'PriceUSD',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'Address Balance USD 10',
+      'data': 'AdrBalUSD10Cnt',
+      'yaxis': 'y2'
+    },
+    {
+      'name': 'Active Addresses',
+      'data': 'AdrActCnt',
+      'yaxis': 'y2'
+    },
+    {
+      'name': 'Active Addresses 30 Day MA',
+      'data': '30_day_ma_AdrActCnt',
+      'yaxis': 'y2'
+    },
+    {
+      'name': 'Active Addresses 365 Day MA',
+      'data': '365_day_ma_AdrActCnt',
+      'yaxis': 'y2'
+    }
+  ],
+  'title':
+  "Bitcoin Address Breakdown",
+  'x_label':
+  "Date",
+  'y1_label':
+  "Bitcoin Price (USD)",
+  'y2_label':
+  "Address Count",
+  'filename':
+  "Bitcoin_Address_Balance_Comp",
+  'chart_type':
+  'line',
+  'events': [{
+    'name': 'Halving',
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Launch',
+    'dates': ['2010-07-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Hack',
+    'dates': ['2011-06-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Bankrupt',
+    'dates': ['2014-02-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'BitLicense',
+    'dates': ['2015-08-08'],
+    'orientation': 'v'
+  }, {
+    'name': 'CME Futures',
+    'dates': ['2017-12-17'],
+    'orientation': 'v'
+  }, {
+    'name': 'Bitcoin Winter',
+    'dates': ['2018-12-15'],
+    'orientation': 'v'
+  }, {
+    'name': 'Coinbase IPO',
+    'dates': ['2021-04-14'],
+    'orientation': 'v'
+  }, {
+    'name': 'FTX Bankrupt',
+    'dates': ['2022-11-11'],
+    'orientation': 'v'
+  }]
+}
+
+# Address Balance Count USD Chart
+chart_address_balance_supply_comp = {
+  'x_data':
+  'time',
+  'y_data': [
+    {
+      'name': 'Address Balance With +10 USD',
+      'data': 'AdrBalUSD10Cnt',
+      'yaxis': 'y'
+    },
+    {
+      'name': '1+ Year Active Supply',
+      'data': 'supply_pct_1_year_plus',
+      'yaxis': 'y2'
+    },
+  ],
+  'title':
+  "Bitcoin Supply Age & Address Balance Count",
+  'x_label':
+  "Date",
+  'y1_label':
+  "Addresses With +10 USD Balance",
+  'y2_label':
+  "+1 Year Old Supply (Percentage)",
+  'filename':
+  "Bitcoin_Address_Supply_Comp",
+  'chart_type':
+  'line',
+  'events': [{
+    'name': 'Halving',
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Launch',
+    'dates': ['2010-07-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Hack',
+    'dates': ['2011-06-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Bankrupt',
+    'dates': ['2014-02-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'BitLicense',
+    'dates': ['2015-08-08'],
+    'orientation': 'v'
+  }, {
+    'name': 'CME Futures',
+    'dates': ['2017-12-17'],
+    'orientation': 'v'
+  }, {
+    'name': 'Bitcoin Winter',
+    'dates': ['2018-12-15'],
+    'orientation': 'v'
+  }, {
+    'name': 'Coinbase IPO',
+    'dates': ['2021-04-14'],
+    'orientation': 'v'
+  }, {
+    'name': 'FTX Bankrupt',
+    'dates': ['2022-11-11'],
+    'orientation': 'v'
+  }]
+}
+
 # List Of All Chart Templates
 chart_templates = [
   chart_supply, chart_transactions, chart_hashrate, chart_price,
@@ -2228,7 +2696,9 @@ chart_templates = [
   chart_supply_age, chart_thermocap_multiple, chart_realizedcap_multiple,
   chart_nvt_price, chart_1_year_supply, macro_supply, chart_NUPL,
   chart_price_ma, chart_m0, chart_equities, chart_gold, chart_promo, 
-  chart_rv, chart_on_chain
+  chart_rv, chart_on_chain, ytd_return, cagr_comparison, chart_sats_per_dollar,
+  chart_hashrate_price, chart_transactions_volume, chart_address_balance_comp,
+  chart_address_balance_supply_comp, mtd_return
 ]
 
 # Map the chart types to their respective functions
