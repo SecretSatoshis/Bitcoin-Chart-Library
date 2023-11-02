@@ -446,10 +446,19 @@ def run_data_analysis(data, start_date):
     return data
 
 def get_current_block():
-      time.sleep(1)  # Adding a delay of 1 second
+  for _ in range(10):  # Retry up to 10 times
+      time.sleep(5)  # Increase the delay to 5 seconds
       response = requests.get('https://blockstream.info/api/blocks/tip/height')
-      response.raise_for_status()
+
+      # Explicitly handling 429 error
+      if response.status_code == 429:
+          time.sleep(20)  # Wait for 20 seconds before retrying
+          continue
+
+      response.raise_for_status()  # This will raise for any other error status
       return response.json()
+  else:
+      raise Exception("Too many retries due to rate limiting")
 
 def get_block_info(block_height):
       time.sleep(1)  # Adding a delay of 1 second
