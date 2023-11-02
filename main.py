@@ -11,7 +11,8 @@ from datetime import datetime, timedelta
 import datetime
 import json
 import math
-from scipy.stats import linregress
+import scipy.stats
+linregress = scipy.stats.linregress
 import seaborn as sns
 import warnings
 
