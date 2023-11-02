@@ -4,3 +4,4 @@ dash
 yahoo_fin
 requests
 kaleido
+scipy
