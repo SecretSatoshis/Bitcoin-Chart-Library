@@ -1003,10 +1003,6 @@ chart_realizedcap_multiple = {
     'data': 'realised_price',
     'yaxis': 'y'
   }, {
-    'name': 'MVRV Ratio',
-    'data': 'mvrv_ratio',
-    'yaxis': 'y2'
-  }, {
     'name': '3x Realized Price',
     'data': 'realizedcap_multiple_3',
     'yaxis': 'y'
