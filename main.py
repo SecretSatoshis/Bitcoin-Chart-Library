@@ -1,5 +1,4 @@
-# --- Importing Resources --- #
-import os
+# Importing Resources
 import warnings
 import os
 import pandas as pd
@@ -13,25 +12,19 @@ import json
 import math
 import scipy.stats
 linregress = scipy.stats.linregress
-import seaborn as sns
-import warnings
 
-# --- Importing From Files --- #
-from data_format import compute_drawdowns, compute_halving_days
+# Importing From Files
+import data_format
 from chart_format import create_charts, chart_templates, create_days_since_chart, chart_drawdowns, chart_halvings
 from dash_app import generate_dash_app, figures
-
-# Ignore any FutureWarnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
-# Import Files
-import data_format
-
 from data_definitions import (
     tickers, market_data_start_date, moving_avg_metrics, fiat_money_data_top10,
     gold_silver_supply, gold_supply_breakdown, stock_tickers, today, yesterday,
     report_date, filter_data_columns, stats_start_date, valuation_data_metrics,
-    valuation_metrics, volatility_windows, correlation_data,
-)
+    valuation_metrics, volatility_windows, correlation_data)
+
+# Ignore any FutureWarnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # Fetch the data
 data = data_format.get_data(tickers, market_data_start_date)
@@ -91,10 +84,10 @@ correlation_data = correlation_data.dropna()
 correlation_results = data_format.create_btc_correlation_tables(report_date, tickers, correlation_data)
 
 # --- Data Processing --- #
-drawdown_data = compute_drawdowns(report_data)
+drawdown_data = data_format.compute_drawdowns(report_data)
 create_days_since_chart(drawdown_data, chart_drawdowns, 'Bitcoin_ATH_Drawdown')
 
-halving_data = compute_halving_days(report_data)
+halving_data = data_format.compute_halving_days(report_data)
 create_days_since_chart(halving_data, chart_halvings, 'Bitcoin_Halving_Cycle')
 
 # --- Chart Creation --- #
