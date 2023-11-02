@@ -66,7 +66,6 @@ valuation_data = data_format.create_valuation_data(report_data, valuation_metric
 
 # Calcualte Grwoth Rate Data
 cagr_results = data_format.calculate_rolling_cagr_for_all_metrics(data)
-print(cagr_results.columns)
 
 report_data = report_data.merge(cagr_results, left_index=True, right_index=True, how='left')
 
