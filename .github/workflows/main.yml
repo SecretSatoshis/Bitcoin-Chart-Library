@@ -2,7 +2,7 @@ name: Update Bitcoin charts
 
 on:
   schedule:
-    - cron:  '50 17 * * *'
+    - cron:  '00 18 * * *'
 
 jobs:
   build:
