@@ -175,7 +175,7 @@ def calculate_btc_price_to_surpass_metal_categories(data, gold_supply_breakdown)
 
       # Compute the market cap for this category
       category_marketcap_billion_usd = gold_marketcap_billion_usd * (percentage_of_market / 100.0)
-      category_marketcap_usd = category_marketcap_billion_usd * 1e9  # Convert to just units
+      category_marketcap_usd = category_marketcap_billion_usd # Convert to just units
 
       # Create the desired metric name format
       if category == "Jewellery":
@@ -188,7 +188,7 @@ def calculate_btc_price_to_surpass_metal_categories(data, gold_supply_breakdown)
           metric_name = 'gold_other_marketcap_btc_price'
 
       # Compute the price of Bitcoin needed to surpass this gold category's market cap
-      data[metric_name] = category_marketcap_usd / data['SplyCur'].iloc[-1]
+      data[metric_name] = category_marketcap_usd / data['SplyCur'].iloc[-2]
 
   # Now, calculate for silver
   silver_marketcap_billion_usd = data['silver_marketcap_billion_usd'].iloc[-1]
