@@ -215,7 +215,7 @@ def calculate_btc_price_to_surpass_fiat(data, fiat_money_data):
 def calculate_btc_price_for_stock_mkt_caps(data, stock_tickers):
       new_columns = {}
       for ticker in stock_tickers:
-          new_columns[ticker + '_mc_btc_price'] = data[ticker + '_MarketCap'] / data['SplyCur']
+          new_columns[ticker + '_mc_btc_price'] = data[ticker + '_MarketCap'] / data['SplyCur'].iloc[-2]
       data = pd.concat([data, pd.DataFrame(new_columns)], axis=1)
       return data
 
