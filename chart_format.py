@@ -5,8 +5,20 @@ import pandas as pd
 
 # Create Line Chart Functoin
 def create_line_chart(chart_template, selected_metrics):
-  #selected_metrics = selected_metrics[selected_metrics.index >= pd.to_datetime("2018-01-01")]
-  # unpack variables from the chart template
+  # Check for the presence of filter_start_date in the template
+  if 'filter_start_date' in chart_template and 'filter_metric' in chart_template:
+      filter_metric = chart_template['filter_metric']
+      start_date = pd.to_datetime(chart_template['filter_start_date'])
+
+      # Check if filter_end_date is also specified
+      if 'filter_end_date' in chart_template:
+          end_date = pd.to_datetime(chart_template['filter_end_date'])
+      else:
+          end_date = selected_metrics.index.max()  # Use the maximum date available in the data
+
+      # Apply the date filter only to the specified metric
+      if filter_metric in selected_metrics.columns:
+          selected_metrics = selected_metrics[(selected_metrics.index >= start_date) & (selected_metrics.index <= end_date) & selected_metrics[filter_metric].notnull()]
   x = selected_metrics.index
   y_data = chart_template['y_data']
   title = chart_template['title']
@@ -452,9 +464,9 @@ chart_transferred_value = {
   'x_data':
   'time',
   'y1_type':
-  'linear',
-  'y2_type':
   'log',
+  'y2_type':
+  'linear',
   'y_data': [
     {
       'name': 'Bitcoin Price',
@@ -999,11 +1011,6 @@ chart_supply_age = {
       'data': 'SplyCur',
       'yaxis': 'y2'
     },
-    {
-      'name': 'Free Float Supply',
-      'data': 'SplyFF',
-      'yaxis': 'y2'
-    },
   ],
   'title':
   "Supply Age",
@@ -1065,7 +1072,7 @@ chart_realizedcap_multiple = {
   'y1_type':
   'log',
   'y2_type':
-  'log',
+  'linear',
   'y_data': [{
     'name': 'Bitcoin Price',
     'data': 'PriceUSD',
@@ -1099,6 +1106,8 @@ chart_realizedcap_multiple = {
   "Bitcoin_Realized_Price",
   'chart_type':
   'line',
+  'filter_start_date': '2012-01-01',   
+  'filter_metric': 'CapMVRVCur',
   'data_source':
   "Data Source: CoinMetrics",
   'events': [{
@@ -1144,6 +1153,8 @@ chart_realizedcap_multiple = {
 chart_thermocap_multiple = {
   'x_data':
   'time',
+  'y2_type':
+  'linear',
   'y_data': [{
     'name': 'Bitcoin Price',
     'data': 'PriceUSD',
@@ -1181,6 +1192,8 @@ chart_thermocap_multiple = {
   "Bitcoin_Thermocap_Multiples",
   'chart_type':
   'line',
+  'filter_start_date': '2012-01-01',   
+  'filter_metric': 'thermocap_multiple',
   'data_source':
   "Data Source: CoinMetrics",
   'events': [{
@@ -1394,10 +1407,6 @@ macro_supply = {
     'data': 'SplyCur',
     'yaxis': 'y2'
   }, {
-    'name': 'Free Float Supply',
-    'data': 'SplyFF',
-    'yaxis': 'y2'
-  }, {
     'name': 'Future Supply',
     'data': 'SplyExpFut10yr',
     'yaxis': 'y2'
@@ -1561,6 +1570,8 @@ chart_price_ma = {
   "Bitcoin_Price_Chart_MA",
   'chart_type':
   'line',
+  'filter_start_date': '2012-01-01',   
+  'filter_metric': '200_day_multiple',
   'data_source':
   "Data Source: CoinMetrics",
   'events': [{
