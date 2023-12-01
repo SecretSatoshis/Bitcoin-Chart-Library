@@ -1,7 +1,7 @@
 pandas==2.0.3
 plotly
 dash
-yahoo_fin
+yahoo_fin==0.8.9
 requests
 kaleido
 scipy
