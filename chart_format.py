@@ -1655,16 +1655,58 @@ chart_drawdowns = {
   "Data Source: CoinMetrics",
 }
 
+# ATH Drawdown Chart
+chart_cycle_lows = {
+  'x_data':
+  'days_since_cycle_low',
+  'y_data': [
+    {
+      'name': 'Market Cycle 1',
+      'data': 'return_since_cycle_low_1',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'Market Cycle 2',
+      'data': 'return_since_cycle_low_2',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'Market Cycle 3',
+      'data': 'return_since_cycle_low_3',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'Market Cycle 4',
+      'data': 'return_since_cycle_low_4',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'Market Cycle 5',
+      'data': 'return_since_cycle_low_5',
+      'yaxis': 'y'
+    },
+  ],
+  'title':
+  "Bitcoin Return From Cycle Low",
+  'x_label':
+  "Days since Cycle Low",
+  'y1_label':
+  "Return (%)",
+  'y2_label':
+  "",
+  'filename':
+  "Bitcoin_Cycle_Low",
+  'chart_type':
+  'line',
+  'data_source':
+  "Data Source: CoinMetrics",
+}
+
 # Halving Performane Chart
 chart_halvings = {
   'x_data':
   'days_since_halving',  # Assuming your halving_data DataFrame has a 'days_since_halving' column
   'y_data': [
-    {
-      'name': 'Halving Era 1',
-      'data': 'return_since_halving_1',
-      'yaxis': 'y'
-    },
     {
       'name': 'Halving Era 2',
       'data': 'return_since_halving_2',
