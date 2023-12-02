@@ -215,7 +215,7 @@ def calculate_btc_price_to_surpass_fiat(data, fiat_money_data):
 def calculate_btc_price_for_stock_mkt_caps(data, stock_tickers):
       new_columns = {}
       for ticker in stock_tickers:
-          new_columns[ticker + '_mc_btc_price'] = data[ticker + '_MarketCap'] / data['SplyCur'].iloc[-2]
+          new_columns[ticker + '_mc_btc_price'] = data[ticker + '_MarketCap'] / data['SplyCur']
       data = pd.concat([data, pd.DataFrame(new_columns)], axis=1)
       return data
 
@@ -444,7 +444,7 @@ def run_data_analysis(data, start_date):
 
     print("Data Analysis Complete")
     return data
-
+  
 def get_current_block():
   for _ in range(10):  # Retry up to 10 times
       time.sleep(5)  # Increase the delay to 5 seconds
@@ -459,7 +459,7 @@ def get_current_block():
       return response.json()
   else:
       raise Exception("Too many retries due to rate limiting")
-
+    
 def get_block_info(block_height):
       time.sleep(1)  # Adding a delay of 1 second
       for _ in range(10):  # Retry up to 10 times
@@ -698,10 +698,10 @@ def create_btc_correlation_tables(report_date, tickers, correlations_data):
 # Compute Drawdown Dataset Function
 def compute_drawdowns(data):
     drawdown_periods = [
-        ('2011-06-08', '2013-12-19'),
-        ('2013-12-04', '2017-01-03'),
-        ('2017-12-16', '2020-12-03'),
-        ('2021-11-08', pd.to_datetime('today'))
+        ('2011-06-08', '2013-02-28'),
+        ('2013-11-29', '2017-03-03'),
+        ('2017-12-17', '2020-12-16'),
+        ('2021-11-10', pd.to_datetime('today'))
     ]
 
     drawdown_data = pd.DataFrame()
@@ -722,6 +722,49 @@ def compute_drawdowns(data):
             drawdown_data = pd.concat([drawdown_data, period_data[[f'days_since_ath_cycle_{i}', f'drawdown_cycle_{i}']].rename(columns={f'days_since_ath_cycle_{i}': 'days_since_ath', f'drawdown_cycle_{i}': f'drawdown_cycle_{i}'})])
 
     return drawdown_data
+
+def compute_cycle_lows(data):
+  cycle_periods = [
+      ('2010-07-25', '2011-11-18'),
+      ('2011-11-18', '2015-01-14'),
+      ('2015-01-14', '2018-12-16'),
+      ('2018-12-16', '2022-11-20'),
+      ('2022-11-20', pd.to_datetime('today'))
+  ]
+  
+  cycle_low_data = pd.DataFrame()
+  
+  for i, period in enumerate(cycle_periods, 1):
+      period_data = data[(data.index >= period[0]) & (data.index <= period[1])]
+      period_data = period_data.copy()
+  
+      # Find the cycle low (minimum price within the period)
+      cycle_low_price = period_data['PriceUSD'].min()
+      cycle_low_date = period_data['PriceUSD'].idxmin()
+  
+      # Calculate 'days_since_cycle_low' from the cycle low date
+      period_data[f'days_since_cycle_low_{i}'] = (period_data.index - cycle_low_date).days
+  
+      # Calculate 'return_since_cycle_low' from the cycle low price
+      period_data[f'return_since_cycle_low_{i}'] = (period_data['PriceUSD'] / cycle_low_price - 1)
+  
+      # Select and rename columns to have a consistent name for plotting
+      if cycle_low_data.empty:
+          cycle_low_data = period_data[[f'days_since_cycle_low_{i}', f'return_since_cycle_low_{i}']].rename(columns={
+              f'days_since_cycle_low_{i}': 'days_since_cycle_low',
+              f'return_since_cycle_low_{i}': f'return_since_cycle_low_{i}'
+          })
+      else:
+          cycle_low_data = pd.concat([
+              cycle_low_data,
+              period_data[[f'days_since_cycle_low_{i}', f'return_since_cycle_low_{i}']].rename(columns={
+                  f'days_since_cycle_low_{i}': 'days_since_cycle_low',
+                  f'return_since_cycle_low_{i}': f'return_since_cycle_low_{i}'
+              })
+          ])
+  
+  return cycle_low_data
+
 
 # Compute Halving Dataset Function
 def compute_halving_days(data):
