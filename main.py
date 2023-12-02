@@ -15,7 +15,7 @@ linregress = scipy.stats.linregress
 
 # Importing From Files
 import data_format
-from chart_format import create_charts, chart_templates, create_days_since_chart, chart_drawdowns, chart_halvings
+from chart_format import create_charts, chart_templates, create_days_since_chart, chart_drawdowns, chart_halvings, chart_cycle_lows
 from dash_app import generate_dash_app, figures
 from data_definitions import (
     tickers, market_data_start_date, moving_avg_metrics, fiat_money_data_top10,
@@ -87,6 +87,9 @@ correlation_results = data_format.create_btc_correlation_tables(report_date, tic
 # --- Data Processing --- #
 drawdown_data = data_format.compute_drawdowns(report_data)
 create_days_since_chart(drawdown_data, chart_drawdowns, 'Bitcoin_ATH_Drawdown')
+
+cycle_low_data = data_format.compute_cycle_lows(report_data)
+create_days_since_chart(cycle_low_data, chart_cycle_lows, 'Bitcoin_Cycle_Lows')
 
 halving_data = data_format.compute_halving_days(report_data)
 create_days_since_chart(halving_data, chart_halvings, 'Bitcoin_Halving_Cycle')
