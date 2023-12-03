@@ -2976,13 +2976,7 @@ def create_days_since_chart(drawdown_data,
              args=["yaxis.type", "linear"]),
         dict(label="Y1-axis: Log",
              method="relayout",
-             args=["yaxis.type", "log"]),
-        dict(label="Y2-axis: Linear",
-             method="relayout",
-             args=["yaxis2.type", "linear"]),
-        dict(label="Y2-axis: Log",
-             method="relayout",
-             args=["yaxis2.type", "log"])
+             args=["yaxis.type", "log"])
       ]),
                            showactive=False,
                            type="buttons",
@@ -2998,8 +2992,8 @@ def create_days_since_chart(drawdown_data,
       l=0,  # left margin
       r=0,  # right margin
       b=0,  # bottom margin
-      t=0,  # top margin
-      pad=0  # padding
+      t=100,  # top margin
+      pad=2  # padding
     ),
     font=dict(family="PT Sans Narrow", size=14, color="black"))
 
@@ -3061,6 +3055,30 @@ def create_days_since_chart(drawdown_data,
     showarrow=False,
     font=dict(size=50, color="rgba(128, 128, 128, 0.5)"),
     align="center",
+  )
+  # Add logo image as an annotation
+  fig.add_layout_image(
+    dict(
+      source=
+      "https://secretsatoshis.github.io/Bitcoin-Fundamentals-Dashboards/Secret_Satoshis_Logo.png",  # Ensure this path is correct
+      x=0.0,
+      y=1.2,
+      sizex=0.1,
+      sizey=0.1,  # Adjust size of the logo as needed
+      xanchor="left",
+      yanchor="top"))
+  # Add data source annotation to the figure
+  fig.add_annotation(
+      text=chart_template['data_source'],  # Correct way to add the data source text
+      xref="paper",
+      yref="paper",
+      x=1,
+      y=-0.2,  # Position at the bottom right
+      xanchor="right",
+      yanchor="bottom",
+      showarrow=False,
+      font=dict(family="Arial", size=12, color="#666"),
+      align="right",
   )
 
   # Save the chart as an HTML file
