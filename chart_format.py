@@ -170,7 +170,7 @@ def create_line_chart(chart_template, selected_metrics):
   fig.add_layout_image(
     dict(
       source=
-      "https://secretsatoshis.github.io/Bitcoin-Fundamentals-Dashboards/Secret_Satoshis_Logo.png",  # Ensure this path is correct
+      "https://secretsatoshis.github.io/Bitcoin-Chart-Library/Secret_Satoshis_Logo.png",  # Ensure this path is correct
       x=0.0,
       y=1.2,
       sizex=0.1,
