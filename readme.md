@@ -4,7 +4,7 @@ Welcome to the repository of Bitcoin Fundamentals Dashboards, an automated dashb
 
 ## Project Overview
 
-This project provides an automated system for generating comprehensive dashboards. It leverages Plotly, a Python graphing library, to create interactive, publication-quality graphs, and Dash, a productive Python framework for building web applications.
+This project provides an automated system for generating comprehensive dashboards. It leverages Plotly, a Python graphing library, to create interactive charts, and Dash, a productive Python framework for building web applications.
 
 The dashboard generator is composed of several Python files:
 
@@ -37,10 +37,6 @@ The workflow is scheduled to run every day at 16:00 UTC. It runs the `main.py` s
 The application generates a variety of charts to visualize Bitcoin data. Each chart is saved as an HTML file in the `Charts` directory of the repository. 
 
 For a more detailed explanation of each chart, please refer to the comments in the `chart_format.py` file.
-
-## Contributing
-
-Contributions are welcome! If you have any ideas for new charts or improvements to the existing ones, feel free to open an issue or submit a pull request.
 
 ## License
 
