@@ -220,52 +220,47 @@ def calculate_btc_price_for_stock_mkt_caps(data, stock_tickers):
       return data
 
 def calculate_stock_to_flow_metrics(data):
-      # Extract the start of each month's data
-      btc_monthly_data = data.resample('M').first()
+    # Extract the start of each month's data
+    btc_monthly_data = data.resample('M').first()
 
-      # Calculate the monthly flow
-      btc_monthly_data['Flow'] = btc_monthly_data['SplyCur'].diff() * 12
+    # Calculate the monthly flow
+    btc_monthly_data['Flow'] = btc_monthly_data['SplyCur'].diff() * 12
 
-      # Calculate Stock-to-Flow
-      btc_monthly_data['SF'] = btc_monthly_data['SplyCur'] / btc_monthly_data['Flow']
+    # Calculate Stock-to-Flow
+    btc_monthly_data['SF'] = btc_monthly_data['SplyCur'] / btc_monthly_data['Flow']
 
-      # Extract the monthly average price and add it to the resampled data
-      btc_monthly_data['PriceUSD'] = data['PriceUSD'].resample('M').mean()
+    # Extract the monthly average price and add it to the resampled data
+    btc_monthly_data['PriceUSD'] = data['PriceUSD'].resample('M').mean()
 
-      # Removing the first row as it doesn't have a valid SF value due to the diff operation
-      btc_monthly_data = btc_monthly_data[1:]
+    # Removing the first row as it doesn't have a valid SF value due to the diff operation
+    btc_monthly_data = btc_monthly_data[1:]
 
-      # Extracting the relevant columns
-      sf_data = btc_monthly_data[['SplyCur', 'Flow', 'SF', 'PriceUSD']].dropna()
+    # Extracting the relevant columns
+    sf_data = btc_monthly_data[['SplyCur', 'Flow', 'SF', 'PriceUSD']].dropna()
 
-      # Calculating market value (supply * price)
-      sf_data['MarketValue'] = sf_data['SplyCur'] * sf_data['PriceUSD']
+    # Applying the provided linear regression formula
+    btc_monthly_data['SF_Predicted_Market_Value'] = np.exp(14.6) * btc_monthly_data['SF']**3.3
 
-      # Using linear regression on the natural logarithm of SF and Market Value
-      slope, intercept, r_value, p_value, std_err = linregress(np.log(sf_data['SF']), np.log(sf_data['MarketValue']))
+    # Calculating the predicted market price by dividing the Predicted Market Value by the supply for that month
+    btc_monthly_data['SF_Predicted_Price'] = btc_monthly_data['SF_Predicted_Market_Value'] / btc_monthly_data['SplyCur']
 
-      # Using the power-law relationship to calculate the predicted Market Value based on SF
-      btc_monthly_data['SF_Predicted_Market_Value'] = np.exp(intercept) * btc_monthly_data['SF']**slope
+    # Calculating the S/F multiple
+    btc_monthly_data['SF_Multiple'] = btc_monthly_data['PriceUSD'] / btc_monthly_data['SF_Predicted_Price']
 
-      # Calculating the predicted market price by dividing the Predicted Market Value by the supply for that month
-      btc_monthly_data['SF_Predicted_Price'] = btc_monthly_data['SF_Predicted_Market_Value'] / btc_monthly_data['SplyCur']
+    # Resampling to daily frequency and forward filling the metrics
+    sf_daily_data = btc_monthly_data[['Flow', 'SF', 'SF_Predicted_Market_Value', 'SF_Predicted_Price', 'SF_Multiple']].resample('D').ffill()
 
-      # Calculating the S/F multiple
-      btc_monthly_data['SF_Multiple'] = btc_monthly_data['PriceUSD'] / btc_monthly_data['SF_Predicted_Price']
+    # Adding the new metrics to the original dataframe
+    data = data.combine_first(sf_daily_data)
 
-      # Resampling to daily frequency and forward filling the metrics
-      sf_daily_data = btc_monthly_data[['Flow', 'SF', 'SF_Predicted_Market_Value', 'SF_Predicted_Price', 'SF_Multiple']].resample('D').ffill()
+    # Extending the dataset to today's date
+    current_date = pd.Timestamp.now().normalize()
+    if data.index[-1] < current_date:
+        date_range = pd.date_range(start=data.index[-1] + pd.Timedelta(days=1), end=current_date)
+        extension_df = pd.DataFrame(index=date_range)
+        data = data.append(extension_df).ffill()
 
-      # Adding the new metrics to the original dataframe
-      data = data.combine_first(sf_daily_data)
-
-      # Extending the dataset to today's date
-      current_date = pd.Timestamp.now().normalize()
-      if data.index[-1] < current_date:
-          date_range = pd.date_range(start=data.index[-1] + pd.Timedelta(days=1), end=current_date)
-          extension_df = pd.DataFrame(index=date_range)
-          data = data.append(extension_df).ffill()
-      return data
+    return data
 
 def calculate_statistics(data, start_date):
       # Convert start_date to datetime
