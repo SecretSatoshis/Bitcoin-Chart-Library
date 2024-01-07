@@ -21,7 +21,7 @@ from data_definitions import (
     tickers, market_data_start_date, moving_avg_metrics, fiat_money_data_top10,
     gold_silver_supply, gold_supply_breakdown, stock_tickers, today, yesterday,
     report_date, filter_data_columns, stats_start_date, valuation_data_metrics,
-    valuation_metrics, volatility_windows, correlation_data,ELECTRICITY_COST)
+    valuation_metrics, volatility_windows, correlation_data)
 
 # Ignore any FutureWarnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
