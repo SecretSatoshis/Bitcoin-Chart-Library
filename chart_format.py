@@ -2,7 +2,6 @@ import plotly.graph_objects as go
 import plotly.io as pio
 import pandas as pd
 
-
 # Create Line Chart Functoin
 def create_line_chart(chart_template, selected_metrics):
   # Check for the presence of filter_start_date in the template
@@ -197,6 +196,161 @@ def create_line_chart(chart_template, selected_metrics):
   # Return the figure
   return fig
 
+# Create Days Since Chart Function
+def create_days_since_chart(drawdown_data, chart_template, filename='chart.html'):
+  colors = [
+    '#7149C6', '#0079FF', '#FF0060', '#22A699', '#8c564b', '#e377c2',
+    '#7f7f7f', '#bcbd22', '#17becf'
+  ]
+
+  fig = go.Figure()
+
+  # Adding traces
+  for i, y_data in enumerate(chart_template['y_data']):
+    line_color = colors[
+      i % len(colors)] if y_data['data'] != 'PriceUSD' else '#FF9900'
+    fig.add_trace(
+      go.Scatter(x=drawdown_data[chart_template['x_data']],
+                 y=drawdown_data[y_data['data']],
+                 mode='lines',
+                 name=y_data['name'],
+                 line=dict(color=line_color),
+                 yaxis=y_data['yaxis']))
+
+  # Update layout
+  fig.update_layout(
+    title=dict(text=chart_template['title'], x=0.5, xanchor='center', y=1),
+    xaxis_title=chart_template['x_label'],
+    yaxis_title=chart_template['y1_label'],
+    yaxis2=dict(title=chart_template['y2_label'],
+                overlaying='y',
+                side='right',
+                showgrid=False),
+    plot_bgcolor='rgba(255, 255, 255, 1)',
+    yaxis=dict(showgrid=False, type='linear'),
+    hovermode='x unified',
+    autosize=True,
+    legend=dict(orientation='h',
+                yanchor='bottom',
+                y=-0.15,
+                xanchor='center',
+                x=0.5),
+    template='plotly_white',
+    updatemenus=[
+      go.layout.Updatemenu(buttons=list([
+        dict(label="Y1-axis: Linear",
+             method="relayout",
+             args=["yaxis.type", "linear"]),
+        dict(label="Y1-axis: Log",
+             method="relayout",
+             args=["yaxis.type", "log"])
+      ]),
+                           showactive=False,
+                           type="buttons",
+                           direction="right",
+                           x=-0.1,
+                           xanchor="left",
+                           y=-0.15,
+                           yanchor="top")
+    ],
+    width=1400,
+    height=700,
+    margin=dict(
+      l=0,  # left margin
+      r=0,  # right margin
+      b=0,  # bottom margin
+      t=100,  # top margin
+      pad=2  # padding
+    ),
+    font=dict(family="PT Sans Narrow", size=14, color="black"))
+
+  fig.update_yaxes(
+    tickformatstops=[
+      dict(dtickrange=[0, 1],
+           value=".2f"),  # Decimal notation for moderate values
+      dict(dtickrange=[1, None],
+           value=".2s")  # SI notation (e.g., K, M, B) for large values
+    ],
+    autorange=True)
+
+  fig.update_xaxes(autorange=True)
+
+  # Add event annotations and lines to the figure
+  if 'events' in chart_template:
+    for event in chart_template['events']:
+      event_dates = pd.to_datetime(event['dates'])
+      orientation = event.get('orientation', 'v')
+      for date in event_dates:
+        if orientation == 'v':  # vertical line
+          fig.add_shape(type="line",
+                        xref="x",
+                        yref="paper",
+                        x0=date.strftime("%Y-%m-%d"),
+                        y0=0,
+                        x1=date.strftime("%Y-%m-%d"),
+                        y1=1,
+                        line=dict(color="black", width=1, dash="dash"))
+        elif orientation == 'h':  # horizontal line
+          y_value = event.get('y_value', None)
+          if y_value:  # make sure y_value is provided and is not zero
+            fig.add_shape(type="line",
+                          xref="paper",
+                          yref="y",
+                          x0=0,
+                          y0=y_value,
+                          x1=1,
+                          y1=y_value,
+                          line=dict(color="black", width=1, dash="dash"))
+            fig.add_annotation(
+              x=date.strftime("%Y-%m-%d"),
+              y=y_value if orientation == 'h' else 1,
+              text=event['name'],
+              showarrow=False,
+              font=dict(color="black"),
+              xanchor="left",
+              yanchor=
+              "bottom"  # The bottom of the text aligns with the 'y' position
+            )
+
+  # Add watermark annotation to the figure
+  fig.add_annotation(
+    xref="paper",
+    yref="paper",
+    x=0.5,
+    y=0.5,
+    text="SecretSatoshis.com",
+    showarrow=False,
+    font=dict(size=50, color="rgba(128, 128, 128, 0.5)"),
+    align="center",
+  )
+  # Add logo image as an annotation
+  fig.add_layout_image(
+    dict(
+      source=
+      "https://secretsatoshis.github.io/Bitcoin-Fundamentals-Dashboards/Secret_Satoshis_Logo.png",  # Ensure this path is correct
+      x=0.0,
+      y=1.2,
+      sizex=0.1,
+      sizey=0.1,  # Adjust size of the logo as needed
+      xanchor="left",
+      yanchor="top"))
+  # Add data source annotation to the figure
+  fig.add_annotation(
+      text=chart_template['data_source'],  # Correct way to add the data source text
+      xref="paper",
+      yref="paper",
+      x=1,
+      y=-0.2,  # Position at the bottom right
+      xanchor="right",
+      yanchor="bottom",
+      showarrow=False,
+      font=dict(family="Arial", size=12, color="#666"),
+      align="right",
+  )
+
+  # Save the chart as an HTML file
+  filepath = 'Charts/' + filename + '.html'
+  pio.write_html(fig, file=filepath, auto_open=False)
 
 # Supply Chart
 chart_supply = {
@@ -464,9 +618,9 @@ chart_transferred_value = {
   'x_data':
   'time',
   'y1_type':
-  'log',
-  'y2_type':
   'linear',
+  'y2_type':
+  'log',
   'y_data': [
     {
       'name': 'Bitcoin Price',
@@ -795,7 +949,7 @@ chart_transaction_fee_USD = {
     },
   ],
   'title':
-  "Bitcoin Fees In Usd",
+  "Bitcoin Fees In USD",
   'x_label':
   "Date",
   'y1_label':
@@ -883,15 +1037,15 @@ chart_address_balance = {
       'yaxis': 'y2'
     },
     {
-      'name': 'Address Balance USD 10M',
-      'data': 'AdrBalUSD10MCnt',
-      'yaxis': 'y2'
-    },
-    {
       'name': 'Address Balance USD 1M',
       'data': 'AdrBalUSD1MCnt',
       'yaxis': 'y2'
     },
+    {
+      'name': 'Address Balance USD 10M',
+      'data': 'AdrBalUSD10MCnt',
+      'yaxis': 'y2'
+    }
   ],
   'title':
   "Address Balances",
@@ -903,365 +1057,6 @@ chart_address_balance = {
   "Address Balance Count",
   'filename':
   "Bitcoin_Address_Balance",
-  'chart_type':
-  'line',
-  'data_source':
-  "Data Source: CoinMetrics",
-  'events': [{
-    'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Launch',
-    'dates': ['2010-07-01'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Hack',
-    'dates': ['2011-06-11'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Bankrupt',
-    'dates': ['2014-02-01'],
-    'orientation': 'v'
-  }, {
-    'name': 'BitLicense',
-    'dates': ['2015-08-08'],
-    'orientation': 'v'
-  }, {
-    'name': 'CME Futures',
-    'dates': ['2017-12-17'],
-    'orientation': 'v'
-  }, {
-    'name': 'Bitcoin Winter',
-    'dates': ['2018-12-15'],
-    'orientation': 'v'
-  }, {
-    'name': 'Coinbase IPO',
-    'dates': ['2021-04-14'],
-    'orientation': 'v'
-  }, {
-    'name': 'FTX Bankrupt',
-    'dates': ['2022-11-11'],
-    'orientation': 'v'
-  }]
-}
-
-# Supply Balance Count USD Chart
-chart_supply_age = {
-  'x_data':
-  'time',
-  'y_data': [
-    {
-      'name': 'Bitcoin Price',
-      'data': 'PriceUSD',
-      'yaxis': 'y'
-    },
-    {
-      'name': 'Active Supply 1 Day',
-      'data': 'SplyAct1d',
-      'yaxis': 'y2'
-    },
-    {
-      'name': 'Active Supply 30 Days',
-      'data': 'SplyAct30d',
-      'yaxis': 'y2'
-    },
-    {
-      'name': 'Active Supply 90 Days',
-      'data': 'SplyAct90d',
-      'yaxis': 'y2'
-    },
-    {
-      'name': 'Active Supply 180 Days',
-      'data': 'SplyAct180d',
-      'yaxis': 'y2'
-    },
-    {
-      'name': 'Active Supply 1 Year',
-      'data': 'SplyAct1yr',
-      'yaxis': 'y2'
-    },
-    {
-      'name': 'Active Supply 2 Years',
-      'data': 'SplyAct2yr',
-      'yaxis': 'y2'
-    },
-    {
-      'name': 'Active Supply 3 Years',
-      'data': 'SplyAct3yr',
-      'yaxis': 'y2'
-    },
-    {
-      'name': 'Active Supply 4 Years',
-      'data': 'SplyAct4yr',
-      'yaxis': 'y2'
-    },
-    {
-      'name': 'Active Supply 5 Years',
-      'data': 'SplyAct5yr',
-      'yaxis': 'y2'
-    },
-    {
-      'name': 'Active Supply 10 Years',
-      'data': 'SplyAct10yr',
-      'yaxis': 'y2'
-    },
-    {
-      'name': 'Current Supply',
-      'data': 'SplyCur',
-      'yaxis': 'y2'
-    },
-  ],
-  'title':
-  "Supply Age",
-  'x_label':
-  "Date",
-  'y1_label':
-  "Bitcoin Price",
-  'y2_label':
-  "Supply Of Bitcoin",
-  'filename':
-  "Bitcoin_Supply_Age",
-  'chart_type':
-  'line',
-  'data_source':
-  "Data Source: CoinMetrics",
-  'events': [{
-    'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Launch',
-    'dates': ['2010-07-01'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Hack',
-    'dates': ['2011-06-11'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Bankrupt',
-    'dates': ['2014-02-01'],
-    'orientation': 'v'
-  }, {
-    'name': 'BitLicense',
-    'dates': ['2015-08-08'],
-    'orientation': 'v'
-  }, {
-    'name': 'CME Futures',
-    'dates': ['2017-12-17'],
-    'orientation': 'v'
-  }, {
-    'name': 'Bitcoin Winter',
-    'dates': ['2018-12-15'],
-    'orientation': 'v'
-  }, {
-    'name': 'Coinbase IPO',
-    'dates': ['2021-04-14'],
-    'orientation': 'v'
-  }, {
-    'name': 'FTX Bankrupt',
-    'dates': ['2022-11-11'],
-    'orientation': 'v'
-  }]
-}
-
-# Realized Price Multiple Chart
-chart_realizedcap_multiple = {
-  'x_data':
-  'time',
-  'y1_type':
-  'log',
-  'y2_type':
-  'linear',
-  'y_data': [{
-    'name': 'Bitcoin Price',
-    'data': 'PriceUSD',
-    'yaxis': 'y'
-  }, {
-    'name': 'Realized Price',
-    'data': 'realised_price',
-    'yaxis': 'y'
-  }, {
-    'name': '3x Realized Price',
-    'data': 'realizedcap_multiple_3',
-    'yaxis': 'y'
-  }, {
-    'name': '5x Realized Price',
-    'data': 'realizedcap_multiple_5',
-    'yaxis': 'y'
-  }, {
-    'name': 'Realized Price Multiple ',
-    'data': 'CapMVRVCur',
-    'yaxis': 'y2'
-  }],
-  'title':
-  "Bitcoin Realized Price",
-  'x_label':
-  "Date",
-  'y1_label':
-  "Bitcoin Price",
-  'y2_label':
-  "MVRV Ratio",
-  'filename':
-  "Bitcoin_Realized_Price",
-  'chart_type':
-  'line',
-  'filter_start_date': '2012-01-01',   
-  'filter_metric': 'CapMVRVCur',
-  'data_source':
-  "Data Source: CoinMetrics",
-  'events': [{
-    'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Launch',
-    'dates': ['2010-07-01'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Hack',
-    'dates': ['2011-06-11'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Bankrupt',
-    'dates': ['2014-02-01'],
-    'orientation': 'v'
-  }, {
-    'name': 'BitLicense',
-    'dates': ['2015-08-08'],
-    'orientation': 'v'
-  }, {
-    'name': 'CME Futures',
-    'dates': ['2017-12-17'],
-    'orientation': 'v'
-  }, {
-    'name': 'Bitcoin Winter',
-    'dates': ['2018-12-15'],
-    'orientation': 'v'
-  }, {
-    'name': 'Coinbase IPO',
-    'dates': ['2021-04-14'],
-    'orientation': 'v'
-  }, {
-    'name': 'FTX Bankrupt',
-    'dates': ['2022-11-11'],
-    'orientation': 'v'
-  }]
-}
-
-# Thermocap Price Multiple Chart
-chart_thermocap_multiple = {
-  'x_data':
-  'time',
-  'y2_type':
-  'linear',
-  'y_data': [{
-    'name': 'Bitcoin Price',
-    'data': 'PriceUSD',
-    'yaxis': 'y'
-  }, {
-    'name': '4x Thermocap Multiple',
-    'data': 'thermocap_multiple_4',
-    'yaxis': 'y'
-  }, {
-    'name': '8x Thermocap Multiple',
-    'data': 'thermocap_multiple_8',
-    'yaxis': 'y'
-  }, {
-    'name': '16x Thermocap Multiple',
-    'data': 'thermocap_multiple_16',
-    'yaxis': 'y'
-  }, {
-    'name': '32x Thermocap Multiple',
-    'data': 'thermocap_multiple_32',
-    'yaxis': 'y'
-  }, {
-    'name': 'Thermocap Multiple',
-    'data': 'thermocap_multiple',
-    'yaxis': 'y2'
-  }],
-  'title':
-  "Bitcoin Thermocap Multiple",
-  'x_label':
-  "Date",
-  'y1_label':
-  "Bitcoin Price",
-  'y2_label':
-  "Thermocap Multiple",
-  'filename':
-  "Bitcoin_Thermocap_Multiples",
-  'chart_type':
-  'line',
-  'filter_start_date': '2012-01-01',   
-  'filter_metric': 'thermocap_multiple',
-  'data_source':
-  "Data Source: CoinMetrics",
-  'events': [{
-    'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Launch',
-    'dates': ['2010-07-01'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Hack',
-    'dates': ['2011-06-11'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Bankrupt',
-    'dates': ['2014-02-01'],
-    'orientation': 'v'
-  }, {
-    'name': 'BitLicense',
-    'dates': ['2015-08-08'],
-    'orientation': 'v'
-  }, {
-    'name': 'CME Futures',
-    'dates': ['2017-12-17'],
-    'orientation': 'v'
-  }, {
-    'name': 'Bitcoin Winter',
-    'dates': ['2018-12-15'],
-    'orientation': 'v'
-  }, {
-    'name': 'Coinbase IPO',
-    'dates': ['2021-04-14'],
-    'orientation': 'v'
-  }, {
-    'name': 'FTX Bankrupt',
-    'dates': ['2022-11-11'],
-    'orientation': 'v'
-  }]
-}
-
-# NVT Price  Chart
-chart_nvt_price = {
-  'x_data':
-  'time',
-  'y_data': [{
-    'name': 'Bitcoin Price',
-    'data': 'PriceUSD',
-    'yaxis': 'y'
-  }, {
-    'name': 'NVT Price 30 Day MA',
-    'data': '30_day_ma_nvt_price',
-    'yaxis': 'y'
-  }, {
-    'name': 'NVT Price 365 Day MA',
-    'data': '365_day_ma_nvt_price',
-    'yaxis': 'y'
-  }],
-  'title':
-  "Bitcoin NVT Price",
-  'x_label':
-  "Date",
-  'y1_label':
-  "Bitcoin Price",
-  'y2_label':
-  "NVT Ratio",
-  'filename':
-  "Bitcoin_NVT_Price",
   'chart_type':
   'line',
   'data_source':
@@ -1423,6 +1218,408 @@ macro_supply = {
   "Bitcoin_Macro_Supply",
   'chart_type':
   'line',
+  'data_source':
+  "Data Source: CoinMetrics",
+  'events': [{
+    'name': 'Halving',
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Launch',
+    'dates': ['2010-07-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Hack',
+    'dates': ['2011-06-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Bankrupt',
+    'dates': ['2014-02-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'BitLicense',
+    'dates': ['2015-08-08'],
+    'orientation': 'v'
+  }, {
+    'name': 'CME Futures',
+    'dates': ['2017-12-17'],
+    'orientation': 'v'
+  }, {
+    'name': 'Bitcoin Winter',
+    'dates': ['2018-12-15'],
+    'orientation': 'v'
+  }, {
+    'name': 'Coinbase IPO',
+    'dates': ['2021-04-14'],
+    'orientation': 'v'
+  }, {
+    'name': 'FTX Bankrupt',
+    'dates': ['2022-11-11'],
+    'orientation': 'v'
+  }]
+}
+
+# Thermocap Price Multiple Chart
+chart_thermocap_multiple = {
+  'x_data':
+  'time',
+  'y2_type':
+  'linear',
+  'y_data': [{
+    'name': 'Bitcoin Price',
+    'data': 'PriceUSD',
+    'yaxis': 'y'
+  }, {
+     'name': 'Thermocap Price',
+     'data': 'thermocap_price',
+     'yaxis': 'y'
+  },{
+    'name': '4x Thermocap Price Multiple',
+    'data': 'thermocap_price_multiple_4',
+    'yaxis': 'y'
+  }, {
+    'name': '8x Thermocap Price Multiple',
+    'data': 'thermocap_price_multiple_8',
+    'yaxis': 'y'
+  }, {
+    'name': '16x Thermocap Price Multiple',
+    'data': 'thermocap_price_multiple_16',
+    'yaxis': 'y'
+  }, {
+    'name': '32x Thermocap Price Multiple',
+    'data': 'thermocap_price_multiple_32',
+    'yaxis': 'y'
+  }, {
+    'name': 'Thermocap Multiple',
+    'data': 'thermocap_multiple',
+    'yaxis': 'y2'
+  }],
+  'title':
+  "Bitcoin Thermocap Multiple",
+  'x_label':
+  "Date",
+  'y1_label':
+  "Bitcoin Price",
+  'y2_label':
+  "Thermocap Multiple",
+  'filename':
+  "Bitcoin_Thermocap_Multiples",
+  'chart_type':
+  'line',
+  'filter_start_date': '2012-01-01',   
+  'filter_metric': 'thermocap_multiple',
+  'data_source':
+  "Data Source: CoinMetrics",
+  'events': [{
+    'name': 'Halving',
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Launch',
+    'dates': ['2010-07-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Hack',
+    'dates': ['2011-06-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Bankrupt',
+    'dates': ['2014-02-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'BitLicense',
+    'dates': ['2015-08-08'],
+    'orientation': 'v'
+  }, {
+    'name': 'CME Futures',
+    'dates': ['2017-12-17'],
+    'orientation': 'v'
+  }, {
+    'name': 'Bitcoin Winter',
+    'dates': ['2018-12-15'],
+    'orientation': 'v'
+  }, {
+    'name': 'Coinbase IPO',
+    'dates': ['2021-04-14'],
+    'orientation': 'v'
+  }, {
+    'name': 'FTX Bankrupt',
+    'dates': ['2022-11-11'],
+    'orientation': 'v'
+  }]
+}
+
+# Realized Price Multiple Chart
+chart_realizedcap_multiple = {
+  'x_data':
+  'time',
+  'y1_type':
+  'log',
+  'y2_type':
+  'linear',
+  'y_data': [{
+    'name': 'Bitcoin Price',
+    'data': 'PriceUSD',
+    'yaxis': 'y'
+  }, {
+    'name': 'Realized Price',
+    'data': 'realised_price',
+    'yaxis': 'y'
+  }, {
+    'name': '3x Realized Price',
+    'data': 'realizedcap_multiple_3',
+    'yaxis': 'y'
+  }, {
+    'name': '5x Realized Price',
+    'data': 'realizedcap_multiple_5',
+    'yaxis': 'y'
+  }, {
+    'name': 'Realized Price Multiple ',
+    'data': 'CapMVRVCur',
+    'yaxis': 'y2'
+  }],
+  'title':
+  "Bitcoin Realized Price",
+  'x_label':
+  "Date",
+  'y1_label':
+  "Bitcoin Price",
+  'y2_label':
+  "MVRV Ratio",
+  'filename':
+  "Bitcoin_Realized_Price",
+  'chart_type':
+  'line',
+  'filter_start_date': '2012-01-01',   
+  'filter_metric': 'CapMVRVCur',
+  'data_source':
+  "Data Source: CoinMetrics",
+  'events': [{
+    'name': 'Halving',
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Launch',
+    'dates': ['2010-07-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Hack',
+    'dates': ['2011-06-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Bankrupt',
+    'dates': ['2014-02-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'BitLicense',
+    'dates': ['2015-08-08'],
+    'orientation': 'v'
+  }, {
+    'name': 'CME Futures',
+    'dates': ['2017-12-17'],
+    'orientation': 'v'
+  }, {
+    'name': 'Bitcoin Winter',
+    'dates': ['2018-12-15'],
+    'orientation': 'v'
+  }, {
+    'name': 'Coinbase IPO',
+    'dates': ['2021-04-14'],
+    'orientation': 'v'
+  }, {
+    'name': 'FTX Bankrupt',
+    'dates': ['2022-11-11'],
+    'orientation': 'v'
+  }]
+}
+
+# NVT Price  Chart
+chart_nvt_price = {
+  'x_data':
+  'time',
+  'y_data': [{
+    'name': 'Bitcoin Price',
+    'data': 'PriceUSD',
+    'yaxis': 'y'
+  }, {
+    'name': 'NVT Price 30 Day MA',
+    'data': '30_day_ma_nvt_price',
+    'yaxis': 'y'
+  }, {
+    'name': 'NVT Price 365 Day MA',
+    'data': '365_day_ma_nvt_price',
+    'yaxis': 'y'
+  }],
+  'title':
+  "Bitcoin NVT Price",
+  'x_label':
+  "Date",
+  'y1_label':
+  "Bitcoin Price",
+  'y2_label':
+  "NVT Ratio",
+  'filename':
+  "Bitcoin_NVT_Price",
+  'chart_type':
+  'line',
+  'data_source':
+  "Data Source: CoinMetrics",
+  'events': [{
+    'name': 'Halving',
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Launch',
+    'dates': ['2010-07-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Hack',
+    'dates': ['2011-06-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Bankrupt',
+    'dates': ['2014-02-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'BitLicense',
+    'dates': ['2015-08-08'],
+    'orientation': 'v'
+  }, {
+    'name': 'CME Futures',
+    'dates': ['2017-12-17'],
+    'orientation': 'v'
+  }, {
+    'name': 'Bitcoin Winter',
+    'dates': ['2018-12-15'],
+    'orientation': 'v'
+  }, {
+    'name': 'Coinbase IPO',
+    'dates': ['2021-04-14'],
+    'orientation': 'v'
+  }, {
+    'name': 'FTX Bankrupt',
+    'dates': ['2022-11-11'],
+    'orientation': 'v'
+  }]
+}
+
+# Electricity Price Chart
+electricity_price = {
+  'x_data':
+  'time',
+  'y2_type':
+  'linear',
+  'y_data': [{
+    'name': 'Bitcoin Price',
+    'data': 'PriceUSD',
+    'yaxis': 'y'
+  }, {
+    'name': 'Energy Value',
+    'data': 'Lagged_Energy_Value',
+    'yaxis': 'y'
+  }, {
+     'name': 'Bitcoin Production Cost',
+     'data': 'Bitcoin_Production_Cost',
+      'yaxis': 'y'
+  },{
+     'name': 'Electricity Cost',
+     'data': 'Electricity_Cost',
+     'yaxis': 'y'
+  },  {
+      'name': 'CM Energy Value',
+      'data': 'CM_Energy_Value',
+      'yaxis': 'y'
+  },{
+      'name': 'Energy Value Multiple',
+      'data': 'Energy_Value_Multiple',
+      'yaxis': 'y2'
+  }],
+  'title':
+  "Bitcoin Electricty Price",
+  'x_label':
+  "Date",
+  'y1_label':
+  "Bitcoin Price",
+  'y2_label':"",
+  'filename':
+  "Bitcoin_Electric_Price",
+  'chart_type':
+  'line',
+  #'filter_start_date': '2014-01-01',   
+  #'filter_metric': 'Energy_Value_Multiple',
+  'data_source':
+  "Data Source: CoinMetrics",
+  'events': [{
+    'name': 'Halving',
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Launch',
+    'dates': ['2010-07-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Hack',
+    'dates': ['2011-06-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Bankrupt',
+    'dates': ['2014-02-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'BitLicense',
+    'dates': ['2015-08-08'],
+    'orientation': 'v'
+  }, {
+    'name': 'CME Futures',
+    'dates': ['2017-12-17'],
+    'orientation': 'v'
+  }, {
+    'name': 'Bitcoin Winter',
+    'dates': ['2018-12-15'],
+    'orientation': 'v'
+  }, {
+    'name': 'Coinbase IPO',
+    'dates': ['2021-04-14'],
+    'orientation': 'v'
+  }, {
+    'name': 'FTX Bankrupt',
+    'dates': ['2022-11-11'],
+    'orientation': 'v'
+  }]
+}
+
+# Stock To Flow Chart
+s2f_price = {
+  'x_data':
+  'time',
+  'y2_type':
+  'linear',
+  'y_data': [{
+    'name': 'Bitcoin Price',
+    'data': 'PriceUSD',
+    'yaxis': 'y'
+  }, {
+    'name': 'Stock-To-Flow Price',
+    'data': 'SF_Predicted_Price',
+    'yaxis': 'y'
+  }, {
+    'name': 'Stock-To-Flow Multiple',
+    'data': 'SF_Multiple',
+    'yaxis': 'y2'
+  }],
+  'title':
+  "Bitcoin Stock To Flow Price",
+  'x_label':
+  "Date",
+  'y1_label':
+  "Bitcoin Price",
+  'y2_label':"Stock To Flow Multiple",
+  'filename':
+  "Bitcoin_S2F_Price",
+  'chart_type':
+  'line',
+  #'filter_start_date': '2012-01-01',   
+  #'filter_metric': 'thermocap_multiple',
   'data_source':
   "Data Source: CoinMetrics",
   'events': [{
@@ -1655,7 +1852,7 @@ chart_drawdowns = {
   "Data Source: CoinMetrics",
 }
 
-# ATH Drawdown Chart
+# Cycle Low Chart
 chart_cycle_lows = {
   'x_data':
   'days_since_cycle_low',
@@ -1733,6 +1930,141 @@ chart_halvings = {
   "",
   'filename':
   "Bitcoin_Halving_Cycle",
+  'chart_type':
+  'line',
+  'data_source':
+  "Data Source: CoinMetrics",
+}
+
+# Bitcoin YTD Retrun Comparison
+ytd_return = {
+  'x_data':
+  'time',
+  'y_data': [{
+    'name': 'Bitcoin',
+    'data': 'PriceUSD_YTD_change',
+    'yaxis': 'y'
+  }, {
+    'name': 'Nasdaq',
+    'data': '^IXIC_close_YTD_change',
+    'yaxis': 'y'
+  }, {
+    'name': 'S&P500',
+    'data': '^GSPC_close_YTD_change',
+    'yaxis': 'y'
+  }, {
+    'name': 'XLF Financials ETF',
+    'data': 'XLF_close_YTD_change',
+    'yaxis': 'y'
+  }, {
+    'name': 'XLE Energy ETF',
+    'data': 'XLE_close_YTD_change',
+    'yaxis': 'y'
+  }, {
+    'name': 'FANG+ ETF',
+    'data': 'FANG.AX_close_YTD_change',
+    'yaxis': 'y'
+  }, {
+    'name': 'BITQ Crypto Industry ETF',
+    'data': 'BITQ_close_YTD_change',
+    'yaxis': 'y'
+  }, {
+    'name': 'Gold Futures',
+    'data': 'GC=F_close_YTD_change',
+    'yaxis': 'y'
+  }, {
+    'name': 'US Dollar Futures',
+    'data': 'DX=F_close_YTD_change',
+    'yaxis': 'y'
+  }, {
+    'name': 'TLT Treasury Bond ETF',
+    'data': 'TLT_close_YTD_change',
+    'yaxis': 'y'
+  }],
+  'title':
+  "Year To Date Return",
+  'x_label':
+  "Date",
+  'y1_label':
+  "Year To Date Return (Percentage)",
+  'y2_label':
+  "",
+  'filename':
+  "Bitcoin_YTD_Return_Comparison",
+  'chart_type':
+  'line',
+  'data_source':
+  "Data Source: CoinMetrics",
+}
+
+# Bitcoin CAGR Comparison
+cagr_comparison = {
+  'x_data':
+  'time',
+  'y_data': [
+    {
+      'name': 'Bitcoin',
+      'data': 'PriceUSD_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'Nasdaq',
+      'data': '^IXIC_close_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'S&P500',
+      'data': '^GSPC_close_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'XLF Financials ETF',
+      'data': 'XLF_close_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'XLE Energy ETF',
+      'data': 'XLE_close_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'FANG+ ETF',
+      'data':
+      'FANG.AX_close_2_Year_CAGR',  # Using 2-Year CAGR as provided in the template
+      'yaxis': 'y'
+    },
+    {
+      'name': 'BITQ Crypto Industry ETF',
+      'data':
+      'BITQ_close_2_Year_CAGR',  # Using 2-Year CAGR as provided in the template
+      'yaxis': 'y'
+    },
+    {
+      'name': 'Gold Futures',
+      'data': 'GC=F_close_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'US Dollar Futures',
+      'data': 'DX=F_close_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'TLT Treasury Bond ETF',
+      'data': 'TLT_close_4_Year_CAGR',
+      'yaxis': 'y'
+    }
+  ],
+  'title':
+  "4 Year Compound Annual Growth Rate Comparison",
+  'x_label':
+  "Date",
+  'y1_label':
+  "4 Year CAGR (Percentage)",
+  'y2_label':
+  "",
+  'filename':
+  "Bitcoin_CAGR_Comparison",
   'chart_type':
   'line',
   'data_source':
@@ -1965,7 +2297,7 @@ chart_gold = {
     'yaxis': 'y'
   }, {
     'name': 'Gold Country Holdings',
-    'data': 'gold_country_holdings_marketcap_btc_price',
+    'data': 'gold_official_country_holdings_marketcap_btc_price',
     'yaxis': 'y'
   }, {
     'name': 'Gold Other / Industrial',
@@ -2039,7 +2371,7 @@ chart_promo = {
     'yaxis': 'y'
   }, {
     'name': 'Thermocap Multiple 32x',
-    'data': 'thermocap_multiple_32',
+    'data': 'thermocap_price_multiple_32',
     'yaxis': 'y'
   }, {
     'name': '200 Week MA',
@@ -2203,11 +2535,11 @@ chart_on_chain = {
     'yaxis': 'y'
   }, {
     'name': '8x Thermocap Multiple',
-    'data': 'thermocap_multiple_8',
+    'data': 'thermocap_price_multiple_8',
     'yaxis': 'y'
   }, {
     'name': '16x Thermocap Multiple',
-    'data': 'thermocap_multiple_16',
+    'data': 'thermocap_price_multiple_16',
     'yaxis': 'y'
   }, {
     'name': 'Realized Price',
@@ -2272,128 +2604,6 @@ chart_on_chain = {
 }
 
 # Bitcoin YTD Retrun Comparison
-ytd_return = {
-  'x_data':
-  'time',
-  'y_data': [{
-    'name': 'Bitcoin',
-    'data': 'PriceUSD_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'Nasdaq',
-    'data': '^IXIC_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'S&P500',
-    'data': '^GSPC_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'XLF Financials ETF',
-    'data': 'XLF_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'XLE Energy ETF',
-    'data': 'XLE_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'FANG+ ETF',
-    'data': 'FANG.AX_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'BITQ Crypto Industry ETF',
-    'data': 'BITQ_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'Gold Futures',
-    'data': 'GC=F_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'US Dollar Futures',
-    'data': 'DX=F_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'TLT Treasury Bond ETF',
-    'data': 'TLT_close_YTD_change',
-    'yaxis': 'y'
-  }],
-  'title':
-  "Year To Date Return",
-  'x_label':
-  "Date",
-  'y1_label':
-  "Year To Date Return (Percentage)",
-  'y2_label':
-  "",
-  'filename':
-  "Bitcoin_YTD_Return_Comparison",
-  'chart_type':
-  'line',
-  'data_source':
-  "Data Source: CoinMetrics",
-}
-
-# Bitcoin YTD Retrun Comparison
-ytd_return_weekly = {
-  'x_data':
-  'time',
-  'y_data': [{
-    'name': 'Bitcoin',
-    'data': 'PriceUSD_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'Nasdaq',
-    'data': '^IXIC_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'S&P500',
-    'data': '^GSPC_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'XLF Financials ETF',
-    'data': 'XLF_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'XLE Energy ETF',
-    'data': 'XLE_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'FANG+ ETF',
-    'data': 'FANG.AX_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'BITQ Crypto Industry ETF',
-    'data': 'BITQ_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'Gold Futures',
-    'data': 'GC=F_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'US Dollar Futures',
-    'data': 'DX=F_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'TLT Treasury Bond ETF',
-    'data': 'TLT_close_YTD_change',
-    'yaxis': 'y'
-  }],
-  'title':
-  "Year To Date Return",
-  'x_label':
-  "Date",
-  'y1_label':
-  "Year To Date Return (Percentage)",
-  'y2_label':
-  "",
-  'filename':
-  "Bitcoin_YTD_Return_Comparison",
-  'chart_type':
-  'line',
-  'data_source':
-  "Data Source: CoinMetrics",
-}
-
-# Bitcoin YTD Retrun Comparison
 mtd_return = {
   'x_data':
   'time',
@@ -2448,80 +2658,6 @@ mtd_return = {
   "",
   'filename':
   "Bitcoin_MTD_Return_Comparison",
-  'chart_type':
-  'line',
-  'data_source':
-  "Data Source: CoinMetrics",
-}
-
-# Bitcoin CAGR Comparison
-cagr_comparison = {
-  'x_data':
-  'time',
-  'y_data': [
-    {
-      'name': 'Bitcoin',
-      'data': 'PriceUSD_4_Year_CAGR',
-      'yaxis': 'y'
-    },
-    {
-      'name': 'Nasdaq',
-      'data': '^IXIC_close_4_Year_CAGR',
-      'yaxis': 'y'
-    },
-    {
-      'name': 'S&P500',
-      'data': '^GSPC_close_4_Year_CAGR',
-      'yaxis': 'y'
-    },
-    {
-      'name': 'XLF Financials ETF',
-      'data': 'XLF_close_4_Year_CAGR',
-      'yaxis': 'y'
-    },
-    {
-      'name': 'XLE Energy ETF',
-      'data': 'XLE_close_4_Year_CAGR',
-      'yaxis': 'y'
-    },
-    {
-      'name': 'FANG+ ETF',
-      'data':
-      'FANG.AX_close_2_Year_CAGR',  # Using 2-Year CAGR as provided in the template
-      'yaxis': 'y'
-    },
-    {
-      'name': 'BITQ Crypto Industry ETF',
-      'data':
-      'BITQ_close_2_Year_CAGR',  # Using 2-Year CAGR as provided in the template
-      'yaxis': 'y'
-    },
-    {
-      'name': 'Gold Futures',
-      'data': 'GC=F_close_4_Year_CAGR',
-      'yaxis': 'y'
-    },
-    {
-      'name': 'US Dollar Futures',
-      'data': 'DX=F_close_4_Year_CAGR',
-      'yaxis': 'y'
-    },
-    {
-      'name': 'TLT Treasury Bond ETF',
-      'data': 'TLT_close_4_Year_CAGR',
-      'yaxis': 'y'
-    }
-  ],
-  'title':
-  "4 Year Compound Annual Growth Rate Comparison",
-  'x_label':
-  "Date",
-  'y1_label':
-  "4 Year CAGR (Percentage)",
-  'y2_label':
-  "",
-  'filename':
-  "Bitcoin_CAGR_Comparison",
   'chart_type':
   'line',
   'data_source':
@@ -2897,22 +3033,142 @@ chart_address_balance_supply_comp = {
   }]
 }
 
+# Supply Balance Count USD Chart
+chart_supply_age = {
+  'x_data':
+  'time',
+  'y_data': [
+    {
+      'name': 'Bitcoin Price',
+      'data': 'PriceUSD',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'Active Supply 1 Day',
+      'data': 'SplyAct1d',
+      'yaxis': 'y2'
+    },
+    {
+      'name': 'Active Supply 30 Days',
+      'data': 'SplyAct30d',
+      'yaxis': 'y2'
+    },
+    {
+      'name': 'Active Supply 90 Days',
+      'data': 'SplyAct90d',
+      'yaxis': 'y2'
+    },
+    {
+      'name': 'Active Supply 180 Days',
+      'data': 'SplyAct180d',
+      'yaxis': 'y2'
+    },
+    {
+      'name': 'Active Supply 1 Year',
+      'data': 'SplyAct1yr',
+      'yaxis': 'y2'
+    },
+    {
+      'name': 'Active Supply 2 Years',
+      'data': 'SplyAct2yr',
+      'yaxis': 'y2'
+    },
+    {
+      'name': 'Active Supply 3 Years',
+      'data': 'SplyAct3yr',
+      'yaxis': 'y2'
+    },
+    {
+      'name': 'Active Supply 4 Years',
+      'data': 'SplyAct4yr',
+      'yaxis': 'y2'
+    },
+    {
+      'name': 'Active Supply 5 Years',
+      'data': 'SplyAct5yr',
+      'yaxis': 'y2'
+    },
+    {
+      'name': 'Active Supply 10 Years',
+      'data': 'SplyAct10yr',
+      'yaxis': 'y2'
+    },
+    {
+      'name': 'Current Supply',
+      'data': 'SplyCur',
+      'yaxis': 'y2'
+    },
+  ],
+  'title':
+  "Supply Age",
+  'x_label':
+  "Date",
+  'y1_label':
+  "Bitcoin Price",
+  'y2_label':
+  "Supply Of Bitcoin",
+  'filename':
+  "Bitcoin_Supply_Age",
+  'chart_type':
+  'line',
+  'data_source':
+  "Data Source: CoinMetrics",
+  'events': [{
+    'name': 'Halving',
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Launch',
+    'dates': ['2010-07-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Hack',
+    'dates': ['2011-06-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Bankrupt',
+    'dates': ['2014-02-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'BitLicense',
+    'dates': ['2015-08-08'],
+    'orientation': 'v'
+  }, {
+    'name': 'CME Futures',
+    'dates': ['2017-12-17'],
+    'orientation': 'v'
+  }, {
+    'name': 'Bitcoin Winter',
+    'dates': ['2018-12-15'],
+    'orientation': 'v'
+  }, {
+    'name': 'Coinbase IPO',
+    'dates': ['2021-04-14'],
+    'orientation': 'v'
+  }, {
+    'name': 'FTX Bankrupt',
+    'dates': ['2022-11-11'],
+    'orientation': 'v'
+  }]
+}
+
 # List Of All Chart Templates
 chart_templates = [
   chart_supply, chart_transactions, chart_hashrate, chart_price,
   chart_transferred_value, chart_miner_revenue, chart_active_addresses,
   chart_transaction_size, chart_transaction_fee_USD, chart_address_balance,
-  chart_supply_age, chart_thermocap_multiple, chart_realizedcap_multiple,
-  chart_nvt_price, chart_1_year_supply, macro_supply, chart_NUPL,
-  chart_price_ma, chart_m0, chart_equities, chart_gold, chart_promo, chart_rv,
-  chart_on_chain, ytd_return, cagr_comparison, chart_sats_per_dollar,
+  macro_supply, chart_1_year_supply, chart_supply_age, 
+  chart_thermocap_multiple, chart_realizedcap_multiple, chart_nvt_price, 
+  chart_NUPL, electricity_price, s2f_price,
+  chart_price_ma, ytd_return, cagr_comparison,
+  chart_m0, chart_equities, chart_gold, chart_promo,
+  chart_rv, chart_on_chain, chart_sats_per_dollar,
   chart_hashrate_price, chart_transactions_volume, chart_address_balance_comp,
   chart_address_balance_supply_comp, mtd_return
 ]
 
 # Map the chart types to their respective functions
 chart_creators = {'line': create_line_chart}
-
 
 # Create Charts Function
 def create_charts(selected_metrics, chart_templates):
@@ -2925,162 +3181,3 @@ def create_charts(selected_metrics, chart_templates):
     fig = chart_creator(chart_template, selected_metrics)
     figures.append(fig)
   return figures
-
-
-# Create Days Since Chart Function
-def create_days_since_chart(drawdown_data,
-                            chart_template,
-                            filename='chart.html'):
-  colors = [
-    '#7149C6', '#0079FF', '#FF0060', '#22A699', '#8c564b', '#e377c2',
-    '#7f7f7f', '#bcbd22', '#17becf'
-  ]
-
-  fig = go.Figure()
-
-  # Adding traces
-  for i, y_data in enumerate(chart_template['y_data']):
-    line_color = colors[
-      i % len(colors)] if y_data['data'] != 'PriceUSD' else '#FF9900'
-    fig.add_trace(
-      go.Scatter(x=drawdown_data[chart_template['x_data']],
-                 y=drawdown_data[y_data['data']],
-                 mode='lines',
-                 name=y_data['name'],
-                 line=dict(color=line_color),
-                 yaxis=y_data['yaxis']))
-
-  # Update layout
-  fig.update_layout(
-    title=dict(text=chart_template['title'], x=0.5, xanchor='center', y=1),
-    xaxis_title=chart_template['x_label'],
-    yaxis_title=chart_template['y1_label'],
-    yaxis2=dict(title=chart_template['y2_label'],
-                overlaying='y',
-                side='right',
-                showgrid=False),
-    plot_bgcolor='rgba(255, 255, 255, 1)',
-    yaxis=dict(showgrid=False, type='linear'),
-    hovermode='x unified',
-    autosize=True,
-    legend=dict(orientation='h',
-                yanchor='bottom',
-                y=-0.15,
-                xanchor='center',
-                x=0.5),
-    template='plotly_white',
-    updatemenus=[
-      go.layout.Updatemenu(buttons=list([
-        dict(label="Y1-axis: Linear",
-             method="relayout",
-             args=["yaxis.type", "linear"]),
-        dict(label="Y1-axis: Log",
-             method="relayout",
-             args=["yaxis.type", "log"])
-      ]),
-                           showactive=False,
-                           type="buttons",
-                           direction="right",
-                           x=-0.1,
-                           xanchor="left",
-                           y=-0.15,
-                           yanchor="top")
-    ],
-    width=1400,
-    height=700,
-    margin=dict(
-      l=0,  # left margin
-      r=0,  # right margin
-      b=0,  # bottom margin
-      t=100,  # top margin
-      pad=2  # padding
-    ),
-    font=dict(family="PT Sans Narrow", size=14, color="black"))
-
-  fig.update_yaxes(
-    tickformatstops=[
-      dict(dtickrange=[0, 1],
-           value=".2f"),  # Decimal notation for moderate values
-      dict(dtickrange=[1, None],
-           value=".2s")  # SI notation (e.g., K, M, B) for large values
-    ],
-    autorange=True)
-
-  fig.update_xaxes(autorange=True)
-
-  # Add event annotations and lines to the figure
-  if 'events' in chart_template:
-    for event in chart_template['events']:
-      event_dates = pd.to_datetime(event['dates'])
-      orientation = event.get('orientation', 'v')
-      for date in event_dates:
-        if orientation == 'v':  # vertical line
-          fig.add_shape(type="line",
-                        xref="x",
-                        yref="paper",
-                        x0=date.strftime("%Y-%m-%d"),
-                        y0=0,
-                        x1=date.strftime("%Y-%m-%d"),
-                        y1=1,
-                        line=dict(color="black", width=1, dash="dash"))
-        elif orientation == 'h':  # horizontal line
-          y_value = event.get('y_value', None)
-          if y_value:  # make sure y_value is provided and is not zero
-            fig.add_shape(type="line",
-                          xref="paper",
-                          yref="y",
-                          x0=0,
-                          y0=y_value,
-                          x1=1,
-                          y1=y_value,
-                          line=dict(color="black", width=1, dash="dash"))
-            fig.add_annotation(
-              x=date.strftime("%Y-%m-%d"),
-              y=y_value if orientation == 'h' else 1,
-              text=event['name'],
-              showarrow=False,
-              font=dict(color="black"),
-              xanchor="left",
-              yanchor=
-              "bottom"  # The bottom of the text aligns with the 'y' position
-            )
-
-  # Add watermark annotation to the figure
-  fig.add_annotation(
-    xref="paper",
-    yref="paper",
-    x=0.5,
-    y=0.5,
-    text="SecretSatoshis.com",
-    showarrow=False,
-    font=dict(size=50, color="rgba(128, 128, 128, 0.5)"),
-    align="center",
-  )
-  # Add logo image as an annotation
-  fig.add_layout_image(
-    dict(
-      source=
-      "https://secretsatoshis.github.io/Bitcoin-Fundamentals-Dashboards/Secret_Satoshis_Logo.png",  # Ensure this path is correct
-      x=0.0,
-      y=1.2,
-      sizex=0.1,
-      sizey=0.1,  # Adjust size of the logo as needed
-      xanchor="left",
-      yanchor="top"))
-  # Add data source annotation to the figure
-  fig.add_annotation(
-      text=chart_template['data_source'],  # Correct way to add the data source text
-      xref="paper",
-      yref="paper",
-      x=1,
-      y=-0.2,  # Position at the bottom right
-      xanchor="right",
-      yanchor="bottom",
-      showarrow=False,
-      font=dict(family="Arial", size=12, color="#666"),
-      align="right",
-  )
-
-  # Save the chart as an HTML file
-  filepath = 'Charts/' + filename + '.html'
-  pio.write_html(fig, file=filepath, auto_open=False)
