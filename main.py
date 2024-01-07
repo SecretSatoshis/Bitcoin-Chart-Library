@@ -21,7 +21,7 @@ from data_definitions import (
     tickers, market_data_start_date, moving_avg_metrics, fiat_money_data_top10,
     gold_silver_supply, gold_supply_breakdown, stock_tickers, today, yesterday,
     report_date, filter_data_columns, stats_start_date, valuation_data_metrics,
-    valuation_metrics, volatility_windows, correlation_data)
+    valuation_metrics, volatility_windows, correlation_data,ELECTRICITY_COST)
 
 # Ignore any FutureWarnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -36,6 +36,7 @@ data = data_format.calculate_gold_market_cap_breakdown(data, gold_supply_breakdo
 data = data_format.calculate_btc_price_to_surpass_metal_categories(data, gold_supply_breakdown)
 data = data_format.calculate_btc_price_for_stock_mkt_caps(data, stock_tickers)
 data = data_format.calculate_stock_to_flow_metrics(data)
+data = data_format.electric_price_models(data)
 
 # Forward fill the data for all columns
 data.ffill(inplace=True)
