@@ -1117,7 +1117,7 @@ chart_1_year_supply = {
     },
   ],
   'title':
-  "Bitcoin 1+ Year Actice Supply",
+  "Bitcoin 1+ Year Supply",
   'x_label':
   "Date",
   'y1_label':
@@ -1441,15 +1441,15 @@ chart_nvt_price = {
     'name': 'Bitcoin Price',
     'data': 'PriceUSD',
     'yaxis': 'y'
-  }, {
+  },{
     'name': 'NVT Price 30 Day MA',
     'data': '30_day_ma_nvt_price',
     'yaxis': 'y'
-  }, {
+  },{
     'name': 'NVT Price 365 Day MA',
     'data': '365_day_ma_nvt_price',
     'yaxis': 'y'
-  }],
+  },],
   'title':
   "Bitcoin NVT Price",
   'x_label':
@@ -1508,7 +1508,7 @@ electricity_price = {
   'x_data':
   'time',
   'y2_type':
-  'linear',
+  'log',
   'y_data': [{
     'name': 'Bitcoin Price',
     'data': 'PriceUSD',
@@ -1521,28 +1521,24 @@ electricity_price = {
      'name': 'Bitcoin Production Cost',
      'data': 'Bitcoin_Production_Cost',
       'yaxis': 'y'
-  },{
+  }, {
      'name': 'Electricity Cost',
      'data': 'Electricity_Cost',
      'yaxis': 'y'
-  },  {
-      'name': 'CM Energy Value',
-      'data': 'CM_Energy_Value',
-      'yaxis': 'y'
-  },{
+  }, {
       'name': 'Energy Value Multiple',
       'data': 'Energy_Value_Multiple',
       'yaxis': 'y2'
   }],
   'title':
-  "Bitcoin Electricty Price",
+  "Bitcoin Production Price",
   'x_label':
   "Date",
   'y1_label':
   "Bitcoin Price",
   'y2_label':"",
   'filename':
-  "Bitcoin_Electric_Price",
+  "Bitcoin_Production_Price",
   'chart_type':
   'line',
   #'filter_start_date': '2014-01-01',   
@@ -1593,7 +1589,7 @@ s2f_price = {
   'x_data':
   'time',
   'y2_type':
-  'linear',
+  'log',
   'y_data': [{
     'name': 'Bitcoin Price',
     'data': 'PriceUSD',
@@ -1991,6 +1987,35 @@ ytd_return = {
   "",
   'filename':
   "Bitcoin_YTD_Return_Comparison",
+  'chart_type':
+  'line',
+  'data_source':
+  "Data Source: CoinMetrics",
+}
+
+# Bitcoin YOY Retrun Comparison
+yoy_return = {
+  'x_data':
+  'time',
+  'y_data': [{
+    'name': 'Bitcoin YOY Return',
+    'data': 'PriceUSD_YOY_change',
+    'yaxis': 'y2'
+  }, {
+     'name': 'Bitcoin Price',
+     'data': 'PriceUSD',
+      'yaxis': 'y'
+            },],
+  'title':
+  "Year Over Year Return",
+  'x_label':
+  "Date",
+  'y1_label':
+  "Bitcoin Price (USD)",
+  'y2_label':
+  "Year Over Year Return (Percentage)",
+  'filename':
+  "Bitcoin_YOY_Return_Comparison",
   'chart_type':
   'line',
   'data_source':
@@ -3160,7 +3185,7 @@ chart_templates = [
   macro_supply, chart_1_year_supply, chart_supply_age, 
   chart_thermocap_multiple, chart_realizedcap_multiple, chart_nvt_price, 
   chart_NUPL, electricity_price, s2f_price,
-  chart_price_ma, ytd_return, cagr_comparison,
+  chart_price_ma, yoy_return, ytd_return, cagr_comparison,
   chart_m0, chart_equities, chart_gold, chart_promo,
   chart_rv, chart_on_chain, chart_sats_per_dollar,
   chart_hashrate_price, chart_transactions_volume, chart_address_balance_comp,
