@@ -487,6 +487,15 @@ def calculate_mtd_change(data):
     mtd_change.columns = [f"{col}_MTD_change" for col in mtd_change.columns]
     return mtd_change
 
+def calculate_yoy_change(data):
+  # Calculate the year-over-year change for each date in the index
+  yoy_change = data.pct_change(periods=365)  # Assuming data is daily
+
+  # Rename columns
+  yoy_change.columns = [f"{col}_YOY_change" for col in yoy_change.columns]
+
+  return yoy_change
+
 def calculate_time_changes(data, periods):
     changes = pd.DataFrame(index=data.index)
     numeric_data = data.select_dtypes(include=[np.number])  # only include numeric columns
@@ -531,8 +540,11 @@ def calculate_all_changes(data):
     # Calculate MTD changes
     mtd_change = calculate_mtd_change(data[original_columns])
 
+    # Calculate YoY changes
+    yoy_change = calculate_yoy_change(data[original_columns])
+
     # Concatenate all changes at once to avoid DataFrame fragmentation
-    changes = pd.concat([changes, ytd_change, mtd_change], axis=1)
+    changes = pd.concat([changes, ytd_change, mtd_change,yoy_change], axis=1)
     return changes
 
 def run_data_analysis(data, start_date):
