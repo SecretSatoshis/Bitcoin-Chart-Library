@@ -1962,7 +1962,7 @@ yoy_return = {
   'filter_start_date': '2015-01-01',   
   'filter_metric': 'PriceUSD_YOY_change',
   'filename':
-  "Bitcoin_YOY_Return_Comparison",
+  "Bitcoin_YOY_Return",
   'chart_type':
   'line',
   'data_source':
