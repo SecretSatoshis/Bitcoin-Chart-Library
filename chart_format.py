@@ -227,7 +227,7 @@ def create_days_since_chart(drawdown_data, chart_template, filename='chart.html'
                 side='right',
                 showgrid=False),
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    yaxis=dict(showgrid=False, type='linear'),
+    yaxis=dict(showgrid=False, type='log'),
     hovermode='x unified',
     autosize=True,
     legend=dict(orientation='h',
@@ -327,7 +327,7 @@ def create_days_since_chart(drawdown_data, chart_template, filename='chart.html'
   fig.add_layout_image(
     dict(
       source=
-      "https://secretsatoshis.github.io/Bitcoin-Fundamentals-Dashboards/Secret_Satoshis_Logo.png",  # Ensure this path is correct
+      "https://secretsatoshis.github.io/Bitcoin-Chart-Library/Secret_Satoshis_Logo.png",  # Ensure this path is correct
       x=0.0,
       y=1.2,
       sizex=0.1,
@@ -1449,7 +1449,11 @@ chart_nvt_price = {
     'name': 'NVT Price 365 Day MA',
     'data': '365_day_ma_nvt_price',
     'yaxis': 'y'
-  },],
+  },{
+    'name': 'NVT Ratio 2 Year Median',
+    'data': 'nvt_price_multiple_ma',
+    'yaxis': 'y2'
+            }],
   'title':
   "Bitcoin NVT Price",
   'x_label':
@@ -1753,6 +1757,8 @@ chart_price_ma = {
   }],
   'title':
   "Bitcoin Price Moving Averages",
+  'filter_start_date': '2012-01-01',   
+  'filter_metric': 'PriceUSD',
   'x_label':
   "Date",
   'y1_label':
@@ -1763,8 +1769,6 @@ chart_price_ma = {
   "Bitcoin_Price_Chart_MA",
   'chart_type':
   'line',
-  'filter_start_date': '2012-01-01',   
-  'filter_metric': '200_day_multiple',
   'data_source':
   "Data Source: CoinMetrics",
   'events': [{
@@ -1852,6 +1856,8 @@ chart_drawdowns = {
 chart_cycle_lows = {
   'x_data':
   'days_since_cycle_low',
+  'y1_type':
+  'log',
   'y_data': [
     {
       'name': 'Market Cycle 1',
@@ -1882,7 +1888,7 @@ chart_cycle_lows = {
   'title':
   "Bitcoin Return From Cycle Low",
   'x_label':
-  "Days since Cycle Low",
+  "Days Since Cycle Low",
   'y1_label':
   "Return (%)",
   'y2_label':
@@ -1898,7 +1904,7 @@ chart_cycle_lows = {
 # Halving Performane Chart
 chart_halvings = {
   'x_data':
-  'days_since_halving',  # Assuming your halving_data DataFrame has a 'days_since_halving' column
+  'days_since_halving',
   'y_data': [
     {
       'name': 'Halving Era 2',
@@ -1917,7 +1923,7 @@ chart_halvings = {
     },
   ],
   'title':
-  "Bitcoin Halvings",
+  "Bitcoin Halvings Return Comparison",
   'x_label':
   "Days Since Halving",
   'y1_label':
@@ -1926,67 +1932,6 @@ chart_halvings = {
   "",
   'filename':
   "Bitcoin_Halving_Cycle",
-  'chart_type':
-  'line',
-  'data_source':
-  "Data Source: CoinMetrics",
-}
-
-# Bitcoin YTD Retrun Comparison
-ytd_return = {
-  'x_data':
-  'time',
-  'y_data': [{
-    'name': 'Bitcoin',
-    'data': 'PriceUSD_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'Nasdaq',
-    'data': '^IXIC_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'S&P500',
-    'data': '^GSPC_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'XLF Financials ETF',
-    'data': 'XLF_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'XLE Energy ETF',
-    'data': 'XLE_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'FANG+ ETF',
-    'data': 'FANG.AX_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'BITQ Crypto Industry ETF',
-    'data': 'BITQ_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'Gold Futures',
-    'data': 'GC=F_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'US Dollar Futures',
-    'data': 'DX=F_close_YTD_change',
-    'yaxis': 'y'
-  }, {
-    'name': 'TLT Treasury Bond ETF',
-    'data': 'TLT_close_YTD_change',
-    'yaxis': 'y'
-  }],
-  'title':
-  "Year To Date Return",
-  'x_label':
-  "Date",
-  'y1_label':
-  "Year To Date Return (Percentage)",
-  'y2_label':
-  "",
-  'filename':
-  "Bitcoin_YTD_Return_Comparison",
   'chart_type':
   'line',
   'data_source':
@@ -2005,7 +1950,7 @@ yoy_return = {
      'name': 'Bitcoin Price',
      'data': 'PriceUSD',
       'yaxis': 'y'
-            },],
+            }],
   'title':
   "Year Over Year Return",
   'x_label':
@@ -2014,6 +1959,8 @@ yoy_return = {
   "Bitcoin Price (USD)",
   'y2_label':
   "Year Over Year Return (Percentage)",
+  'filter_start_date': '2015-01-01',   
+  'filter_metric': 'PriceUSD_YOY_change',
   'filename':
   "Bitcoin_YOY_Return_Comparison",
   'chart_type':
@@ -2023,73 +1970,31 @@ yoy_return = {
 }
 
 # Bitcoin CAGR Comparison
-cagr_comparison = {
+cagr_overview = {
   'x_data':
   'time',
   'y_data': [
     {
-      'name': 'Bitcoin',
+      'name': 'Bitcoin Price',
+      'data': 'PriceUSD',
+      'yaxis': 'y'
+    },{
+      'name': 'Bitcoin 4 Year CAGR',
       'data': 'PriceUSD_4_Year_CAGR',
-      'yaxis': 'y'
-    },
-    {
-      'name': 'Nasdaq',
-      'data': '^IXIC_close_4_Year_CAGR',
-      'yaxis': 'y'
-    },
-    {
-      'name': 'S&P500',
-      'data': '^GSPC_close_4_Year_CAGR',
-      'yaxis': 'y'
-    },
-    {
-      'name': 'XLF Financials ETF',
-      'data': 'XLF_close_4_Year_CAGR',
-      'yaxis': 'y'
-    },
-    {
-      'name': 'XLE Energy ETF',
-      'data': 'XLE_close_4_Year_CAGR',
-      'yaxis': 'y'
-    },
-    {
-      'name': 'FANG+ ETF',
-      'data':
-      'FANG.AX_close_2_Year_CAGR',  # Using 2-Year CAGR as provided in the template
-      'yaxis': 'y'
-    },
-    {
-      'name': 'BITQ Crypto Industry ETF',
-      'data':
-      'BITQ_close_2_Year_CAGR',  # Using 2-Year CAGR as provided in the template
-      'yaxis': 'y'
-    },
-    {
-      'name': 'Gold Futures',
-      'data': 'GC=F_close_4_Year_CAGR',
-      'yaxis': 'y'
-    },
-    {
-      'name': 'US Dollar Futures',
-      'data': 'DX=F_close_4_Year_CAGR',
-      'yaxis': 'y'
-    },
-    {
-      'name': 'TLT Treasury Bond ETF',
-      'data': 'TLT_close_4_Year_CAGR',
-      'yaxis': 'y'
-    }
-  ],
+      'yaxis': 'y2'
+    }],
   'title':
-  "4 Year Compound Annual Growth Rate Comparison",
+  "4 Year Compound Annual Growth Rate",
   'x_label':
   "Date",
   'y1_label':
-  "4 Year CAGR (Percentage)",
+  "Bitcoin Price",
   'y2_label':
-  "",
+  "4 Year CAGR (Percentage)",
+  'filter_start_date': '2015-01-01',   
+  'filter_metric': 'PriceUSD_4_Year_CAGR',
   'filename':
-  "Bitcoin_CAGR_Comparison",
+  "Bitcoin_CAGR",
   'chart_type':
   'line',
   'data_source':
@@ -3177,6 +3082,141 @@ chart_supply_age = {
   }]
 }
 
+# Bitcoin CAGR Comparison
+cagr_comparison = {
+  'x_data':
+  'time',
+  'y_data': [
+    {
+      'name': 'Bitcoin',
+      'data': 'PriceUSD_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'Nasdaq',
+      'data': '^IXIC_close_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'S&P500',
+      'data': '^GSPC_close_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'XLF Financials ETF',
+      'data': 'XLF_close_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'XLE Energy ETF',
+      'data': 'XLE_close_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'FANG+ ETF',
+      'data':
+      'FANG.AX_close_2_Year_CAGR',  # Using 2-Year CAGR as provided in the template
+      'yaxis': 'y'
+    },
+    {
+      'name': 'BITQ Crypto Industry ETF',
+      'data':
+      'BITQ_close_2_Year_CAGR',  # Using 2-Year CAGR as provided in the template
+      'yaxis': 'y'
+    },
+    {
+      'name': 'Gold Futures',
+      'data': 'GC=F_close_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'US Dollar Futures',
+      'data': 'DX=F_close_4_Year_CAGR',
+      'yaxis': 'y'
+    },
+    {
+      'name': 'TLT Treasury Bond ETF',
+      'data': 'TLT_close_4_Year_CAGR',
+      'yaxis': 'y'
+    }
+  ],
+  'title':
+  "4 Year Compound Annual Growth Rate Comparison",
+  'x_label':
+  "Date",
+  'y1_label':
+  "4 Year CAGR (Percentage)",
+  'y2_label':
+  "",
+  'filename':
+  "Bitcoin_CAGR_Comparison",
+  'chart_type':
+  'line',
+  'data_source':
+  "Data Source: CoinMetrics",
+}
+
+# Bitcoin YTD Retrun Comparison
+ytd_return = {
+  'x_data':
+  'time',
+  'y_data': [{
+    'name': 'Bitcoin',
+    'data': 'PriceUSD_YTD_change',
+    'yaxis': 'y'
+  }, {
+    'name': 'Nasdaq',
+    'data': '^IXIC_close_YTD_change',
+    'yaxis': 'y'
+  }, {
+    'name': 'S&P500',
+    'data': '^GSPC_close_YTD_change',
+    'yaxis': 'y'
+  }, {
+    'name': 'XLF Financials ETF',
+    'data': 'XLF_close_YTD_change',
+    'yaxis': 'y'
+  }, {
+    'name': 'XLE Energy ETF',
+    'data': 'XLE_close_YTD_change',
+    'yaxis': 'y'
+  }, {
+    'name': 'FANG+ ETF',
+    'data': 'FANG.AX_close_YTD_change',
+    'yaxis': 'y'
+  }, {
+    'name': 'BITQ Crypto Industry ETF',
+    'data': 'BITQ_close_YTD_change',
+    'yaxis': 'y'
+  }, {
+    'name': 'Gold Futures',
+    'data': 'GC=F_close_YTD_change',
+    'yaxis': 'y'
+  }, {
+    'name': 'US Dollar Futures',
+    'data': 'DX=F_close_YTD_change',
+    'yaxis': 'y'
+  }, {
+    'name': 'TLT Treasury Bond ETF',
+    'data': 'TLT_close_YTD_change',
+    'yaxis': 'y'
+  }],
+  'title':
+  "Year To Date Return",
+  'x_label':
+  "Date",
+  'y1_label':
+  "Year To Date Return (Percentage)",
+  'y2_label':
+  "",
+  'filename':
+  "Bitcoin_YTD_Return_Comparison",
+  'chart_type':
+  'line',
+  'data_source':
+  "Data Source: CoinMetrics",
+}
+
 # List Of All Chart Templates
 chart_templates = [
   chart_supply, chart_transactions, chart_hashrate, chart_price,
@@ -3185,11 +3225,11 @@ chart_templates = [
   macro_supply, chart_1_year_supply, chart_supply_age, 
   chart_thermocap_multiple, chart_realizedcap_multiple, chart_nvt_price, 
   chart_NUPL, electricity_price, s2f_price,
-  chart_price_ma, yoy_return, ytd_return, cagr_comparison,
+  chart_price_ma, yoy_return, cagr_overview,
   chart_m0, chart_equities, chart_gold, chart_promo,
   chart_rv, chart_on_chain, chart_sats_per_dollar,
   chart_hashrate_price, chart_transactions_volume, chart_address_balance_comp,
-  chart_address_balance_supply_comp, mtd_return
+  chart_address_balance_supply_comp, mtd_return, cagr_comparison, ytd_return
 ]
 
 # Map the chart types to their respective functions
