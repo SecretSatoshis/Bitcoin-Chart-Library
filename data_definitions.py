@@ -87,7 +87,7 @@ filter_data_columns = {
         '7_day_ma_TxTfrValMeanUSD', 'FeeTotUSD', 'thermocap_price','thermocap_multiple',
         'thermocap_price_multiple_4','thermocap_price_multiple_8', 'thermocap_price_multiple_16',
         'thermocap_price_multiple_32', 'nvt_price',
-        'nvt_price_adj', 'nvt_price_multiple', '30_day_ma_nvt_price',
+        'nvt_price_adj', 'nvt_price_multiple', '30_day_ma_nvt_price','nvt_price_multiple_ma',
         '365_day_ma_nvt_price', 'NVTAdj', 'NVTAdj90', 'NVTAdjFF',
         'realised_price', 'VelCur1yr', 'supply_pct_1_year_plus', 'mvrv_ratio',
         'realizedcap_multiple_3', 'realizedcap_multiple_5', 'nupl',
