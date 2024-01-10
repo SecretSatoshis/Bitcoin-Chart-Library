@@ -108,6 +108,7 @@ def calculate_custom_on_chain_metrics(data):
       data['nvt_price'] = (data['NVTAdj'].rolling(window=365*2).median() * data['TxTfrValAdjUSD']) / data['SplyCur']
       data['nvt_price_adj'] = (data['NVTAdj90'].rolling(window=365).median() * data['TxTfrValAdjUSD']) / data['SplyCur']
       data['nvt_price_multiple'] = data['PriceUSD'] / data['nvt_price']
+      data['nvt_price_multiple_ma'] = data['nvt_price_multiple'].rolling(window=14).mean()
 
   # Price Moving Averages
       data['7_day_ma_priceUSD'] = data['PriceUSD'].rolling(window=7).mean()
@@ -433,7 +434,7 @@ def rolling_cagr_for_all_columns(data, years):
       for column in data.columns:
           start_value = data[column].shift(int(years * days_per_year))
           end_value = data[column]
-          cagr = ((end_value / start_value) ** (1/years)) - 1
+          cagr = ((end_value / start_value) ** (1/years) - 1) * 100  # Multiply by 100 to convert to percentage
           series_list.append(cagr.rename(f"{column}_{years}_Year_CAGR"))
 
       cagr_data = pd.concat(series_list, axis=1)
@@ -489,7 +490,7 @@ def calculate_mtd_change(data):
 
 def calculate_yoy_change(data):
   # Calculate the year-over-year change for each date in the index
-  yoy_change = data.pct_change(periods=365)  # Assuming data is daily
+  yoy_change = data.pct_change(periods=365) * 100   # Assuming data is daily
 
   # Rename columns
   yoy_change.columns = [f"{col}_YOY_change" for col in yoy_change.columns]
@@ -860,7 +861,7 @@ def compute_cycle_lows(data):
       period_data[f'days_since_cycle_low_{i}'] = (period_data.index - cycle_low_date).days
   
       # Calculate 'return_since_cycle_low' from the cycle low price
-      period_data[f'return_since_cycle_low_{i}'] = (period_data['PriceUSD'] / cycle_low_price - 1)
+      period_data[f'return_since_cycle_low_{i}'] = (period_data['PriceUSD'] / cycle_low_price - 1) * 100
   
       # Select and rename columns to have a consistent name for plotting
       if cycle_low_data.empty:
@@ -880,28 +881,31 @@ def compute_cycle_lows(data):
   return cycle_low_data
 
 def compute_halving_days(data):
-    bitcoin_halvings = [
-        ('Genesis Era', '2009-01-03', '2012-11-28'),
-        ('2nd Era', '2012-11-28', '2016-07-09'),
-        ('3rd Era', '2016-07-09', '2020-05-11'),
-        ('4th Era', '2020-05-11', pd.to_datetime('today').strftime('%Y-%m-%d')),
-    ]
-
-    halving_data = pd.DataFrame()
-    cumulative_days_from_halving = 0
-
-    for i, halving in enumerate(bitcoin_halvings, 1):
-        period_data = data[(data.index >= halving[1]) & (data.index <= halving[2])]
-        period_data = period_data.copy()
-        
-        period_data[f'days_since_halving_{i}'] = (period_data.index - pd.to_datetime(halving[1])).days
-
-        period_data[f'return_since_halving_{i}'] = (period_data['PriceUSD'] / period_data.loc[period_data.index == pd.to_datetime(halving[1]), 'PriceUSD'].values[0] - 1) * 100
-
-
-        if halving_data.empty:
-            halving_data = period_data[[f'days_since_halving_{i}', f'return_since_halving_{i}']].rename(columns={f'days_since_halving_{i}': 'days_since_halving', f'return_since_halving_{i}': f'return_since_halving_{i}'})
-        else:
-            halving_data = pd.concat([halving_data, period_data[[f'days_since_halving_{i}', f'return_since_halving_{i}']].rename(columns={f'days_since_halving_{i}': 'days_since_halving', f'return_since_halving_{i}': f'return_since_halving_{i}'})])
-
-    return halving_data
+  bitcoin_halvings = [
+      ('Genesis Era', '2009-01-03', '2012-11-28'),
+      ('2nd Era', '2012-11-28', '2016-07-09'),
+      ('3rd Era', '2016-07-09', '2020-05-11'),
+      ('4th Era', '2020-05-11', pd.to_datetime('today').strftime('%Y-%m-%d')),
+  ]
+  
+  halving_data = pd.DataFrame()
+  
+  for i, halving in enumerate(bitcoin_halvings, 1):
+      period_data = data[(data.index >= halving[1]) & (data.index <= halving[2])]
+      period_data = period_data.copy()
+  
+      period_data[f'days_since_halving_{i}'] = (period_data.index - pd.to_datetime(halving[1])).days
+      period_data[f'return_since_halving_{i}'] = (period_data['PriceUSD'] / period_data.loc[period_data.index == pd.to_datetime(halving[1]), 'PriceUSD'].values[0] - 1) * 100
+  
+      # Set values below 1 to 1
+      period_data[f'return_since_halving_{i}'] = period_data[f'return_since_halving_{i}'].clip(lower=1)
+  
+      # Filter out rows with return_since_halving less than 1 (original value before setting to 1)
+      period_data = period_data[period_data[f'return_since_halving_{i}'] >= 1]
+  
+      if halving_data.empty:
+          halving_data = period_data[[f'days_since_halving_{i}', f'return_since_halving_{i}']].rename(columns={f'days_since_halving_{i}': 'days_since_halving', f'return_since_halving_{i}': f'return_since_halving_{i}'})
+      else:
+          halving_data = pd.concat([halving_data, period_data[[f'days_since_halving_{i}', f'return_since_halving_{i}']].rename(columns={f'days_since_halving_{i}': 'days_since_halving', f'return_since_halving_{i}': f'return_since_halving_{i}'})])
+  
+  return halving_data
