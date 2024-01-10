@@ -227,7 +227,7 @@ def create_days_since_chart(drawdown_data, chart_template, filename='chart.html'
                 side='right',
                 showgrid=False),
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    yaxis=dict(showgrid=False, type='log'),
+    yaxis=dict(showgrid=False, type=chart_template.get('y1_type', 'log')),
     hovermode='x unified',
     autosize=True,
     legend=dict(orientation='h',
@@ -1814,6 +1814,8 @@ chart_price_ma = {
 chart_drawdowns = {
   'x_data':
   'days_since_ath',
+  'y1_type':
+  'linear',
   'y_data': [
     {
       'name': 'Drawdown Cycle 1',
@@ -1962,7 +1964,7 @@ yoy_return = {
   'filter_start_date': '2015-01-01',   
   'filter_metric': 'PriceUSD_YOY_change',
   'filename':
-  "Bitcoin_YOY_Return",
+  "Bitcoin_YOY_Return_Comparison",
   'chart_type':
   'line',
   'data_source':
