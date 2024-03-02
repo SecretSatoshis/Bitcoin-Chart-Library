@@ -1,6 +1,7 @@
 import plotly.graph_objects as go
 import plotly.io as pio
 import pandas as pd
+import os
 
 # Create Line Chart Functoin
 def create_line_chart(chart_template, selected_metrics):
@@ -188,12 +189,6 @@ def create_line_chart(chart_template, selected_metrics):
     font=dict(family="Arial", size=12, color="#666"),
     align="right",
   )
-
-  # Save the chart as an HTML file
-  filepath = 'Charts/' + filename + '.html'
-  pio.write_html(fig, file=filepath, auto_open=False)
-
-  # Return the figure
   return fig
 
 # Create Days Since Chart Function
@@ -470,6 +465,10 @@ chart_transactions = {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -544,6 +543,10 @@ chart_hashrate = {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -609,6 +612,10 @@ chart_price = {
   }, {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
+    'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
     'orientation': 'v'
   }]
 }
@@ -693,6 +700,10 @@ chart_transferred_value = {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -776,6 +787,10 @@ chart_miner_revenue = {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -855,6 +870,10 @@ chart_active_addresses = {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -929,6 +948,10 @@ chart_transaction_size = {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -997,6 +1020,10 @@ chart_transaction_fee_USD = {
   }, {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
+    'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
     'orientation': 'v'
   }]
 }
@@ -1097,6 +1124,10 @@ chart_address_balance = {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -1165,6 +1196,10 @@ chart_1_year_supply = {
   }, {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
+    'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
     'orientation': 'v'
   }]
 }
@@ -1256,6 +1291,10 @@ macro_supply = {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -1346,6 +1385,10 @@ chart_thermocap_multiple = {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -1430,6 +1473,10 @@ chart_realizedcap_multiple = {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -1503,6 +1550,10 @@ chart_nvt_price = {
   }, {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
+    'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
     'orientation': 'v'
   }]
 }
@@ -1585,6 +1636,10 @@ electricity_price = {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -1658,6 +1713,10 @@ s2f_price = {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -1727,6 +1786,10 @@ chart_NUPL = {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -1738,7 +1801,11 @@ chart_price_ma = {
     'name': 'Bitcoin Price',
     'data': 'PriceUSD',
     'yaxis': 'y'
-  }, {
+  },{
+    'name': '7 Day MA',
+    'data': '7_day_ma_priceUSD',
+    'yaxis': 'y'
+  },{
     'name': '50 Day MA',
     'data': '50_day_ma_priceUSD',
     'yaxis': 'y'
@@ -1807,6 +1874,10 @@ chart_price_ma = {
     'name': 'FTX Bankruptcy',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -1839,7 +1910,7 @@ chart_drawdowns = {
     },
   ],
   'title':
-  "Bitcoin Drawdowns",
+  "Bitcoin Drawdowns From ATH",
   'x_label':
   "Days since ATH",
   'y1_label':
@@ -2003,6 +2074,76 @@ cagr_overview = {
   "Data Source: CoinMetrics",
 }
 
+# Hashrate Chart
+chart_sats_per_dollar = {
+  'x_data':
+  'time',
+  'y_data': [{
+    'name': 'Satoshis Per Dollar',
+    'data': 'sat_per_dollar',
+    'yaxis': 'y1'
+  }, {
+    'name': 'Bitcoin Price',
+    'data': 'PriceUSD',
+    'yaxis': 'y2'
+  }],
+  'title':
+  "Satoshis Per Dollar",
+  'x_label':
+  "Date",
+  'y1_label':
+  "Satoshis Per Dollar | Amount Of Bitcoin You Can Purchase Per $1",
+  'y2_label':
+  "1 Full Bitcion Price",
+  'filename':
+  "Bitcoin_Sats_Per_Dollar",
+  'chart_type':
+  'line',
+  'data_source':
+  "Data Source: CoinMetrics",
+  'events': [{
+    'name': 'Halving',
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Launch',
+    'dates': ['2010-07-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Hack',
+    'dates': ['2011-06-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Bankrupt',
+    'dates': ['2014-02-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'BitLicense',
+    'dates': ['2015-08-08'],
+    'orientation': 'v'
+  }, {
+    'name': 'CME Futures',
+    'dates': ['2017-12-17'],
+    'orientation': 'v'
+  }, {
+    'name': 'Bitcoin Winter',
+    'dates': ['2018-12-15'],
+    'orientation': 'v'
+  }, {
+    'name': 'Coinbase IPO',
+    'dates': ['2021-04-14'],
+    'orientation': 'v'
+  }, {
+    'name': 'FTX Bankrupt',
+    'dates': ['2022-11-11'],
+    'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
+  }]
+}
+
 # Bitcoin m0
 chart_m0 = {
   'x_data':
@@ -2097,6 +2238,10 @@ chart_m0 = {
   }, {
     'name': 'FTX Bankruptcy',
     'dates': ['2022-11-11'],
+    'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
     'orientation': 'v'
   }]
 }
@@ -2200,6 +2345,10 @@ chart_equities = {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -2286,6 +2435,10 @@ chart_gold = {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -2368,6 +2521,10 @@ chart_promo = {
     'name': 'FTX Bankruptcy',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -2384,22 +2541,58 @@ chart_rv = {
     'data': 'silver_marketcap_btc_price',
     'yaxis': 'y'
   }, {
-    'name': 'Gold',
+    'name': 'Gold Country Holdings',
+    'data': 'gold_official_country_holdings_marketcap_btc_price',
+    'yaxis': 'y'
+  }, {
+    'name': 'Gold Private Investment',
+    'data': 'gold_private_investment_marketcap_btc_price',
+    'yaxis': 'y'
+  }, {
+    'name': 'Total Gold Market',
     'data': 'gold_marketcap_btc_price',
+    'yaxis': 'y'
+  }, {
+    'name': 'Meta',
+    'data': 'META_mc_btc_price',
+    'yaxis': 'y'
+  }, {
+    'name': 'Amazon',
+    'data': 'AMZN_mc_btc_price',
+    'yaxis': 'y'
+  }, {
+    'name': 'Alphabet',
+    'data': 'GOOGL_mc_btc_price',
+    'yaxis': 'y'
+  }, {
+    'name': 'Microsoft',
+    'data': 'MSFT_mc_btc_price',
     'yaxis': 'y'
   }, {
     'name': 'Apple',
     'data': 'AAPL_mc_btc_price',
     'yaxis': 'y'
   }, {
+    'name': 'United Kingdom',
+    'data': 'United_Kingdom_btc_price',
+    'yaxis': 'y'
+  }, {
+    'name': 'Japan',
+    'data': 'Japan_btc_price',
+    'yaxis': 'y'
+  }, {
+    'name': 'China',
+    'data': 'China_btc_price',
+    'yaxis': 'y'
+  }, {
     'name': 'United States',
     'data': 'United_States_btc_price',
     'yaxis': 'y'
   }, {
-    'name': 'United Kingdom',
-    'data': 'United_Kingdom_btc_price',
+    'name': 'EU',
+    'data': 'Eurozone_btc_price',
     'yaxis': 'y'
-  }],
+},],
   'title':
   "Bitcoin Price Relative Valuation",
   'x_label':
@@ -2450,6 +2643,10 @@ chart_rv = {
     'name': 'FTX Bankruptcy',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -2462,8 +2659,8 @@ chart_on_chain = {
     'data': 'PriceUSD',
     'yaxis': 'y'
   }, {
-    'name': 'NVT Price 30 Day MA',
-    'data': '30_day_ma_nvt_price',
+    'name': 'Bitcoin Production Price',
+    'data': 'Lagged_Energy_Value',
     'yaxis': 'y'
   }, {
     'name': '8x Thermocap Multiple',
@@ -2532,6 +2729,10 @@ chart_on_chain = {
     'name': 'FTX Bankruptcy',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -2594,72 +2795,6 @@ mtd_return = {
   'line',
   'data_source':
   "Data Source: CoinMetrics",
-}
-
-# Hashrate Chart
-chart_sats_per_dollar = {
-  'x_data':
-  'time',
-  'y_data': [{
-    'name': 'Satoshis Per Dollar',
-    'data': 'sat_per_dollar',
-    'yaxis': 'y1'
-  }, {
-    'name': 'Bitcoin Price',
-    'data': 'PriceUSD',
-    'yaxis': 'y2'
-  }],
-  'title':
-  "Satoshis Per Dollar",
-  'x_label':
-  "Date",
-  'y1_label':
-  "Satoshis Per Dollar | Amount Of Bitcoin You Can Purchase Per $1",
-  'y2_label':
-  "1 Full Bitcion Price",
-  'filename':
-  "Bitcoin_Sats_Per_Dollar",
-  'chart_type':
-  'line',
-  'data_source':
-  "Data Source: CoinMetrics",
-  'events': [{
-    'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Launch',
-    'dates': ['2010-07-01'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Hack',
-    'dates': ['2011-06-11'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Bankrupt',
-    'dates': ['2014-02-01'],
-    'orientation': 'v'
-  }, {
-    'name': 'BitLicense',
-    'dates': ['2015-08-08'],
-    'orientation': 'v'
-  }, {
-    'name': 'CME Futures',
-    'dates': ['2017-12-17'],
-    'orientation': 'v'
-  }, {
-    'name': 'Bitcoin Winter',
-    'dates': ['2018-12-15'],
-    'orientation': 'v'
-  }, {
-    'name': 'Coinbase IPO',
-    'dates': ['2021-04-14'],
-    'orientation': 'v'
-  }, {
-    'name': 'FTX Bankrupt',
-    'dates': ['2022-11-11'],
-    'orientation': 'v'
-  }]
 }
 
 # Bitcoin Promo Chart
@@ -2732,6 +2867,10 @@ chart_hashrate_price = {
   }, {
     'name': 'FTX Bankruptcy',
     'dates': ['2022-11-11'],
+    'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
     'orientation': 'v'
   }]
 }
@@ -2815,6 +2954,10 @@ chart_transactions_volume = {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -2893,6 +3036,10 @@ chart_address_balance_comp = {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
     'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
   }]
 }
 
@@ -2961,6 +3108,10 @@ chart_address_balance_supply_comp = {
   }, {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
+    'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
     'orientation': 'v'
   }]
 }
@@ -3080,6 +3231,10 @@ chart_supply_age = {
   }, {
     'name': 'FTX Bankrupt',
     'dates': ['2022-11-11'],
+    'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
     'orientation': 'v'
   }]
 }
@@ -3234,17 +3389,48 @@ chart_templates = [
   chart_address_balance_supply_comp, mtd_return, cagr_comparison, ytd_return
 ]
 
-# Map the chart types to their respective functions
-chart_creators = {'line': create_line_chart}
+# Function to save chart as an image and also as an HTML file
+def save_chart(fig, chart_template, selected_metrics):
+    # Define the filename without extension
+    filename = chart_template['filename']
+
+    # Define the directory to save the images
+    image_directory = 'Chart_Images'
+    if not os.path.exists(image_directory):
+        os.makedirs(image_directory)
+
+    # Define the path for the image
+    image_path = os.path.join(image_directory, f"{filename}.png")
+    width = 2560  # Example width for HD quality
+    height = 1440  # Example height for HD quality
+  
+    # Save the figure as a static image
+    fig.write_image(image_path, width=width, height=height)
+
+    # Save the chart as an HTML file for interactive use
+    html_directory = 'Charts'
+    if not os.path.exists(html_directory):
+        os.makedirs(html_directory)
+
+    # Define the path for the HTML file
+    html_filepath = os.path.join(html_directory, f"{filename}.html")
+    fig.write_html(html_filepath, auto_open=False)
+
+    # Return the paths to the saved files
+    return image_path, html_filepath
 
 # Create Charts Function
 def create_charts(selected_metrics, chart_templates):
-  figures = []
-  for chart_template in chart_templates:
-    chart_type = chart_template.get(
-      'chart_type', 'line')  # Default to 'line' if no chart_type specified
-    chart_creator = chart_creators[
-      chart_type]  # This will be the function that creates the chart
-    fig = chart_creator(chart_template, selected_metrics)
-    figures.append(fig)
-  return figures
+    figures = []
+    for chart_template in chart_templates:
+        # Call the function to create the line chart
+        fig = create_line_chart(chart_template, selected_metrics)
+
+        # Save the chart as an image and HTML using the save_chart function
+        image_path, html_filepath = save_chart(fig, chart_template, selected_metrics)
+        print(f"Saved chart image to {image_path} and HTML to {html_filepath}")
+
+        # Append the figure to the list of figures
+        figures.append(fig)
+    return figures
+
