@@ -146,7 +146,6 @@ def calculate_moving_averages(data, metrics):
           data[f'7_day_ma_{metric}'] = data[metric].rolling(window=7).mean()
           data[f'30_day_ma_{metric}'] = data[metric].rolling(window=30).mean()
           data[f'365_day_ma_{metric}'] = data[metric].rolling(window=365).mean()
-
       return data
 
 def calculate_metal_market_caps(data, gold_silver_supply):
@@ -155,15 +154,29 @@ def calculate_metal_market_caps(data, gold_silver_supply):
       metal = row['Metal']
       supply_billion_troy_ounces = row['Supply in Billion Troy Ounces']
 
-      # Compute the market cap in billion USD
+      if pd.isna(supply_billion_troy_ounces):
+          print(f"Warning: Supply data for {metal} is NaN.")
+          continue
+
       if metal == 'Gold':
-          price_usd_per_ounce = data['GC=F_close']
+          if 'GC=F_close' not in data:
+              print("Warning: Gold price data column is missing.")
+              continue
+          # Use the last available price, forward fill missing values
+          price_usd_per_ounce = data['GC=F_close'].ffill()
       elif metal == 'Silver':
-          price_usd_per_ounce = data['SI=F_close']
+          if 'SI=F_close' not in data:
+              print("Warning: Silver price data column is missing.")
+              continue
+          # Use the last available price, forward fill missing values
+          price_usd_per_ounce = data['SI=F_close'].ffill()
 
-      metric_name = metal.lower() + '_marketcap_billion_usd'
-      new_columns[metric_name] = supply_billion_troy_ounces * price_usd_per_ounce
+      metric_name = f'{metal.lower()}_marketcap_billion_usd'
+      # Calculate the market cap using the last available price
+      market_cap = supply_billion_troy_ounces * price_usd_per_ounce.iloc[-1]
+      new_columns[metric_name] = pd.Series(market_cap, index=data.index)
 
+  # Concatenate the new columns to the original data
   data = pd.concat([data, pd.DataFrame(new_columns)], axis=1)
   return data
 
@@ -178,33 +191,35 @@ def calculate_gold_market_cap_breakdown(data, gold_supply_breakdown):
 
           # Add a new metric to the data
           metric_name = 'gold_marketcap_' + category.replace(' ', '_').lower() + '_billion_usd'
-          data[metric_name] = category_marketcap_billion_usd  
+          data[metric_name] = category_marketcap_billion_usd
       return data
 
 def calculate_btc_price_to_surpass_metal_categories(data, gold_supply_breakdown):
   new_columns = {}
-  
+
+  # Calculate the number of rows in the DataFrame for creating Series
+  num_rows = len(data)
+
   # Gold calculations
   gold_marketcap_billion_usd = data['gold_marketcap_billion_usd'].iloc[-1]
-  new_columns['gold_marketcap_btc_price'] = [gold_marketcap_billion_usd / data['SplyCur'].iloc[-2]] * len(data)
-  
+  new_columns['gold_marketcap_btc_price'] = pd.Series([gold_marketcap_billion_usd / data['SplyCur'].iloc[-2]] * num_rows)
+
   # Gold subcategories
   for i, row in gold_supply_breakdown.iterrows():
       category = row['Gold Supply Breakdown']
       percentage_of_market = row['Percentage Of Market']
       category_marketcap_billion_usd = gold_marketcap_billion_usd * (percentage_of_market / 100.0)
-  
+
       # Create metric name
       metric_name = 'gold_' + category.replace(' ', '_').lower() + '_marketcap_btc_price'
-      new_columns[metric_name] = [category_marketcap_billion_usd / data['SplyCur'].iloc[-2]] * len(data)
-  
+      new_columns[metric_name] = pd.Series([category_marketcap_billion_usd / data['SplyCur'].iloc[-2]] * num_rows)
+
   # Silver calculations
   silver_marketcap_billion_usd = data['silver_marketcap_billion_usd'].iloc[-1]
-  new_columns['silver_marketcap_btc_price'] = [silver_marketcap_billion_usd / data['SplyCur'].iloc[-2]] * len(data)
-  
-  # Add new columns to the DataFrame
-  for key, value in new_columns.items():
-      data[key] = value
+  new_columns['silver_marketcap_btc_price'] = pd.Series([silver_marketcap_billion_usd / data['SplyCur'].iloc[-2]] * num_rows)
+
+  # Use pd.concat to add the new columns to the DataFrame
+  data = pd.concat([data, pd.DataFrame(new_columns)], axis=1)
   return data
 
 def calculate_btc_price_to_surpass_fiat(data, fiat_money_data):
@@ -810,33 +825,32 @@ def create_btc_correlation_tables(report_date, tickers, correlations_data):
       }
 
       return btc_correlations
-
+  
 def compute_drawdowns(data):
-    drawdown_periods = [
-        ('2011-06-08', '2013-02-28'),
-        ('2013-11-29', '2017-03-03'),
-        ('2017-12-17', '2020-12-16'),
-        ('2021-11-10', pd.to_datetime('today'))
-    ]
+  drawdown_periods = [
+      ('2011-06-08', '2013-02-28'),
+      ('2013-11-29', '2017-03-03'),
+      ('2017-12-17', '2020-12-16'),
+      ('2021-11-10', pd.to_datetime('today'))
+  ]
 
-    drawdown_data = pd.DataFrame()
+  drawdown_data = pd.DataFrame()
 
-    for i, period in enumerate(drawdown_periods, 1):
-        period_data = data[(data.index >= period[0]) & (data.index <= period[1])]
-        period_data = period_data.copy() 
-        period_data[f'ath_cycle_{i}'] = period_data['PriceUSD'].cummax()
-        period_data[f'drawdown_cycle_{i}'] = (period_data['PriceUSD'] / period_data[f'ath_cycle_{i}'] - 1) * 100
-        
-        # Calculate 'days_since_ath' from the start of the cycle
-        period_start_date = pd.to_datetime(period[0])
-        period_data[f'days_since_ath_cycle_{i}'] = (period_data.index - period_start_date).days
+  for i, period in enumerate(drawdown_periods, 1):
+      start_date, end_date = pd.to_datetime(period[0]), pd.to_datetime(period[1])
+      period_data = data[(data.index >= start_date) & (data.index <= end_date)].copy()
+      period_data[f'ath_cycle_{i}'] = period_data['PriceUSD'].cummax()
+      period_data[f'drawdown_cycle_{i}'] = (period_data['PriceUSD'] / period_data[f'ath_cycle_{i}'] - 1) * 100
+      period_data['index_as_date'] = pd.to_datetime(period_data.index)
+      period_data[f'days_since_ath_cycle_{i}'] = (period_data['index_as_date'] - start_date).dt.days
 
-        if drawdown_data.empty:
-            drawdown_data = period_data[[f'days_since_ath_cycle_{i}', f'drawdown_cycle_{i}']].rename(columns={f'days_since_ath_cycle_{i}': 'days_since_ath', f'drawdown_cycle_{i}': f'drawdown_cycle_{i}'})
-        else:
-            drawdown_data = pd.concat([drawdown_data, period_data[[f'days_since_ath_cycle_{i}', f'drawdown_cycle_{i}']].rename(columns={f'days_since_ath_cycle_{i}': 'days_since_ath', f'drawdown_cycle_{i}': f'drawdown_cycle_{i}'})])
+      selected_columns = [f'days_since_ath_cycle_{i}', f'drawdown_cycle_{i}']
+      if drawdown_data.empty:
+          drawdown_data = period_data[selected_columns].rename(columns={f'days_since_ath_cycle_{i}': 'days_since_ath', f'drawdown_cycle_{i}': f'drawdown_cycle_{i}'})
+      else:
+          drawdown_data = pd.concat([drawdown_data, period_data[selected_columns].rename(columns={f'days_since_ath_cycle_{i}': 'days_since_ath', f'drawdown_cycle_{i}': f'drawdown_cycle_{i}'})])
 
-    return drawdown_data
+  return drawdown_data
 
 def compute_cycle_lows(data):
   cycle_periods = [
@@ -846,38 +860,24 @@ def compute_cycle_lows(data):
       ('2018-12-16', '2022-11-20'),
       ('2022-11-20', pd.to_datetime('today'))
   ]
-  
+
   cycle_low_data = pd.DataFrame()
-  
+
   for i, period in enumerate(cycle_periods, 1):
-      period_data = data[(data.index >= period[0]) & (data.index <= period[1])]
-      period_data = period_data.copy()
-  
-      # Find the cycle low (minimum price within the period)
+      start_date, end_date = pd.to_datetime(period[0]), pd.to_datetime(period[1])
+      period_data = data[(data.index >= start_date) & (data.index <= end_date)].copy()
       cycle_low_price = period_data['PriceUSD'].min()
       cycle_low_date = period_data['PriceUSD'].idxmin()
-  
-      # Calculate 'days_since_cycle_low' from the cycle low date
-      period_data[f'days_since_cycle_low_{i}'] = (period_data.index - cycle_low_date).days
-  
-      # Calculate 'return_since_cycle_low' from the cycle low price
+      period_data['index_as_date'] = pd.to_datetime(period_data.index)
+      period_data[f'days_since_cycle_low_{i}'] = (period_data['index_as_date'] - cycle_low_date).dt.days
       period_data[f'return_since_cycle_low_{i}'] = (period_data['PriceUSD'] / cycle_low_price - 1) * 100
-  
-      # Select and rename columns to have a consistent name for plotting
+
+      selected_columns = [f'days_since_cycle_low_{i}', f'return_since_cycle_low_{i}']
       if cycle_low_data.empty:
-          cycle_low_data = period_data[[f'days_since_cycle_low_{i}', f'return_since_cycle_low_{i}']].rename(columns={
-              f'days_since_cycle_low_{i}': 'days_since_cycle_low',
-              f'return_since_cycle_low_{i}': f'return_since_cycle_low_{i}'
-          })
+          cycle_low_data = period_data[selected_columns].rename(columns={f'days_since_cycle_low_{i}': 'days_since_cycle_low', f'return_since_cycle_low_{i}': f'return_since_cycle_low_{i}'})
       else:
-          cycle_low_data = pd.concat([
-              cycle_low_data,
-              period_data[[f'days_since_cycle_low_{i}', f'return_since_cycle_low_{i}']].rename(columns={
-                  f'days_since_cycle_low_{i}': 'days_since_cycle_low',
-                  f'return_since_cycle_low_{i}': f'return_since_cycle_low_{i}'
-              })
-          ])
-  
+          cycle_low_data = pd.concat([cycle_low_data, period_data[selected_columns].rename(columns={f'days_since_cycle_low_{i}': 'days_since_cycle_low', f'return_since_cycle_low_{i}': f'return_since_cycle_low_{i}'})])
+
   return cycle_low_data
 
 def compute_halving_days(data):
@@ -887,25 +887,20 @@ def compute_halving_days(data):
       ('3rd Era', '2016-07-09', '2020-05-11'),
       ('4th Era', '2020-05-11', pd.to_datetime('today').strftime('%Y-%m-%d')),
   ]
-  
+
   halving_data = pd.DataFrame()
-  
+
   for i, halving in enumerate(bitcoin_halvings, 1):
-      period_data = data[(data.index >= halving[1]) & (data.index <= halving[2])]
-      period_data = period_data.copy()
-  
-      period_data[f'days_since_halving_{i}'] = (period_data.index - pd.to_datetime(halving[1])).days
-      period_data[f'return_since_halving_{i}'] = (period_data['PriceUSD'] / period_data.loc[period_data.index == pd.to_datetime(halving[1]), 'PriceUSD'].values[0] - 1) * 100
-  
-      # Set values below 1 to 1
-      period_data[f'return_since_halving_{i}'] = period_data[f'return_since_halving_{i}'].clip(lower=1)
-  
-      # Filter out rows with return_since_halving less than 1 (original value before setting to 1)
-      period_data = period_data[period_data[f'return_since_halving_{i}'] >= 1]
-  
+      start_date, end_date = pd.to_datetime(halving[1]), pd.to_datetime(halving[2])
+      period_data = data[(data.index >= start_date) & (data.index <= end_date)].copy()
+      period_data['index_as_date'] = pd.to_datetime(period_data.index)
+      period_data[f'days_since_halving_{i}'] = (period_data['index_as_date'] - start_date).dt.days
+      period_data[f'return_since_halving_{i}'] = (period_data['PriceUSD'] / period_data.loc[start_date, 'PriceUSD'] - 1) * 100
+
+      selected_columns = [f'days_since_halving_{i}', f'return_since_halving_{i}']
       if halving_data.empty:
-          halving_data = period_data[[f'days_since_halving_{i}', f'return_since_halving_{i}']].rename(columns={f'days_since_halving_{i}': 'days_since_halving', f'return_since_halving_{i}': f'return_since_halving_{i}'})
+          halving_data = period_data[selected_columns].rename(columns={f'days_since_halving_{i}': 'days_since_halving', f'return_since_halving_{i}': f'return_since_halving_{i}'})
       else:
-          halving_data = pd.concat([halving_data, period_data[[f'days_since_halving_{i}', f'return_since_halving_{i}']].rename(columns={f'days_since_halving_{i}': 'days_since_halving', f'return_since_halving_{i}': f'return_since_halving_{i}'})])
-  
+          halving_data = pd.concat([halving_data, period_data[selected_columns].rename(columns={f'days_since_halving_{i}': 'days_since_halving', f'return_since_halving_{i}': f'return_since_halving_{i}'})])
+
   return halving_data
