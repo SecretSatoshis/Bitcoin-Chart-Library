@@ -199,6 +199,8 @@ def calculate_btc_price_to_surpass_metal_categories(data, gold_supply_breakdown)
 
   # Calculate the number of rows in the DataFrame for creating Series
   num_rows = len(data)
+  data['SplyCur'] = data['SplyCur'].fillna(method='ffill')  # Forward fill
+
 
   # Gold calculations
   gold_marketcap_billion_usd = data['gold_marketcap_billion_usd'].iloc[-1]
@@ -220,6 +222,7 @@ def calculate_btc_price_to_surpass_metal_categories(data, gold_supply_breakdown)
 
   # Use pd.concat to add the new columns to the DataFrame
   data = pd.concat([data, pd.DataFrame(new_columns)], axis=1)
+  print(data.tail(5))
   return data
 
 def calculate_btc_price_to_surpass_fiat(data, fiat_money_data):
