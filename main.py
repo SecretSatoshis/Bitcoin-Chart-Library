@@ -40,7 +40,7 @@ data = data_format.electric_price_models(data)
 
 # Forward fill the data for all columns
 data.ffill(inplace=True)
-today_date = datetime.date.today()
+today_date = pd.Timestamp(datetime.date.today())
 data = data.loc[:today_date]
 
 # Flatten the list of columns from the dictionary
@@ -97,6 +97,8 @@ create_days_since_chart(halving_data, chart_halvings, 'Bitcoin_Halving_Cycle')
 
 # --- Chart Creation --- #
 generated_figures = create_charts(report_data, chart_templates)
+
+# Assuming 'figures' is a list you have previously defined to store all your figures
 figures.extend(generated_figures)
 
 # --- Start the Dash App --- #
