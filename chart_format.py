@@ -2529,7 +2529,7 @@ chart_promo = {
 }
 
 # Bitcoin Relative Valuation
-chart_rv = {
+chart_rv_metals = {
   'x_data':
   'time',
   'y_data': [{
@@ -2552,7 +2552,73 @@ chart_rv = {
     'name': 'Total Gold Market',
     'data': 'gold_marketcap_btc_price',
     'yaxis': 'y'
+  }, ],
+  'title':
+  "Bitcoin Price Relative Valuation - Metals",
+  'x_label':
+  "Date",
+  'y1_label':
+  "Bitcoin Price (USD)",
+  'y2_label':
+  "",
+  'filename':
+  "Bitcoin_RV_metals",
+  'chart_type':
+  'line',
+  'data_source':
+  "Data Source: CoinMetrics",
+  'events': [{
+    'name': 'Halving',
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'orientation': 'v'
   }, {
+    'name': 'MtGox Launch',
+    'dates': ['2010-07-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Hack',
+    'dates': ['2011-06-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Bankruptcy',
+    'dates': ['2014-02-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'BitLicense',
+    'dates': ['2015-08-08'],
+    'orientation': 'v'
+  }, {
+    'name': 'CME Futures Launch',
+    'dates': ['2017-12-17'],
+    'orientation': 'v'
+  }, {
+    'name': 'Bitcoin Winter',
+    'dates': ['2018-12-15'],
+    'orientation': 'v'
+  }, {
+    'name': 'Coinbase IPO',
+    'dates': ['2021-04-14'],
+    'orientation': 'v'
+  }, {
+    'name': 'FTX Bankruptcy',
+    'dates': ['2022-11-11'],
+    'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
+  }]
+}
+
+# Bitcoin Relative Valuation
+chart_rv_stocks = {
+  'x_data':
+  'time',
+  'y_data': [{
+    'name': 'Bitcoin Price',
+    'data': 'PriceUSD',
+    'yaxis': 'y'
+  },  {
     'name': 'Meta',
     'data': 'META_mc_btc_price',
     'yaxis': 'y'
@@ -2571,6 +2637,72 @@ chart_rv = {
   }, {
     'name': 'Apple',
     'data': 'AAPL_mc_btc_price',
+    'yaxis': 'y'
+  },],
+  'title':
+  "Bitcoin Price Relative Valuation - Stocks",
+  'x_label':
+  "Date",
+  'y1_label':
+  "Bitcoin Price (USD)",
+  'y2_label':
+  "",
+  'filename':
+  "Bitcoin_RV_stocks",
+  'chart_type':
+  'line',
+  'data_source':
+  "Data Source: CoinMetrics",
+  'events': [{
+    'name': 'Halving',
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Launch',
+    'dates': ['2010-07-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Hack',
+    'dates': ['2011-06-11'],
+    'orientation': 'v'
+  }, {
+    'name': 'MtGox Bankruptcy',
+    'dates': ['2014-02-01'],
+    'orientation': 'v'
+  }, {
+    'name': 'BitLicense',
+    'dates': ['2015-08-08'],
+    'orientation': 'v'
+  }, {
+    'name': 'CME Futures Launch',
+    'dates': ['2017-12-17'],
+    'orientation': 'v'
+  }, {
+    'name': 'Bitcoin Winter',
+    'dates': ['2018-12-15'],
+    'orientation': 'v'
+  }, {
+    'name': 'Coinbase IPO',
+    'dates': ['2021-04-14'],
+    'orientation': 'v'
+  }, {
+    'name': 'FTX Bankruptcy',
+    'dates': ['2022-11-11'],
+    'orientation': 'v'
+  },{
+    'name': 'Spot ETF Launch',
+    'dates': ['2024-01-11'],
+    'orientation': 'v'
+  }]
+}
+
+# Bitcoin Relative Valuation
+chart_rv_m0 = {
+  'x_data':
+  'time',
+  'y_data': [{
+    'name': 'Bitcoin Price',
+    'data': 'PriceUSD',
     'yaxis': 'y'
   }, {
     'name': 'United Kingdom',
@@ -2594,7 +2726,7 @@ chart_rv = {
     'yaxis': 'y'
 },],
   'title':
-  "Bitcoin Price Relative Valuation",
+  "Bitcoin Price Relative Valuation - M0",
   'x_label':
   "Date",
   'y1_label':
@@ -2602,7 +2734,7 @@ chart_rv = {
   'y2_label':
   "",
   'filename':
-  "Bitcoin_RV",
+  "Bitcoin_RV_M0",
   'chart_type':
   'line',
   'data_source':
@@ -3384,7 +3516,7 @@ chart_templates = [
   chart_NUPL, electricity_price, s2f_price,
   chart_price_ma, yoy_return, cagr_overview,
   chart_m0, chart_equities, chart_gold, chart_promo,
-  chart_rv, chart_on_chain, chart_sats_per_dollar,
+  chart_rv_metals,chart_rv_stocks,chart_rv_m0 chart_on_chain, chart_sats_per_dollar,
   chart_hashrate_price, chart_transactions_volume, chart_address_balance_comp,
   chart_address_balance_supply_comp, mtd_return, cagr_comparison, ytd_return
 ]
@@ -3433,4 +3565,3 @@ def create_charts(selected_metrics, chart_templates):
         # Append the figure to the list of figures
         figures.append(fig)
     return figures
-
