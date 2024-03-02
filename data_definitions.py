@@ -82,7 +82,7 @@ filter_data_columns = {
         'HashRate', '7_day_ma_HashRate', '365_day_ma_HashRate', 'PriceUSD',
         '50_day_ma_priceUSD', '200_day_ma_priceUSD', '200_day_multiple',
         '200_week_ma_priceUSD', 'TxTfrValAdjUSD', '7_day_ma_TxTfrValAdjUSD',
-        '365_day_ma_TxTfrValAdjUSD', 'RevUSD', 'AdrActCnt',
+        '365_day_ma_TxTfrValAdjUSD', 'RevUSD', 'AdrActCnt', '7_day_ma_priceUSD',
         '30_day_ma_AdrActCnt', '365_day_ma_AdrActCnt',
         '7_day_ma_TxTfrValMeanUSD', 'FeeTotUSD', 'thermocap_price','thermocap_multiple',
         'thermocap_price_multiple_4','thermocap_price_multiple_8', 'thermocap_price_multiple_16',
@@ -110,7 +110,7 @@ filter_data_columns = {
         'Global_Fiat_Supply_btc_price', 'SF_Predicted_Price', 'SF_Multiple', 'China_btc_price', 'Eurozone_btc_price',
         'Japan_btc_price', 'Switzerland_btc_price', 'India_btc_price', 'Australia_btc_price',
         'Russia_btc_price', 'MSFT_mc_btc_price', 'GOOGL_mc_btc_price', 'NVDA_mc_btc_price', 'AMZN_mc_btc_price',
-        'V_mc_btc_price', 'TSLA_mc_btc_price', 'JPM_mc_btc_price', 'PYPL_mc_btc_price', 'GS_mc_btc_price',
+        'V_mc_btc_price', 'TSLA_mc_btc_price', 'JPM_mc_btc_price', 'PYPL_mc_btc_price', 'GS_mc_btc_price', 'META_mc_btc_price',
         'gold_marketcap_btc_price', 'silver_marketcap_btc_price', 'gold_jewellery_marketcap_btc_price', 'gold_private_investment_marketcap_btc_price',
         'gold_official_country_holdings_marketcap_btc_price', 'gold_other_marketcap_btc_price', 'sat_per_dollar', 'Lagged_Energy_Value',
         'Hayes_Network_Price_Per_BTC','Electricity_Cost','Bitcoin_Production_Cost','CM_Energy_Value','Energy_Value_Multiple','SF_Predicted_Price_MA365'
