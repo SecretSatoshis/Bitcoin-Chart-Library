@@ -3516,7 +3516,7 @@ chart_templates = [
   chart_NUPL, electricity_price, s2f_price,
   chart_price_ma, yoy_return, cagr_overview,
   chart_m0, chart_equities, chart_gold, chart_promo,
-  chart_rv_metals,chart_rv_stocks,chart_rv_m0 chart_on_chain, chart_sats_per_dollar,
+  chart_rv_metals, chart_rv_stocks, chart_rv_m0, chart_on_chain, chart_sats_per_dollar,
   chart_hashrate_price, chart_transactions_volume, chart_address_balance_comp,
   chart_address_balance_supply_comp, mtd_return, cagr_comparison, ytd_return
 ]
