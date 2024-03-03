@@ -181,49 +181,61 @@ def calculate_metal_market_caps(data, gold_silver_supply):
   return data
 
 def calculate_gold_market_cap_breakdown(data, gold_supply_breakdown):
-      gold_marketcap_billion_usd = data['gold_marketcap_billion_usd'].iloc[-1]  # get the latest value
-      for i, row in gold_supply_breakdown.iterrows():
-          category = row['Gold Supply Breakdown']
-          percentage_of_market = row['Percentage Of Market']
-
-          # Compute the market cap for this category
-          category_marketcap_billion_usd = gold_marketcap_billion_usd * (percentage_of_market / 100.0)
-
-          # Add a new metric to the data
-          metric_name = 'gold_marketcap_' + category.replace(' ', '_').lower() + '_billion_usd'
-          data[metric_name] = category_marketcap_billion_usd
-      return data
-
-def calculate_btc_price_to_surpass_metal_categories(data, gold_supply_breakdown):
-  new_columns = {}
-
-  # Calculate the number of rows in the DataFrame for creating Series
-  num_rows = len(data)
-  data['SplyCur'] = data['SplyCur'].fillna(method='ffill')  # Forward fill
-
-
-  # Gold calculations
+  # Use the latest value of gold market cap
   gold_marketcap_billion_usd = data['gold_marketcap_billion_usd'].iloc[-1]
-  new_columns['gold_marketcap_btc_price'] = pd.Series([gold_marketcap_billion_usd / data['SplyCur'].iloc[-2]] * num_rows)
-
-  # Gold subcategories
+  
   for i, row in gold_supply_breakdown.iterrows():
       category = row['Gold Supply Breakdown']
       percentage_of_market = row['Percentage Of Market']
       category_marketcap_billion_usd = gold_marketcap_billion_usd * (percentage_of_market / 100.0)
+  
+      # Create the metric name
+      metric_name = 'gold_marketcap_' + category.replace(' ', '_').lower() + '_billion_usd'
+  
+      # Assign the calculated value to all rows in the new column
+      data[metric_name] = category_marketcap_billion_usd
+  
+  # Explicitly check if the index is a DatetimeIndex; fix if needed
+  if not isinstance(data.index, pd.DatetimeIndex):
+      try:
+          data.index = pd.to_datetime(data.index)
+      except ValueError as e:
+          print(f"Failed to convert index back to DatetimeIndex: {e}")
+  
+  return data
 
-      # Create metric name
-      metric_name = 'gold_' + category.replace(' ', '_').lower() + '_marketcap_btc_price'
-      new_columns[metric_name] = pd.Series([category_marketcap_billion_usd / data['SplyCur'].iloc[-2]] * num_rows)
+def calculate_btc_price_to_surpass_metal_categories(data, gold_supply_breakdown):
+  # Ensure 'SplyExpFut10yr' is forward filled to avoid NaN values
+  data['SplyExpFut10yr'].ffill(inplace=True)
+
+  # Early return if 'SplyExpFut10yr' for the latest row is zero or NaN to avoid division by zero
+  if data['SplyExpFut10yr'].iloc[-1] == 0 or pd.isna(data['SplyExpFut10yr'].iloc[-1]):
+      print("Warning: 'SplyExpFut10yr' is zero or NaN for the latest row. Skipping calculations.")
+      return data
+
+  new_columns = {}  # Use a dictionary to store new columns
+
+  # Calculating BTC prices required to match or surpass market caps
+  gold_marketcap_billion_usd = data['gold_marketcap_billion_usd'].iloc[-1]
+  new_columns['gold_marketcap_btc_price'] = gold_marketcap_billion_usd / data['SplyExpFut10yr']
+
+  # Iterating through gold supply breakdown to calculate specific categories
+  for i, row in gold_supply_breakdown.iterrows():
+      category = row['Gold Supply Breakdown'].replace(' ', '_').lower()
+      percentage_of_market = row['Percentage Of Market'] / 100.0
+      new_columns[f'gold_{category}_marketcap_btc_price'] = (gold_marketcap_billion_usd * percentage_of_market) / data['SplyExpFut10yr']
 
   # Silver calculations
   silver_marketcap_billion_usd = data['silver_marketcap_billion_usd'].iloc[-1]
-  new_columns['silver_marketcap_btc_price'] = pd.Series([silver_marketcap_billion_usd / data['SplyCur'].iloc[-2]] * num_rows)
+  new_columns['silver_marketcap_btc_price'] = silver_marketcap_billion_usd / data['SplyExpFut10yr']
 
-  # Use pd.concat to add the new columns to the DataFrame
-  data = pd.concat([data, pd.DataFrame(new_columns)], axis=1)
-  print(data.tail(5))
+  # Convert the dictionary to a DataFrame and concatenate it with the original DataFrame
+  new_columns_df = pd.DataFrame(new_columns, index=data.index)
+  data = pd.concat([data, new_columns_df], axis=1)
+
   return data
+
+
 
 def calculate_btc_price_to_surpass_fiat(data, fiat_money_data):
       for i, row in fiat_money_data.iterrows():
@@ -526,22 +538,34 @@ def calculate_time_changes(data, periods):
     return changes
 
 def get_data(tickers, start_date):
-    coindata = get_coinmetrics_onchain('btc.csv')
-    coindata['time'] = pd.to_datetime(coindata['time'])  # convert to datetime type
-    prices = get_price(tickers, start_date)
-    marketcaps = get_marketcap(tickers, start_date)
-    fear_greed_index = get_fear_and_greed_index()
-    miner_data = get_miner_data("https://docs.google.com/spreadsheets/d/1GXaY6XE2mx5jnCu5uJFejwV95a0gYDJYHtDE0lmkGeA/edit?usp=sharing")
-    data = pd.merge(coindata, prices, on='time', how='left')
-    data = pd.merge(data, miner_data, on='time', how='left')
-    data = pd.merge(data, marketcaps, on='time', how='left')
-    data = pd.merge(data, fear_greed_index, on='time', how='left')
+  # Placeholder functions to simulate data fetching
+  coindata = get_coinmetrics_onchain('btc.csv')
+  prices = get_price(tickers, start_date)
+  marketcaps = get_marketcap(tickers, start_date)
+  fear_greed_index = get_fear_and_greed_index()
+  miner_data = get_miner_data("https://docs.google.com/spreadsheets/d/1GXaY6XE2mx5jnCu5uJFejwV95a0gYDJYHtDE0lmkGeA/edit?usp=sharing")
 
-    # Set the index to 'time'
-    data.set_index('time', inplace=True)
+  # Ensure 'time' is datetime and set as index for each DataFrame
+  datasets = [coindata, prices, marketcaps, fear_greed_index, miner_data]
+  for dataset in datasets:
+      dataset['time'] = pd.to_datetime(dataset['time'])
+      dataset.set_index('time', inplace=True)
 
-    print("All Raw Data Has Been Fetched & Mergered")
-    return data
+  # Merge datasets using a consistent datetime index
+  data = coindata
+  for dataset in datasets[1:]:
+      data = data.merge(dataset, left_index=True, right_index=True, how='left')
+
+  # Check for and drop duplicates to ensure a clean dataset
+  if data.index.duplicated().any():
+      print("Warning: Duplicate timestamps found. Dropping duplicates.")
+      data = data[~data.index.duplicated()]
+
+  # Forward fill to handle missing values
+  data.ffill(inplace=True)
+
+  
+  return data
 
 def calculate_all_changes(data):
     # Define the periods for which we want to calculate changes
