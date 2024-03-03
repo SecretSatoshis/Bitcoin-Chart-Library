@@ -40,8 +40,6 @@ data = data_format.electric_price_models(data)
 
 # Forward fill the data for all columns
 data.ffill(inplace=True)
-today_date = pd.Timestamp(datetime.date.today())
-data = data.loc[:today_date]
 
 # Flatten the list of columns from the dictionary
 columns_to_keep = [item for sublist in filter_data_columns.values() for item in sublist]
