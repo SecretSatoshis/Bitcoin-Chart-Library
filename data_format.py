@@ -8,6 +8,7 @@ from pandas.tseries.offsets import MonthEnd
 from datetime import datetime
 from datetime import timedelta
 import time
+import yfinance as yf
 
 def get_coinmetrics_onchain(endpoint):
     url = f'https://raw.githubusercontent.com/coinmetrics/data/master/csv/{endpoint}'
@@ -50,41 +51,27 @@ def get_price(tickers, start_date):
       return data
 
 def get_marketcap(tickers, start_date):
-    date_range = pd.date_range(start=start_date, end=pd.to_datetime('today'))
-    data = pd.DataFrame(date_range, columns=['time'])
+    data = pd.DataFrame()
+    end_date = pd.to_datetime('today') - pd.Timedelta(days=1)  # Adjust to 'yesterday' to ensure data availability
 
-    # Only get market cap for the tickers in the 'stocks' category
-    stock_tickers = tickers['stocks']
+    for ticker in tickers['stocks']:
+        stock = yf.Ticker(ticker)
+        hist = stock.history(start=start_date, end=end_date)
+        market_cap = stock.info['marketCap']
 
-    for ticker in stock_tickers:
-      quote_table = None  # Initialize quote_table to None
-      try:
-        quote_table = si.get_quote_table(ticker)
-        market_cap_str = quote_table["Market Cap"]
+        # Create a DataFrame for the market cap data
+        mc_data = pd.DataFrame({
+            'time': pd.date_range(start=start_date, end=end_date),
+            f'{ticker}_MarketCap': [market_cap] * len(pd.date_range(start=start_date, end=end_date))
+        })
 
-        # Convert market cap to numeric
-        if 'T' in market_cap_str:
-          market_cap = float(market_cap_str.replace('T', '')) * 1e12
-        elif 'B' in market_cap_str:
-          market_cap = float(market_cap_str.replace('B', '')) * 1e9
-        elif 'M' in market_cap_str:
-          market_cap = float(market_cap_str.replace('M', '')) * 1e6
-        elif 'K' in market_cap_str:
-          market_cap = float(market_cap_str.replace('K', '')) * 1e3
+        if data.empty:
+            data = mc_data
         else:
-          market_cap = float(market_cap_str)
+            data = pd.merge(data, mc_data, on='time', how='outer')
 
-        # Create a new column for this ticker's market cap and backfill it with the current market cap
-        data[f'{ticker}_MarketCap'] = [market_cap
-                                       ] + [None] * (len(date_range) - 1)
-        data[f'{ticker}_MarketCap'] = data[f'{ticker}_MarketCap'].ffill()
-      except Exception as e:
-        print(f"Could not fetch data for {ticker}. Reason: {str(e)}")
-        print(f"Quote table for {ticker}: {quote_table}")
-        data[f'{ticker}_MarketCap'] = [None] * len(date_range)
-    print("Yahoo Finance Marketcap Data Call Completed")
     return data
-
+    
 def get_miner_data(google_sheet_url):
     try:
       # Constructing the CSV export URL from the Google Sheets URL
