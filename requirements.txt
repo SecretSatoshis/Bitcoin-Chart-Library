@@ -5,3 +5,4 @@ yahoo_fin
 requests
 kaleido
 scipy
+yfinance
