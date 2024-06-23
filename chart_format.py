@@ -2,8 +2,8 @@ import plotly.graph_objects as go
 import plotly.io as pio
 import pandas as pd
 import os
+import copy
 
-# Create Line Chart Functoin
 def create_line_chart(chart_template, selected_metrics):
   # Check for the presence of filter_start_date in the template
   if 'filter_start_date' in chart_template and 'filter_metric' in chart_template:
@@ -32,8 +32,8 @@ def create_line_chart(chart_template, selected_metrics):
 
   # Define Colors For Line Charts Items
   colors = [
-    '#7149C6', '#0079FF', '#FF0060', '#22A699', '#8c564b', '#e377c2',
-    '#7f7f7f', '#bcbd22', '#17becf'
+      '#7149C6', '#0079FF', '#FF0060', '#22A699', '#8c564b', '#e377c2',
+      '#7f7f7f', '#bcbd22', '#17becf'
   ]
 
   # Create an empty Plotly Figure object
@@ -41,156 +41,170 @@ def create_line_chart(chart_template, selected_metrics):
 
   # Add line traces to the figure for each item in y_data
   for i, y_item in enumerate(y_data):
-    line_color = colors[
-      i % len(colors)] if y_item['data'] != 'PriceUSD' else '#FF9900'
-    fig.add_trace(
-      go.Scatter(x=x,
-                 y=selected_metrics[y_item['data']],
-                 mode='lines',
-                 name=y_item['name'],
-                 line=dict(color=line_color),
-                 yaxis=y_item['yaxis'],
-                 hovertemplate='%{y:,.2f}<extra></extra>'))
+      line_color = colors[
+          i % len(colors)] if y_item['data'] != 'PriceUSD' else '#FF9900'
+      fig.add_trace(
+          go.Scatter(x=x,
+                     y=selected_metrics[y_item['data']],
+                     mode='lines',
+                     name=y_item['name'],
+                     line=dict(color=line_color),
+                     yaxis=y_item['yaxis'],
+                     hovertemplate='%{y:,.2f}<extra></extra>'))
+  # Extend x-axis range by one year into the future
+  max_date = selected_metrics.index.max()
+  extended_max_date = max_date + pd.DateOffset(years=1)
+  fig.update_xaxes(range=[selected_metrics.index.min(), extended_max_date])
 
   # Update the layout of the figure with various styling options
   fig.update_layout(
-    title=dict(text=title, x=0.5, xanchor='center', y=0.98),
-    xaxis_title=x_label,
-    yaxis_title=y1_label,
-    yaxis=dict(showgrid=False, type=y1_type, autorange=True),
-    yaxis2=dict(title=y2_label,
-                overlaying='y',
-                side='right',
-                showgrid=False,
-                type=y2_type,
-                autorange=True),
-    plot_bgcolor='rgba(255, 255, 255, 1)',
-    xaxis=dict(showgrid=False,
-               tickformat='%B-%d-%Y',
-               rangeslider_visible=False,
-               rangeselector=dict(buttons=list([
-                 dict(count=1, label="1m", step="month", stepmode="backward"),
-                 dict(count=6, label="6m", step="month", stepmode="backward"),
-                 dict(count=1, label="YTD", step="year", stepmode="todate"),
-                 dict(count=1, label="1y", step="year", stepmode="backward"),
-                 dict(count=2, label="2y", step="year", stepmode="backward"),
-                 dict(count=3, label="3y", step="year", stepmode="backward"),
-                 dict(count=5, label="5y", step="year", stepmode="backward"),
-                 dict(count=10, label="10y", step="year", stepmode="backward"),
-                 dict(step="all")
-               ])),
-               autorange=True),
-    hovermode='x',
-    autosize=True,
-    legend=dict(orientation='h',
-                yanchor='bottom',
-                y=-0.15,
-                xanchor='center',
-                x=0.5),
-    template='plotly_white',
-    updatemenus=[
-      go.layout.Updatemenu(buttons=list([
-        dict(label="Y1-axis: Linear",
-             method="relayout",
-             args=["yaxis.type", "linear"]),
-        dict(label="Y1-axis: Log",
-             method="relayout",
-             args=["yaxis.type", "log"]),
-        dict(label="Y2-axis: Linear",
-             method="relayout",
-             args=["yaxis2.type", "linear"]),
-        dict(label="Y2-axis: Log",
-             method="relayout",
-             args=["yaxis2.type", "log"])
-      ]),
-                           showactive=False,
-                           type="buttons",
-                           direction="right",
-                           x=-0.1,
-                           xanchor="left",
-                           y=-0.15,
-                           yanchor="top")
-    ],
-    width=1400,
-    height=700,
-    margin=dict(l=0, r=0, b=0, t=100, pad=2),
-    font=dict(family="PT Sans Narrow", size=14, color="black"))
+      title=dict(text=title, x=0.5, xanchor='center', y=0.98),
+      xaxis_title=x_label,
+      yaxis_title=y1_label,
+      yaxis=dict(showgrid=False, type=y1_type, autorange=True),
+      yaxis2=dict(title=y2_label,
+                  overlaying='y',
+                  side='right',
+                  showgrid=False,
+                  type=y2_type,
+                  autorange=True),
+      plot_bgcolor='rgba(255, 255, 255, 1)',
+      xaxis=dict(showgrid=False,
+                 tickformat='%B-%d-%Y',
+                 rangeslider_visible=False,
+                 rangeselector=dict(buttons=list([
+                     dict(count=1, label="1m", step="month", stepmode="backward"),
+                     dict(count=6, label="6m", step="month", stepmode="backward"),
+                     dict(count=1, label="YTD", step="year", stepmode="todate"),
+                     dict(count=1, label="1y", step="year", stepmode="backward"),
+                     dict(count=2, label="2y", step="year", stepmode="backward"),
+                     dict(count=3, label="3y", step="year", stepmode="backward"),
+                     dict(count=5, label="5y", step="year", stepmode="backward"),
+                     dict(count=10, label="10y", step="year", stepmode="backward"),
+                     dict(step="all")
+                 ])),
+                 autorange=True),
+      hovermode='x',
+      autosize=True,
+      legend=dict(orientation='h',
+                  yanchor='bottom',
+                  y=-0.15,
+                  xanchor='center',
+                  x=0.5),
+      template='plotly_white',
+      updatemenus=[
+          go.layout.Updatemenu(buttons=list([
+              dict(label="Y1-axis: Linear",
+                   method="relayout",
+                   args=["yaxis.type", "linear"]),
+              dict(label="Y1-axis: Log",
+                   method="relayout",
+                   args=["yaxis.type", "log"]),
+              dict(label="Y2-axis: Linear",
+                   method="relayout",
+                   args=["yaxis2.type", "linear"]),
+              dict(label="Y2-axis: Log",
+                   method="relayout",
+                   args=["yaxis2.type", "log"])
+          ]),
+              showactive=False,
+              type="buttons",
+              direction="right",
+              x=-0.1,
+              xanchor="left",
+              y=-0.15,
+              yanchor="top")
+      ],
+      width=1400,
+      height=700,
+      margin=dict(l=0, r=0, b=0, t=100, pad=2),
+      font=dict(family="PT Sans Narrow", size=14, color="black"))
 
   fig.update_layout(yaxis=dict(tickformat=",.2f"))
 
+  # Add the lines below to extend the x-axis
+  max_date = selected_metrics.index.max()
+  extended_max_date = max_date + pd.DateOffset(years=1)
+  fig.update_xaxes(range=[selected_metrics.index.min(), extended_max_date])
+
+  # Add these lines to extend the x-axis by one year
+  max_date = selected_metrics.index.max()
+  extended_max_date = max_date + pd.DateOffset(years=1)
+  fig.update_xaxes(range=[selected_metrics.index.min(), extended_max_date])
+
   # Add event annotations and lines to the figure
   if 'events' in chart_template:
-    for event in chart_template['events']:
-      event_dates = pd.to_datetime(event['dates'])
-      orientation = event.get('orientation', 'v')
-      for date in event_dates:
-        if orientation == 'v':  # vertical line
-          fig.add_shape(type="line",
-                        xref="x",
-                        yref="paper",
-                        x0=date.strftime("%Y-%m-%d"),
-                        y0=0,
-                        x1=date.strftime("%Y-%m-%d"),
-                        y1=1,
-                        line=dict(color="black", width=1, dash="dash"))
-        elif orientation == 'h':  # horizontal line
-          y_value = event.get('y_value', None)
-          if y_value:  # make sure y_value is provided and is not zero
-            fig.add_shape(type="line",
-                          xref="paper",
-                          yref="y",
-                          x0=0,
-                          y0=y_value,
-                          x1=1,
-                          y1=y_value,
-                          line=dict(color="black", width=1, dash="dash"))
-        fig.add_annotation(
-          x=date.strftime("%Y-%m-%d"),
-          y=5,  # Place the annotation at the bottom of the y-axis
-          text=event['name'],
-          showarrow=False,
-          font=dict(color="black"),
-          xanchor="right",
-          yanchor=
-          "top"  # Align the top edge of the annotation with the y position
-        )
+      alternate_height = [0, 0.2]  # Heights for alternating annotations
+      for index, event in enumerate(chart_template['events']):
+          event_dates = pd.to_datetime(event['dates'])
+          orientation = event.get('orientation', 'v')
+          for date in event_dates:
+              if orientation == 'v':  # vertical line
+                  fig.add_shape(type="line",
+                                xref="x",
+                                yref="paper",
+                                x0=date.strftime("%Y-%m-%d"),
+                                y0=0,
+                                x1=date.strftime("%Y-%m-%d"),
+                                y1=1,
+                                line=dict(color="black", width=1, dash="dash"))
+              elif orientation == 'h':  # horizontal line
+                  y_value = event.get('y_value', None)
+                  if y_value:  # make sure y_value is provided and is not zero
+                      fig.add_shape(type="line",
+                                    xref="paper",
+                                    yref="y",
+                                    x0=0,
+                                    y0=y_value,
+                                    x1=1,
+                                    y1=y_value,
+                                    line=dict(color="black", width=1, dash="dash"))
+              annotation_y = alternate_height[index % len(alternate_height)]
+              fig.add_annotation(
+                  x=date.strftime("%Y-%m-%d"),
+                  y=annotation_y,
+                  text=event['name'],
+                  showarrow=False,
+                  font=dict(color="black"),
+                  xanchor="left",
+                  yanchor="top"  # Align the top edge of the annotation with the y position
+              )
 
   # Add watermark annotation to the figure
   fig.add_annotation(
-    xref="paper",
-    yref="paper",
-    x=0.5,
-    y=0.5,
-    text="SecretSatoshis.com",
-    showarrow=False,
-    font=dict(size=50, color="rgba(128, 128, 128, 0.5)"),
-    align="center",
+      xref="paper",
+      yref="paper",
+      x=0.5,
+      y=0.5,
+      text="SecretSatoshis.com",
+      showarrow=False,
+      font=dict(size=50, color="rgba(128, 128, 128, 0.5)"),
+      align="center",
   )
   # Add logo image as an annotation
   fig.add_layout_image(
-    dict(
-      source=
-      "https://secretsatoshis.github.io/Bitcoin-Chart-Library/Secret_Satoshis_Logo.png",  # Ensure this path is correct
-      x=0.0,
-      y=1.2,
-      sizex=0.1,
-      sizey=0.1,  # Adjust size of the logo as needed
-      xanchor="left",
-      yanchor="top"))
+      dict(
+          source="https://secretsatoshis.github.io/Bitcoin-Chart-Library/Secret_Satoshis_Logo.png",  # Ensure this path is correct
+          x=0.0,
+          y=1.2,
+          sizex=0.1,
+          sizey=0.1,  # Adjust size of the logo as needed
+          xanchor="left",
+          yanchor="top"))
   fig.add_annotation(
-    text=data_source_text,  # Text from the chart template
-    xref="paper",
-    yref="paper",
-    x=1,
-    y=-0.2,  # Position at the bottom right
-    xanchor="right",
-    yanchor="bottom",
-    showarrow=False,
-    font=dict(family="Arial", size=12, color="#666"),
-    align="right",
+      text=data_source_text,  # Text from the chart template
+      xref="paper",
+      yref="paper",
+      x=1,
+      y=-0.2,  # Position at the bottom right
+      xanchor="right",
+      yanchor="bottom",
+      showarrow=False,
+      font=dict(family="PT Sans Narrow", size=12, color="#666"),
+      align="right",
   )
   return fig
-
+  
 # Create Days Since Chart Function
 def create_days_since_chart(drawdown_data, chart_template, filename='chart.html'):
   colors = [
@@ -339,7 +353,7 @@ def create_days_since_chart(drawdown_data, chart_template, filename='chart.html'
       xanchor="right",
       yanchor="bottom",
       showarrow=False,
-      font=dict(family="Arial", size=12, color="#666"),
+      font=dict(family="PT Sans Narrow", size=12, color="#666"),
       align="right",
   )
 
@@ -389,7 +403,7 @@ chart_supply = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20',],
     'orientation': 'v'
   }]
 }
@@ -431,7 +445,7 @@ chart_transactions = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -509,7 +523,7 @@ chart_hashrate = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -579,7 +593,7 @@ chart_price = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -625,9 +639,9 @@ chart_transferred_value = {
   'x_data':
   'time',
   'y1_type':
-  'linear',
-  'y2_type':
   'log',
+  'y2_type':
+  'linear',
   'y_data': [
     {
       'name': 'Bitcoin Price',
@@ -666,7 +680,7 @@ chart_transferred_value = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -712,9 +726,9 @@ chart_miner_revenue = {
   'x_data':
   'time',
   'y1_type':
-  'linear',
-  'y2_type':
   'log',
+  'y2_type':
+  'linear',
   'y_data': [
     {
       'name': 'Bitcoin Price',
@@ -753,7 +767,7 @@ chart_miner_revenue = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -836,7 +850,7 @@ chart_active_addresses = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -914,7 +928,7 @@ chart_transaction_size = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -987,7 +1001,7 @@ chart_transaction_fee_USD = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -1090,7 +1104,7 @@ chart_address_balance = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -1163,7 +1177,7 @@ chart_1_year_supply = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -1257,7 +1271,7 @@ macro_supply = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -1351,7 +1365,7 @@ chart_thermocap_multiple = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -1439,7 +1453,7 @@ chart_realizedcap_multiple = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -1517,7 +1531,7 @@ chart_nvt_price = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -1602,7 +1616,7 @@ electricity_price = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -1679,7 +1693,7 @@ s2f_price = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -1752,7 +1766,7 @@ chart_NUPL = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -1840,7 +1854,7 @@ chart_price_ma = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -2103,7 +2117,7 @@ chart_sats_per_dollar = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -2205,7 +2219,7 @@ chart_m0 = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -2311,7 +2325,7 @@ chart_equities = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -2401,7 +2415,7 @@ chart_gold = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -2487,7 +2501,7 @@ chart_promo = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -2569,7 +2583,7 @@ chart_rv_metals = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -2655,7 +2669,7 @@ chart_rv_stocks = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -2741,7 +2755,7 @@ chart_rv_m0 = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -2827,7 +2841,7 @@ chart_on_chain = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -2966,7 +2980,7 @@ chart_hashrate_price = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -3011,6 +3025,10 @@ chart_hashrate_price = {
 chart_transactions_volume = {
   'x_data':
   'time',
+  'y1_type':
+  'linear',
+  'y2_type':
+  'linear',
   'y_data': [{
     'name': 'Tx Count',
     'data': 'TxCnt',
@@ -3052,162 +3070,7 @@ chart_transactions_volume = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Launch',
-    'dates': ['2010-07-01'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Hack',
-    'dates': ['2011-06-11'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Bankrupt',
-    'dates': ['2014-02-01'],
-    'orientation': 'v'
-  }, {
-    'name': 'BitLicense',
-    'dates': ['2015-08-08'],
-    'orientation': 'v'
-  }, {
-    'name': 'CME Futures',
-    'dates': ['2017-12-17'],
-    'orientation': 'v'
-  }, {
-    'name': 'Bitcoin Winter',
-    'dates': ['2018-12-15'],
-    'orientation': 'v'
-  }, {
-    'name': 'Coinbase IPO',
-    'dates': ['2021-04-14'],
-    'orientation': 'v'
-  }, {
-    'name': 'FTX Bankrupt',
-    'dates': ['2022-11-11'],
-    'orientation': 'v'
-  },{
-    'name': 'Spot ETF Launch',
-    'dates': ['2024-01-11'],
-    'orientation': 'v'
-  }]
-}
-
-# Address Balance Count USD Chart
-chart_address_balance_comp = {
-  'x_data':
-  'time',
-  'y_data': [{
-    'name': 'Bitcon Price',
-    'data': 'PriceUSD',
-    'yaxis': 'y'
-  }, {
-    'name': 'Address Balance USD 10',
-    'data': 'AdrBalUSD10Cnt',
-    'yaxis': 'y2'
-  }, {
-    'name': 'Active Addresses',
-    'data': 'AdrActCnt',
-    'yaxis': 'y2'
-  }, {
-    'name': 'Active Addresses 30 Day MA',
-    'data': '30_day_ma_AdrActCnt',
-    'yaxis': 'y2'
-  }, {
-    'name': 'Active Addresses 365 Day MA',
-    'data': '365_day_ma_AdrActCnt',
-    'yaxis': 'y2'
-  }],
-  'title':
-  "Bitcoin Address Breakdown",
-  'x_label':
-  "Date",
-  'y1_label':
-  "Bitcoin Price (USD)",
-  'y2_label':
-  "Address Count",
-  'filename':
-  "Bitcoin_Address_Balance_Comp",
-  'chart_type':
-  'line',
-  'data_source':
-  "Data Source: CoinMetrics",
-  'events': [{
-    'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Launch',
-    'dates': ['2010-07-01'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Hack',
-    'dates': ['2011-06-11'],
-    'orientation': 'v'
-  }, {
-    'name': 'MtGox Bankrupt',
-    'dates': ['2014-02-01'],
-    'orientation': 'v'
-  }, {
-    'name': 'BitLicense',
-    'dates': ['2015-08-08'],
-    'orientation': 'v'
-  }, {
-    'name': 'CME Futures',
-    'dates': ['2017-12-17'],
-    'orientation': 'v'
-  }, {
-    'name': 'Bitcoin Winter',
-    'dates': ['2018-12-15'],
-    'orientation': 'v'
-  }, {
-    'name': 'Coinbase IPO',
-    'dates': ['2021-04-14'],
-    'orientation': 'v'
-  }, {
-    'name': 'FTX Bankrupt',
-    'dates': ['2022-11-11'],
-    'orientation': 'v'
-  },{
-    'name': 'Spot ETF Launch',
-    'dates': ['2024-01-11'],
-    'orientation': 'v'
-  }]
-}
-
-# Address Balance Count USD Chart
-chart_address_balance_supply_comp = {
-  'x_data':
-  'time',
-  'y_data': [
-    {
-      'name': 'Address Balance With +10 USD',
-      'data': 'AdrBalUSD10Cnt',
-      'yaxis': 'y'
-    },
-    {
-      'name': '1+ Year Active Supply',
-      'data': 'supply_pct_1_year_plus',
-      'yaxis': 'y2'
-    },
-  ],
-  'title':
-  "Bitcoin Supply Age & Address Balance Count",
-  'x_label':
-  "Date",
-  'y1_label':
-  "Addresses With +10 USD Balance",
-  'y2_label':
-  "+1 Year Old Supply (Percentage)",
-  'filename':
-  "Bitcoin_Address_Supply_Comp",
-  'chart_type':
-  'line',
-  'data_source':
-  "Data Source: CoinMetrics",
-  'events': [{
-    'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -3330,7 +3193,7 @@ chart_supply_age = {
   "Data Source: CoinMetrics",
   'events': [{
     'name': 'Halving',
-    'dates': ['2012-11-28', '2016-07-09', '2020-05-11'],
+    'dates': ['2012-11-28', '2016-07-09', '2020-05-11','2024-04-20'],
     'orientation': 'v'
   }, {
     'name': 'MtGox Launch',
@@ -3517,51 +3380,102 @@ chart_templates = [
   chart_price_ma, yoy_return, cagr_overview,
   chart_m0, chart_equities, chart_gold, chart_promo,
   chart_rv_metals, chart_rv_stocks, chart_rv_m0, chart_on_chain, chart_sats_per_dollar,
-  chart_hashrate_price, chart_transactions_volume, chart_address_balance_comp,
-  chart_address_balance_supply_comp, mtd_return, cagr_comparison, ytd_return
+  chart_hashrate_price, chart_transactions_volume, mtd_return, cagr_comparison, ytd_return
 ]
 
-# Function to save chart as an image and also as an HTML file
 def save_chart(fig, chart_template, selected_metrics):
-    # Define the filename without extension
-    filename = chart_template['filename']
+  filename = chart_template['filename']
+  image_directory = 'Chart_Images'
+  if not os.path.exists(image_directory):
+      os.makedirs(image_directory)
+  image_path = os.path.join(image_directory, f"{filename}.png")
+  width = 2560
+  height = 1440
 
-    # Define the directory to save the images
-    image_directory = 'Chart_Images'
-    if not os.path.exists(image_directory):
-        os.makedirs(image_directory)
+  # Get the last non-NaN value and date in the dataset
+  last_date = selected_metrics.index.max()
 
-    # Define the path for the image
-    image_path = os.path.join(image_directory, f"{filename}.png")
-    width = 2560  # Example width for HD quality
-    height = 1440  # Example height for HD quality
-  
-    # Save the figure as a static image
-    fig.write_image(image_path, width=width, height=height)
+  # Set up the initial y position and offset for annotations
+  y_offset = 0.05  # Offset for each subsequent annotation
+  initial_y_position = 0.9  # Start at the top of the chart area
 
-    # Save the chart as an HTML file for interactive use
-    html_directory = 'Charts'
-    if not os.path.exists(html_directory):
-        os.makedirs(html_directory)
+  # Create a copy of the figure for annotations
+  fig_with_annotations = copy.deepcopy(fig)
 
-    # Define the path for the HTML file
-    html_filepath = os.path.join(html_directory, f"{filename}.html")
-    fig.write_html(html_filepath, auto_open=False)
+  # Add a title annotation for the values
+  fig_with_annotations.add_annotation(
+      x=last_date,
+      y=initial_y_position,
+      text="Current Chart Values",
+      showarrow=False,
+      font=dict(size=20, color="black", family="PT Sans Narrow"),
+      align="left",
+      bordercolor="black",
+      borderwidth=1,
+      borderpad=5,
+      bgcolor="rgba(255, 255, 255, 0.9)",
+      xanchor='left',
+      yanchor='top',
+      xref='x',
+      yref='paper'
+  )
 
-    # Return the paths to the saved files
-    return image_path, html_filepath
+  # Add annotations for the latest non-NaN values for both y-axes
+  y_position = initial_y_position - y_offset  # Initial y position for the first annotation
+  for y_item in chart_template['y_data']:
+      non_nan_values = selected_metrics[y_item['data']].dropna()
+      if not non_nan_values.empty:
+          latest_value = non_nan_values.iloc[-1]
+          latest_date = non_nan_values.index[-1]
+      else:
+          latest_value = np.nan
+          latest_date = last_date
+
+      line_color = next(item.line.color for item in fig.data if item.name == y_item['name'])
+
+      annotation_text = f"{y_item['name']}: {latest_value:,.2f}"
+
+      fig_with_annotations.add_annotation(
+          x=last_date,
+          y=y_position,  # Adjust y position for each annotation
+          text=annotation_text,
+          showarrow=True,
+          font=dict(size=16, color=line_color, family="PT Sans Narrow"),
+          align="left",
+          bordercolor=line_color,
+          borderwidth=1,
+          borderpad=4,
+          bgcolor="rgba(255, 255, 255, 0.9)",
+          xanchor='left',
+          yanchor='top',
+          xref='x',
+          yref='paper'
+      )
+      y_position -= y_offset  # Update y position for the next annotation
+
+  # Save annotated figure as an image
+  fig_with_annotations.write_image(image_path, width=width, height=height)
+
+  # Save original figure as HTML without annotations
+  html_directory = 'Charts'
+  if not os.path.exists(html_directory):
+      os.makedirs(html_directory)
+  html_filepath = os.path.join(html_directory, f"{filename}.html")
+  fig.write_html(html_filepath, auto_open=False)
+
+  return image_path, html_filepath
 
 # Create Charts Function
 def create_charts(selected_metrics, chart_templates):
-    figures = []
-    for chart_template in chart_templates:
-        # Call the function to create the line chart
-        fig = create_line_chart(chart_template, selected_metrics)
+  figures = []
+  for chart_template in chart_templates:
+      # Call the function to create the line chart
+      fig = create_line_chart(chart_template, selected_metrics)
 
-        # Save the chart as an image and HTML using the save_chart function
-        image_path, html_filepath = save_chart(fig, chart_template, selected_metrics)
-        print(f"Saved chart image to {image_path} and HTML to {html_filepath}")
+      # Save the chart as an image and HTML using the save_chart function
+      image_path, html_filepath = save_chart(fig, chart_template, selected_metrics)
+      print(f"Saved chart image to {image_path} and HTML to {html_filepath}")
 
-        # Append the figure to the list of figures
-        figures.append(fig)
-    return figures
+      # Append the figure to the list of figures
+      figures.append(fig)
+  return figures
