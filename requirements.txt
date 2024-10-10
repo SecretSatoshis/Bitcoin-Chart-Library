@@ -1,4 +1,4 @@
-pandas==1.5.3.0
+pandas==1.5.3
 numpy==1.21.2
 plotly
 dash
@@ -6,4 +6,5 @@ yahoo_fin
 requests
 kaleido
 scipy
+requests_html
 yfinance
