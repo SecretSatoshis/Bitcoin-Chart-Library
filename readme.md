@@ -1,6 +1,6 @@
 # Bitcoin Chart Library
 
-Welcome to the Bitcoin Chart Library, an automated system for visualizing Bitcoin data. This project leverages Python to generate dynamic and informative Bitcoin charts, using Plotly for interactive visualization and Dash to build a seamless web interface.
+Welcome to the Secret Satoshis Bitcoin Chart Library, an automated system for visualizing Bitcoin data. This project leverages Python to generate dynamic and informative Bitcoin charts, using Plotly for interactive visualization and Dash to build a seamless web interface.
 
 ## Project Overview
 
