@@ -779,9 +779,9 @@ def create_indexed_monthly_returns(selected_metrics):
 
     # Save the chart
     os.makedirs("Chart_Images", exist_ok=True)
-    os.makedirs("charts", exist_ok=True)
+    os.makedirs("Charts", exist_ok=True)
     fig.write_image("Chart_Images/Bitcoin_MTD_Return_By_Month_Indexed.png")
-    fig.write_html("charts/Bitcoin_MTD_Return_By_Month_Indexed.html")
+    fig.write_html("Charts/Bitcoin_MTD_Return_By_Month_Indexed.html")
 
     print("Chart saved as PNG and HTML.")
     return fig
@@ -1171,9 +1171,9 @@ def create_indexed_yearly_returns(selected_metrics):
 
     # Save the chart
     os.makedirs("Chart_Images", exist_ok=True)
-    os.makedirs("charts", exist_ok=True)
+    os.makedirs("Charts", exist_ok=True)
     fig.write_image("Chart_Images/Bitcoin_YTD_Return_By_Year_Indexed.png")
-    fig.write_html("charts/Bitcoin_YTD_Return_By_Year_Indexed.html")
+    fig.write_html("Charts/Bitcoin_YTD_Return_By_Year_Indexed.html")
 
     return fig
 
