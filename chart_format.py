@@ -4,6 +4,14 @@ import pandas as pd
 import os
 import copy
 import numpy as np
+import datetime
+
+# Get the first day of the current month
+first_day_of_month = pd.Timestamp.now().replace(day=1).strftime("%Y-%m-%d")
+# Get the current month and year for chart title
+current_month_year = pd.Timestamp.now().strftime("%B %Y")  # Example: "October 2024"
+# Get current year
+current_year = pd.Timestamp.now().year
 
 
 def create_line_chart(chart_template, selected_metrics):
@@ -381,6 +389,926 @@ def create_days_since_chart(drawdown_data, chart_template):
     pio.write_html(fig, file=filepath, auto_open=False)
 
     return fig
+
+
+def create_monthly_returns(selected_metrics):
+    """
+    Plot the daily month-to-date (MTD) returns for the current month across multiple years,
+    with the current year's daily progression, the median, and the average MTD return
+    across historical years.
+
+    Parameters:
+    selected_metrics (pd.DataFrame): DataFrame containing Bitcoin price data with a 'PriceUSD' column.
+
+    Returns:
+    fig (go.Figure): Plotly figure object with the historical performance chart.
+    """
+    # Automatically detect the current month and year
+    today = datetime.date.today()
+    current_year = today.year
+    current_month = today.month
+
+    # Filter out years before 2014 to avoid skewing the data
+    selected_metrics = selected_metrics[selected_metrics.index.year >= 2014]
+
+    # Dictionary to store daily MTD returns for each year within the current month
+    daily_mtd_returns = {}
+
+    # Calculate MTD returns up to each day of the current month for each year
+    for year in selected_metrics.index.year.unique():
+        # Filter data for the current month and year
+        yearly_data = selected_metrics[
+            (selected_metrics.index.month == current_month)
+            & (selected_metrics.index.year == year)
+        ]
+
+        if not yearly_data.empty:
+            # Calculate daily MTD return for each day of the month
+            first_price = yearly_data["PriceUSD"].iloc[0]
+            daily_returns = (yearly_data["PriceUSD"] / first_price - 1) * 100
+            daily_mtd_returns[year] = daily_returns.values
+
+    # Align data by padding each year's returns to the max number of days in the month
+    max_days = max(len(v) for v in daily_mtd_returns.values())
+    for year in daily_mtd_returns:
+        if len(daily_mtd_returns[year]) < max_days:
+            daily_mtd_returns[year] = np.append(
+                daily_mtd_returns[year],
+                [np.nan] * (max_days - len(daily_mtd_returns[year])),
+            )
+
+    # Convert daily MTD returns to a DataFrame
+    daily_mtd_df = pd.DataFrame(daily_mtd_returns)
+
+    # Create a date range for the x-axis based on the current month’s max days
+    start_date = datetime.date(current_year, current_month, 1)
+    date_range = pd.date_range(start=start_date, periods=max_days).strftime("%Y-%m-%d")
+    daily_mtd_df.index = pd.to_datetime(date_range)
+
+    # Calculate the median and average MTD return for each day across historical years (excluding the current year)
+    historical_df = daily_mtd_df.drop(columns=[current_year], errors="ignore")
+    median_mtd_returns = historical_df.median(axis=1)
+    average_mtd_returns = historical_df.mean(axis=1)
+
+    # Initialize Plotly Figure
+    fig = go.Figure()
+
+    # Define color scheme for specific lines
+    current_year_color = "rgb(255,153,0)"  # Orange for the current year
+    median_color = "black"  # Black for the median line
+    average_color = "green"  # Green for the average line
+
+    # Plot historical MTD data for each year
+    for year in historical_df.columns:
+        fig.add_trace(
+            go.Scatter(
+                x=daily_mtd_df.index,
+                y=daily_mtd_df[year],
+                mode="lines",
+                name=str(year),
+                line=dict(width=1),
+                hovertemplate="MTD Return (%) %{y:,.2f} | %{fullData.name}<extra></extra>",
+                opacity=0.3,
+            )
+        )
+
+    # Plot the current year's MTD progression in orange
+    if current_year in daily_mtd_df.columns:
+        fig.add_trace(
+            go.Scatter(
+                x=daily_mtd_df.index,
+                y=daily_mtd_df[current_year],
+                mode="lines",
+                name=str(current_year),
+                line=dict(color=current_year_color, width=3),
+                hovertemplate="MTD Return (%) %{y:,.2f} | %{fullData.name}<extra></extra>",
+                opacity=1,
+            )
+        )
+
+    # Plot the median MTD return for historical data as a black dashed line
+    fig.add_trace(
+        go.Scatter(
+            x=daily_mtd_df.index,
+            y=median_mtd_returns,
+            mode="lines",
+            name="Median MTD Return",
+            line=dict(color=median_color, width=2, dash="dash"),
+            hovertemplate="Median: %{y:,.2f}%<extra></extra>",
+            opacity=0.9,
+        )
+    )
+
+    # Plot the average MTD return for historical data as a green solid line
+    fig.add_trace(
+        go.Scatter(
+            x=daily_mtd_df.index,
+            y=average_mtd_returns,
+            mode="lines",
+            name="Average MTD Return",
+            line=dict(color=average_color, width=2),
+            hovertemplate="Average: %{y:,.2f}%<extra></extra>",
+            opacity=0.9,
+        )
+    )
+
+    # Set up layout and axis titles to match the styling template
+    month_name = datetime.date(1900, current_month, 1).strftime("%B")
+    fig.update_layout(
+        title=dict(
+            text=f"Bitcoin {month_name} MTD Returns Comparison Since {selected_metrics.index.year.min()}",
+            x=0.5,
+            xanchor="center",
+            y=0.98,
+        ),
+        xaxis_title="Date",
+        yaxis_title="MTD Return (%)",
+        yaxis=dict(showgrid=False, tickformat=",.2f", autorange=True),
+        plot_bgcolor="rgba(255, 255, 255, 1)",
+        xaxis=dict(
+            showgrid=False,
+            tickformat="%b %d",
+            rangeslider_visible=False,
+            autorange=True,
+        ),
+        hovermode="x",
+        autosize=True,
+        width=1400,
+        height=700,
+        legend=dict(
+            orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5
+        ),
+        font=dict(family="PT Sans Narrow", size=14, color="black"),
+        margin=dict(l=0, r=0, b=0, t=100, pad=2),
+        template="plotly_white",
+    )
+
+    # Branding annotations
+    fig.add_annotation(
+        xref="paper",
+        yref="paper",
+        x=0.5,
+        y=0.5,
+        text="SecretSatoshis.com",
+        showarrow=False,
+        font=dict(size=50, color="rgba(128, 128, 128, 0.5)"),
+        align="center",
+    )
+    fig.add_layout_image(
+        dict(
+            source="https://secretsatoshis.github.io/Bitcoin-Chart-Library/Secret_Satoshis_Logo.png",
+            x=0.0,
+            y=1.2,
+            sizex=0.1,
+            sizey=0.1,
+            xanchor="left",
+            yanchor="top",
+        )
+    )
+    fig.add_annotation(
+        text="Data Source: CoinMetrics",
+        xref="paper",
+        yref="paper",
+        x=1,
+        y=-0.2,
+        xanchor="right",
+        yanchor="bottom",
+        showarrow=False,
+        font=dict(family="PT Sans Narrow", size=12, color="#666"),
+        align="right",
+    )
+
+    fig.write_image("Chart_images/MTD_Return_By_Year_Percentage.png")
+    fig.write_html("Charts/MTD_Return_By_Year_Percentage.html")
+
+    return fig
+
+
+def create_indexed_monthly_returns(selected_metrics):
+    """
+    Plot the daily month-to-date (MTD) returns for the current month, indexed to the current month's starting price,
+    across multiple years. Includes average and median monthly returns.
+
+    Parameters:
+    selected_metrics (pd.DataFrame): DataFrame containing Bitcoin price data with a 'PriceUSD' column.
+
+    Returns:
+    fig (go.Figure): Plotly figure object with the historical performance chart.
+    """
+    # Filter out years before 2014 to avoid skewing the data
+    selected_metrics = selected_metrics[selected_metrics.index.year >= 2014]
+
+    # Get the current month and year for plotting and data indexing
+    today = datetime.date.today()
+    current_year = today.year
+    current_month = today.month
+
+    # Dictionary to store indexed MTD prices for each year
+    indexed_mtd_prices = {}
+
+    # Get the starting price for the current month to index other years
+    current_month_data = selected_metrics[
+        (selected_metrics.index.year == current_year)
+        & (selected_metrics.index.month == current_month)
+    ]
+    if current_month_data.empty:
+        print("No data for the current month and year.")
+        return
+
+    current_start_price = current_month_data["PriceUSD"].iloc[0]
+
+    # Calculate indexed MTD prices for each year based on the current month's starting price
+    for year in selected_metrics.index.year.unique():
+        monthly_data = selected_metrics[
+            (selected_metrics.index.year == year)
+            & (selected_metrics.index.month == current_month)
+        ]
+
+        if not monthly_data.empty:
+            # Scale each year's monthly price series to the current year's monthly starting price
+            indexed_prices = (
+                monthly_data["PriceUSD"]
+                / monthly_data["PriceUSD"].iloc[0]
+                * current_start_price
+            )
+            indexed_mtd_prices[year] = indexed_prices.values
+
+    # Align data by padding each year's returns to the max number of days in the month
+    max_days = max(len(v) for v in indexed_mtd_prices.values())
+    for year in indexed_mtd_prices:
+        if len(indexed_mtd_prices[year]) < max_days:
+            indexed_mtd_prices[year] = np.append(
+                indexed_mtd_prices[year],
+                [np.nan] * (max_days - len(indexed_mtd_prices[year])),
+            )
+
+    # Convert indexed MTD prices to a DataFrame
+    daily_mtd_df = pd.DataFrame(indexed_mtd_prices)
+
+    # Create a date range for the x-axis based on the current month’s max days
+    start_date = datetime.date(current_year, current_month, 1)
+    date_range = pd.date_range(start=start_date, periods=max_days)
+    daily_mtd_df.index = date_range
+
+    # Exclude the current year from median and average calculations
+    historical_df = daily_mtd_df.drop(columns=[current_year], errors="ignore")
+    median_mtd_returns = historical_df.median(axis=1)
+    average_mtd_returns = historical_df.mean(axis=1)
+
+    # Initialize Plotly Figure
+    fig = go.Figure()
+
+    # Define color scheme
+    current_year_color = "rgb(255,153,0)"  # Orange for the current year
+    median_color = "black"  # Black for the median line
+    average_color = "green"  # Green for the average line
+
+    # Plot historical MTD data for each year
+    for year in historical_df.columns:
+        fig.add_trace(
+            go.Scatter(
+                x=daily_mtd_df.index,
+                y=daily_mtd_df[year],
+                mode="lines",
+                name=str(year),
+                hovertemplate="MTD Return ($) %{y:,.2f} | %{fullData.name}<extra></extra>",
+                opacity=0.3,
+            )
+        )
+
+    # Plot the current year's MTD progression
+    if current_year in daily_mtd_df.columns:
+        fig.add_trace(
+            go.Scatter(
+                x=daily_mtd_df.index,
+                y=daily_mtd_df[current_year],
+                mode="lines",
+                name=str(current_year),
+                line=dict(color=current_year_color, width=3),
+                hovertemplate="MTD Return ($) %{y:,.2f} | %{fullData.name}<extra></extra>",
+                opacity=1,
+            )
+        )
+
+    # Plot the median MTD return for historical data as a black dashed line
+    fig.add_trace(
+        go.Scatter(
+            x=daily_mtd_df.index,
+            y=median_mtd_returns,
+            mode="lines",
+            name="Median MTD Return",
+            line=dict(color=median_color, width=2, dash="dash"),
+            hovertemplate="Median: %{y:,.2f}<extra></extra>",
+            opacity=0.9,
+        )
+    )
+
+    # Plot the average MTD return for historical data as a green solid line
+    fig.add_trace(
+        go.Scatter(
+            x=daily_mtd_df.index,
+            y=average_mtd_returns,
+            mode="lines",
+            name="Average MTD Return",
+            line=dict(color=average_color, width=2),
+            hovertemplate="Average: %{y:,.2f}<extra></extra>",
+            opacity=0.9,
+        )
+    )
+
+    # Set up layout and axis titles to match the styling template
+    month_name = today.strftime("%B")
+    fig.update_layout(
+        title=dict(
+            text=f"Bitcoin {month_name} MTD Returns Comparison (Indexed to Current Year)",
+            x=0.5,
+            xanchor="center",
+            y=0.98,
+        ),
+        xaxis_title="Date",
+        yaxis_title="MTD Return Indexed to Current Year Start ($)",
+        plot_bgcolor="rgba(255, 255, 255, 1)",
+        xaxis=dict(showgrid=False, tickformat="%b %d", rangeslider_visible=False),
+        yaxis=dict(showgrid=False, tickformat=",.2f"),
+        hovermode="x",
+        autosize=True,
+        width=1400,
+        height=700,
+        legend=dict(
+            orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5
+        ),
+        font=dict(family="PT Sans Narrow", size=14, color="black"),
+        margin=dict(l=0, r=0, b=0, t=100, pad=2),
+        template="plotly_white",
+    )
+
+    # Branding and annotations
+    fig.add_annotation(
+        xref="paper",
+        yref="paper",
+        x=0.5,
+        y=0.5,
+        text="SecretSatoshis.com",
+        showarrow=False,
+        font=dict(size=50, color="rgba(128, 128, 128, 0.5)"),
+        align="center",
+    )
+    fig.add_layout_image(
+        dict(
+            source="https://secretsatoshis.github.io/Bitcoin-Chart-Library/Secret_Satoshis_Logo.png",
+            x=0.0,
+            y=1.2,
+            sizex=0.1,
+            sizey=0.1,
+            xanchor="left",
+            yanchor="top",
+        )
+    )
+    fig.add_annotation(
+        text="Data Source: CoinMetrics",
+        xref="paper",
+        yref="paper",
+        x=1,
+        y=-0.2,
+        xanchor="right",
+        yanchor="bottom",
+        showarrow=False,
+        font=dict(family="PT Sans Narrow", size=12, color="#666"),
+        align="right",
+    )
+
+    # Save the chart
+    os.makedirs("Chart_images", exist_ok=True)
+    os.makedirs("charts", exist_ok=True)
+    fig.write_image("Chart_images/Bitcoin_MTD_Return_By_Month_Indexed.png")
+    fig.write_html("charts/Bitcoin_MTD_Return_By_Month_Indexed.html")
+
+    print("Chart saved as PNG and HTML.")
+    return fig
+
+
+def create_yearly_returns(selected_metrics):
+    """
+    Plot the daily year-to-date (YTD) returns for each year,
+    with the current year's daily progression, the median, and the average YTD return
+    across historical years.
+
+    Parameters:
+    selected_metrics (pd.DataFrame): DataFrame containing Bitcoin price data with a 'PriceUSD' column.
+
+    Returns:
+    fig (go.Figure): Plotly figure object with the historical performance chart.
+    """
+    # Filter out years before 2014 to avoid skewing the data
+    selected_metrics = selected_metrics[selected_metrics.index.year >= 2014]
+
+    # Exclude February 29 to ensure 365 days per year
+    selected_metrics = selected_metrics[
+        ~((selected_metrics.index.month == 2) & (selected_metrics.index.day == 29))
+    ]
+
+    # Get today's year and define the current year
+    today = datetime.date.today()
+    current_year = today.year
+
+    # Dictionary to store daily YTD returns for each year
+    daily_ytd_returns = {}
+
+    # Calculate YTD returns up to each day of the year for each year
+    for year in selected_metrics.index.year.unique():
+        # Filter data for the specified year
+        yearly_data = selected_metrics[selected_metrics.index.year == year]
+
+        # Only include years with data starting on January 1
+        if (
+            not yearly_data.empty
+            and yearly_data.index[0].month == 1
+            and yearly_data.index[0].day == 1
+        ):
+            # Calculate daily YTD return for each day of the year
+            first_price = yearly_data["PriceUSD"].iloc[0]
+            daily_returns = (yearly_data["PriceUSD"] / first_price - 1) * 100
+            daily_ytd_returns[year] = daily_returns.values
+
+    # Pad each year's data to 365 days
+    max_days = 365
+    for year in daily_ytd_returns:
+        if len(daily_ytd_returns[year]) < max_days:
+            daily_ytd_returns[year] = np.append(
+                daily_ytd_returns[year],
+                [np.nan] * (max_days - len(daily_ytd_returns[year])),
+            )
+
+    # Convert daily YTD returns to a DataFrame
+    daily_ytd_df = pd.DataFrame(daily_ytd_returns)
+
+    # Create a date range for the x-axis (excluding February 29)
+    start_date = datetime.date(2024, 1, 1)
+    date_range = pd.date_range(start=start_date, periods=366).drop(
+        pd.Timestamp("2024-02-29")
+    )
+    daily_ytd_df.index = date_range
+
+    # Calculate median and average YTD return for each day across historical years
+    historical_df = daily_ytd_df.drop(columns=[current_year], errors="ignore")
+    median_ytd_returns = historical_df.median(axis=1)
+    average_ytd_returns = historical_df.mean(axis=1)
+
+    # Initialize Plotly Figure
+    fig = go.Figure()
+
+    # Plot historical YTD data for each year with default Plotly color cycle
+    for year in historical_df.columns:
+        fig.add_trace(
+            go.Scatter(
+                x=daily_ytd_df.index,
+                y=daily_ytd_df[year],
+                mode="lines",
+                name=str(year),
+                line=dict(width=1),
+                hovertemplate="YTD Return (%) %{y:,.2f} | %{fullData.name}<extra></extra>",
+                opacity=0.6,
+            )
+        )
+
+    # Plot the current year's YTD progression
+    if current_year in daily_ytd_df.columns:
+        fig.add_trace(
+            go.Scatter(
+                x=daily_ytd_df.index,
+                y=daily_ytd_df[current_year],
+                mode="lines",
+                name=str(current_year),
+                line=dict(color="rgb(255,153,0)", width=3),
+                hovertemplate="YTD Return (%) %{y:,.2f} | %{fullData.name}<extra></extra>",
+                opacity=1,
+            )
+        )
+
+    # Plot median and average YTD returns
+    fig.add_trace(
+        go.Scatter(
+            x=daily_ytd_df.index,
+            y=median_ytd_returns,
+            mode="lines",
+            name="Median YTD Return",
+            line=dict(color="black", width=2, dash="dash"),
+            hovertemplate="Median: %{y:,.2f}%<extra></extra>",
+            opacity=0.9,
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=daily_ytd_df.index,
+            y=average_ytd_returns,
+            mode="lines",
+            name="Average YTD Return",
+            line=dict(color="green", width=2),
+            hovertemplate="Average: %{y:,.2f}%<extra></extra>",
+            opacity=0.9,
+        )
+    )
+
+    # Layout setup
+    fig.update_layout(
+        title=dict(
+            text=f"Bitcoin YTD Returns Comparison Since {selected_metrics.index.year.min()}",
+            x=0.5,
+            xanchor="center",
+            y=0.98,
+        ),
+        xaxis_title="Date",
+        yaxis_title="YTD Return (%)",
+        plot_bgcolor="rgba(255, 255, 255, 1)",
+        xaxis=dict(showgrid=False, tickformat="%b %d"),
+        yaxis=dict(showgrid=False, tickformat=",.2f"),
+        hovermode="x",
+        width=1400,
+        height=700,
+        legend=dict(
+            orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5
+        ),
+        font=dict(family="PT Sans Narrow", size=14, color="black"),
+        margin=dict(l=0, r=0, b=0, t=100, pad=2),
+        template="plotly_white",
+    )
+
+    # Branding and annotations
+    fig.add_annotation(
+        xref="paper",
+        yref="paper",
+        x=0.5,
+        y=0.5,
+        text="SecretSatoshis.com",
+        showarrow=False,
+        font=dict(size=50, color="rgba(128, 128, 128, 0.5)"),
+    )
+    fig.add_layout_image(
+        dict(
+            source="https://secretsatoshis.github.io/Bitcoin-Chart-Library/Secret_Satoshis_Logo.png",
+            x=0.0,
+            y=1.2,
+            sizex=0.1,
+            sizey=0.1,
+            xanchor="left",
+            yanchor="top",
+        )
+    )
+    fig.add_annotation(
+        text="Data Source: CoinMetrics",
+        xref="paper",
+        yref="paper",
+        x=1,
+        y=-0.2,
+        xanchor="right",
+        yanchor="bottom",
+        showarrow=False,
+        font=dict(family="PT Sans Narrow", size=12, color="#666"),
+    )
+
+    fig.write_image("Chart_images/Bitcoin_YTD_Return_By_Year_Percentage.png")
+    fig.write_html("Charts/Bitcoin_YTD_Return_By_Year_Percentage.html")
+
+    return fig
+
+
+def create_indexed_yearly_returns(selected_metrics):
+    """
+    Plot the daily year-to-date (YTD) returns for each year, indexed to the current year's starting price.
+    This allows for a dollar-comparison of annual performance across multiple years, and also includes
+    average and median yearly returns for years with full data.
+
+    Parameters:
+    selected_metrics (pd.DataFrame): DataFrame containing Bitcoin price data with a 'PriceUSD' column.
+
+    Returns:
+    fig (go.Figure): Plotly figure object with the historical performance chart in dollar terms.
+    """
+    # Filter out years before 2014 to avoid skewing the data
+    selected_metrics = selected_metrics[selected_metrics.index.year >= 2014]
+
+    # Exclude February 29 entirely from the dataset to ensure 365 days per year
+    selected_metrics = selected_metrics[
+        ~((selected_metrics.index.month == 2) & (selected_metrics.index.day == 29))
+    ]
+
+    # Get today's year and define the current year for the chart
+    today = datetime.date.today()
+    current_year = today.year
+
+    # Dictionary to store indexed YTD prices for each year
+    indexed_ytd_prices = {}
+
+    # Get the starting price for the current year to index other years
+    current_start_price = selected_metrics[selected_metrics.index.year == current_year][
+        "PriceUSD"
+    ].iloc[0]
+
+    # Calculate indexed YTD prices for each year based on the current year's starting price
+    for year in selected_metrics.index.year.unique():
+        yearly_data = selected_metrics[selected_metrics.index.year == year]
+
+        # Only include completed years or the current (possibly incomplete) year
+        if yearly_data.empty or (
+            year != current_year and yearly_data.index[-1].day != 31
+        ):
+            continue
+
+        # Scale each year's price series to the current year's starting price
+        indexed_prices = (
+            yearly_data["PriceUSD"]
+            / yearly_data["PriceUSD"].iloc[0]
+            * current_start_price
+        )
+
+        # Ensure each year has exactly 365 days by padding the current year if incomplete
+        if year == current_year and len(indexed_prices) < 365:
+            indexed_ytd_prices[year] = np.pad(
+                indexed_prices.values,
+                (0, 365 - len(indexed_prices)),
+                constant_values=np.nan,
+            )
+        else:
+            indexed_ytd_prices[year] = indexed_prices.values[:365]
+
+    # Convert indexed YTD prices to a DataFrame with 365 days
+    daily_ytd_df = pd.DataFrame(indexed_ytd_prices)
+
+    # Generate a date range explicitly from January 1 to December 31, ensuring exactly 365 days
+    start_date = datetime.date(current_year, 1, 1)
+    date_range = pd.date_range(start=start_date, periods=366).drop(
+        pd.Timestamp(f"{current_year}-02-29")
+    )
+    daily_ytd_df.index = date_range  # Assign the date range to the DataFrame index
+
+    # Exclude the current year from median and average calculations
+    historical_df = daily_ytd_df.drop(columns=[current_year], errors="ignore")
+
+    # Calculate median and average
+    median_ytd_returns = historical_df.median(axis=1)
+    average_ytd_returns = historical_df.mean(axis=1)
+
+    # Initialize Plotly Figure
+    fig = go.Figure()
+
+    # Define color scheme
+    historical_color = "rgba(111, 168, 220, 1)"  # Light blue
+    current_year_color = "rgb(255,153,0)"  # Orange
+    median_color = "black"  # Black
+    average_color = "green"  # Green
+
+    # Plot historical data using default Plotly colors
+    for year in historical_df.columns:
+        fig.add_trace(
+            go.Scatter(
+                x=daily_ytd_df.index,
+                y=daily_ytd_df[year],
+                mode="lines",
+                name=str(year),
+                line=dict(width=1),  # Use default color cycle
+                hovertemplate="YTD Return ($) %{y:,.2f} | %{fullData.name}<extra></extra>",
+                opacity=0.6,
+            )
+        )
+
+    # Plot current year data
+    if current_year in daily_ytd_df.columns:
+        fig.add_trace(
+            go.Scatter(
+                x=daily_ytd_df.index,
+                y=daily_ytd_df[current_year],
+                mode="lines",
+                name=str(current_year),
+                line=dict(color=current_year_color, width=3),
+                hovertemplate="YTD Return ($) %{y:,.2f} | %{fullData.name}<extra></extra>",
+                opacity=1,
+            )
+        )
+
+    # Plot median and average lines
+    fig.add_trace(
+        go.Scatter(
+            x=daily_ytd_df.index,
+            y=median_ytd_returns,
+            mode="lines",
+            name="Median YTD Return",
+            line=dict(color=median_color, width=2, dash="dash"),
+            hovertemplate="Median: %{y:,.2f}<extra></extra>",
+            opacity=0.9,
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=daily_ytd_df.index,
+            y=average_ytd_returns,
+            mode="lines",
+            name="Average YTD Return",
+            line=dict(color=average_color, width=2),
+            hovertemplate="Average: %{y:,.2f}<extra></extra>",
+            opacity=0.9,
+        )
+    )
+
+    # Consistent layout setup
+    fig.update_layout(
+        title=dict(
+            text=f"Bitcoin YTD Returns Comparison (Indexed to Current Year)",
+            x=0.5,
+            xanchor="center",
+            y=0.98,
+        ),
+        xaxis_title="Date",
+        yaxis_title="Prices Indexed to Current Year Start ($)",
+        plot_bgcolor="rgba(255, 255, 255, 1)",
+        xaxis=dict(showgrid=False, tickformat="%b %d", rangeslider_visible=False),
+        yaxis=dict(showgrid=False, tickformat=",.2f"),
+        hovermode="x",
+        autosize=True,
+        width=1400,
+        height=700,
+        legend=dict(
+            orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5
+        ),
+        font=dict(family="PT Sans Narrow", size=14, color="black"),
+        margin=dict(l=0, r=0, b=0, t=100, pad=2),
+        template="plotly_white",
+    )
+
+    # Branding and annotations
+    fig.add_annotation(
+        xref="paper",
+        yref="paper",
+        x=0.5,
+        y=0.5,
+        text="SecretSatoshis.com",
+        showarrow=False,
+        font=dict(size=50, color="rgba(128, 128, 128, 0.5)"),
+        align="center",
+    )
+    fig.add_layout_image(
+        dict(
+            source="https://secretsatoshis.github.io/Bitcoin-Chart-Library/Secret_Satoshis_Logo.png",
+            x=0.0,
+            y=1.2,
+            sizex=0.1,
+            sizey=0.1,
+            xanchor="left",
+            yanchor="top",
+        )
+    )
+    fig.add_annotation(
+        text="Data Source: CoinMetrics",
+        xref="paper",
+        yref="paper",
+        x=1,
+        y=-0.2,
+        xanchor="right",
+        yanchor="bottom",
+        showarrow=False,
+        font=dict(family="PT Sans Narrow", size=12, color="#666"),
+        align="right",
+    )
+
+    # Save the chart
+    os.makedirs("Chart_images", exist_ok=True)
+    os.makedirs("charts", exist_ok=True)
+    fig.write_image("Chart_images/Bitcoin_YTD_Return_By_Year_Indexed.png")
+    fig.write_html("charts/Bitcoin_YTD_Return_By_Year_Indexed.html")
+
+    return fig
+
+
+# Save charts as PNG
+def save_chart(fig, chart_template, selected_metrics):
+    filename = chart_template["filename"]
+    image_directory = "Chart_Images"
+    if not os.path.exists(image_directory):
+        os.makedirs(image_directory)
+    image_path = os.path.join(image_directory, f"{filename}.png")
+    width = 3000  # Keep the width to allow more space for annotations
+    height = 1440
+
+    # Get the last non-NaN value and date in the dataset
+    last_date = selected_metrics.index.max()
+
+    # Set up the initial y position and offset for annotations
+    y_offset = 0.05  # Offset for each subsequent annotation
+    initial_y_position = 0.9  # Start near the top of the chart area for annotations
+
+    # Create a copy of the figure for annotations (to modify without affecting the original fig)
+    fig_with_annotations = copy.deepcopy(fig)
+
+    # Temporarily remove interactive elements for the image
+    fig_with_annotations.update_layout(
+        margin=dict(l=100, r=350, b=0, t=100),  # Adjust margins for better layout
+        updatemenus=[],  # Remove interactive buttons for the image
+    )
+    # Remove the 'updatemenus' attribute to eliminate buttons
+    fig_with_annotations.layout.pop("updatemenus", None)
+    # Remove the range selector and slider from the x-axis layout
+    fig_with_annotations.update_xaxes(
+        rangeslider_visible=False,  # Hide the range slider for the image
+        rangeselector=dict(visible=False),  # Hide the range selector for the image
+    )
+
+    # Add a title annotation for the current chart values
+    fig_with_annotations.add_annotation(
+        x=1.03,  # Position annotations slightly outside the plot area
+        y=initial_y_position,
+        text="Current Chart Values",
+        showarrow=False,
+        font=dict(size=20, color="black", family="PT Sans Narrow"),
+        align="left",
+        bordercolor="black",
+        borderwidth=1,
+        borderpad=5,
+        bgcolor="rgba(255, 255, 255, 0.9)",
+        xanchor="left",
+        yanchor="top",
+        xref="paper",
+        yref="paper",
+    )
+
+    # Add logo image to the figure
+    fig_with_annotations.add_layout_image(
+        dict(
+            source="https://secretsatoshis.github.io/Bitcoin-Chart-Library/Secret_Satoshis_Logo.png",
+            x=0.0,  # Top left corner position
+            y=1.07,  # Top left corner position
+            sizex=0.1,
+            sizey=0.1,
+            xanchor="left",
+            yanchor="top",
+            xref="paper",
+            yref="paper",
+            layer="above",  # Ensure the logo is above the plot elements
+        )
+    )
+
+    # Add annotations for the latest non-NaN values for each y-axis item
+    y_position = (
+        initial_y_position - y_offset
+    )  # Start position for the first annotation
+    for y_item in chart_template["y_data"]:
+        non_nan_values = selected_metrics[y_item["data"]].dropna()
+        if not non_nan_values.empty:
+            latest_value = non_nan_values.iloc[-1]
+            latest_date = non_nan_values.index[-1]
+        else:
+            latest_value = np.nan
+            latest_date = last_date
+
+        # Find the corresponding line color from the chart
+        line_color = next(
+            (item.line.color for item in fig.data if item.name == y_item["name"]),
+            "black",
+        )
+
+        annotation_text = f"{y_item['name']}: {latest_value:,.2f}"
+
+        fig_with_annotations.add_annotation(
+            x=1.03,  # Position annotations slightly outside the plot area
+            y=y_position,
+            text=annotation_text,
+            showarrow=False,
+            font=dict(size=16, color=line_color, family="PT Sans Narrow"),
+            align="left",
+            bordercolor=line_color,
+            borderwidth=1,
+            borderpad=4,
+            bgcolor="rgba(255, 255, 255, 0.9)",
+            xanchor="left",
+            yanchor="top",
+            xref="paper",
+            yref="paper",
+        )
+        y_position -= y_offset  # Update y position for the next annotation
+
+    # Save the modified figure as an image
+    fig_with_annotations.write_image(image_path, width=width, height=height)
+
+    # Save the original figure with interactive elements as HTML
+    html_directory = "Charts"
+    if not os.path.exists(html_directory):
+        os.makedirs(html_directory)
+    html_filepath = os.path.join(html_directory, f"{filename}.html")
+    fig.write_html(html_filepath, auto_open=False)
+
+    return image_path, html_filepath
+
+
+# Create Charts Function
+def create_charts(selected_metrics, chart_templates):
+    figures = []
+    for chart_template in chart_templates:
+        # Call the function to create the line chart
+        fig = create_line_chart(chart_template, selected_metrics)
+        # Save the chart as an image and HTML using the save_chart function
+        image_path, html_filepath = save_chart(fig, chart_template, selected_metrics)
+
+        # Append the figure to the list of figures
+        figures.append(fig)
+    return figures
 
 
 # Supply Chart
@@ -1657,11 +2585,6 @@ cagr_comparison = {
     "filter_start_date": "2015-05-01",
 }
 
-# Get the first day of the current month
-first_day_of_month = pd.Timestamp.now().replace(day=1).strftime("%Y-%m-%d")
-# Get the current month and year for the title
-current_month_year = pd.Timestamp.now().strftime("%B %Y")  # Example: "October 2024"
-
 # Bitcoin MTD Return Comparison
 mtd_return = {
     "x_data": "time",
@@ -1692,8 +2615,6 @@ mtd_return = {
     "filter_start_date": first_day_of_month,  # Start of the current month
 }
 
-# Bitcoin YTD Retrun Comparison
-current_year = pd.Timestamp.now().year
 ytd_return = {
     "x_data": "time",
     "y1_type": "linear",
@@ -1782,7 +2703,6 @@ chart_halvings = {
     "data_source": "Data Source: CoinMetrics",
 }
 
-
 # List Of All Chart Templates
 chart_templates = [
     chart_supply,
@@ -1821,138 +2741,3 @@ chart_templates = [
     mtd_return,
     ytd_return,
 ]
-
-
-# Save charts as PNG
-def save_chart(fig, chart_template, selected_metrics):
-    filename = chart_template["filename"]
-    image_directory = "Chart_Images"
-    if not os.path.exists(image_directory):
-        os.makedirs(image_directory)
-    image_path = os.path.join(image_directory, f"{filename}.png")
-    width = 3000  # Keep the width to allow more space for annotations
-    height = 1440
-
-    # Get the last non-NaN value and date in the dataset
-    last_date = selected_metrics.index.max()
-
-    # Set up the initial y position and offset for annotations
-    y_offset = 0.05  # Offset for each subsequent annotation
-    initial_y_position = 0.9  # Start near the top of the chart area for annotations
-
-    # Create a copy of the figure for annotations (to modify without affecting the original fig)
-    fig_with_annotations = copy.deepcopy(fig)
-
-    # Temporarily remove interactive elements for the image
-    fig_with_annotations.update_layout(
-        margin=dict(l=100, r=350, b=0, t=100),  # Adjust margins for better layout
-        updatemenus=[],  # Remove interactive buttons for the image
-    )
-    # Remove the 'updatemenus' attribute to eliminate buttons
-    fig_with_annotations.layout.pop("updatemenus", None)
-    # Remove the range selector and slider from the x-axis layout
-    fig_with_annotations.update_xaxes(
-        rangeslider_visible=False,  # Hide the range slider for the image
-        rangeselector=dict(visible=False),  # Hide the range selector for the image
-    )
-
-    # Add a title annotation for the current chart values
-    fig_with_annotations.add_annotation(
-        x=1.03,  # Position annotations slightly outside the plot area
-        y=initial_y_position,
-        text="Current Chart Values",
-        showarrow=False,
-        font=dict(size=20, color="black", family="PT Sans Narrow"),
-        align="left",
-        bordercolor="black",
-        borderwidth=1,
-        borderpad=5,
-        bgcolor="rgba(255, 255, 255, 0.9)",
-        xanchor="left",
-        yanchor="top",
-        xref="paper",
-        yref="paper",
-    )
-
-    # Add logo image to the figure
-    fig_with_annotations.add_layout_image(
-        dict(
-            source="https://secretsatoshis.github.io/Bitcoin-Chart-Library/Secret_Satoshis_Logo.png",
-            x=0.0,  # Top left corner position
-            y=1.07,  # Top left corner position
-            sizex=0.1,
-            sizey=0.1,
-            xanchor="left",
-            yanchor="top",
-            xref="paper",
-            yref="paper",
-            layer="above",  # Ensure the logo is above the plot elements
-        )
-    )
-
-    # Add annotations for the latest non-NaN values for each y-axis item
-    y_position = (
-        initial_y_position - y_offset
-    )  # Start position for the first annotation
-    for y_item in chart_template["y_data"]:
-        non_nan_values = selected_metrics[y_item["data"]].dropna()
-        if not non_nan_values.empty:
-            latest_value = non_nan_values.iloc[-1]
-            latest_date = non_nan_values.index[-1]
-        else:
-            latest_value = np.nan
-            latest_date = last_date
-
-        # Find the corresponding line color from the chart
-        line_color = next(
-            (item.line.color for item in fig.data if item.name == y_item["name"]),
-            "black",
-        )
-
-        annotation_text = f"{y_item['name']}: {latest_value:,.2f}"
-
-        fig_with_annotations.add_annotation(
-            x=1.03,  # Position annotations slightly outside the plot area
-            y=y_position,
-            text=annotation_text,
-            showarrow=False,
-            font=dict(size=16, color=line_color, family="PT Sans Narrow"),
-            align="left",
-            bordercolor=line_color,
-            borderwidth=1,
-            borderpad=4,
-            bgcolor="rgba(255, 255, 255, 0.9)",
-            xanchor="left",
-            yanchor="top",
-            xref="paper",
-            yref="paper",
-        )
-        y_position -= y_offset  # Update y position for the next annotation
-
-    # Save the modified figure as an image
-    fig_with_annotations.write_image(image_path, width=width, height=height)
-
-    # Save the original figure with interactive elements as HTML
-    html_directory = "Charts"
-    if not os.path.exists(html_directory):
-        os.makedirs(html_directory)
-    html_filepath = os.path.join(html_directory, f"{filename}.html")
-    fig.write_html(html_filepath, auto_open=False)
-
-    return image_path, html_filepath
-
-
-# Create Charts Function
-def create_charts(selected_metrics, chart_templates):
-    figures = []
-    for chart_template in chart_templates:
-        # Call the function to create the line chart
-        fig = create_line_chart(chart_template, selected_metrics)
-
-        # Save the chart as an image and HTML using the save_chart function
-        image_path, html_filepath = save_chart(fig, chart_template, selected_metrics)
-        print(f"Saved chart image to {image_path} and HTML to {html_filepath}")
-
-        # Append the figure to the list of figures
-        figures.append(fig)
-    return figures
