@@ -91,5 +91,5 @@ generated_figures = create_charts(report_data, chart_templates)
 figures.extend(generated_figures)
 
 # --- Start the Dash App --- #
-app_with_charts = generate_dash_app()
-app_with_charts.run_server(debug=True, use_reloader=False, host="0.0.0.0", port=8080)
+# app_with_charts = generate_dash_app()
+# app_with_charts.run_server(debug=True, use_reloader=False, host="0.0.0.0", port=8080)
