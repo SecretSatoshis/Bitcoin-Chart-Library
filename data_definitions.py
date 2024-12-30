@@ -2,6 +2,7 @@ import datetime
 import pandas as pd
 
 # TradFi Data
+# TradFi Data
 tickers = {
     "stocks": [
         "AAPL",
@@ -18,6 +19,11 @@ tickers = {
         "JPM",
         "PYPL",
         "GS",
+        "COIN",
+        "SQ",
+        "MSTR",
+        "MARA",
+        "RIOT",
     ],
     "etfs": [
         "BITQ",
@@ -36,8 +42,13 @@ tickers = {
         "SHY",
         "XLE",
         "FANG.AX",
+        "SPY",
+        "IEMG",
+        "AGG",
+        "WGMI",
+        "VXUS",
     ],
-    "indices": ["^GSPC", "^VIX", "^IXIC", "^TNX", "^TYX", "^FVX", "^IRX"],
+    "indices": ["^GSPC", "^VIX", "^IXIC", "^TNX", "^TYX", "^FVX", "^IRX", "^BCOM"],
     "commodities": ["GC=F", "CL=F", "SI=F"],
     "forex": [
         "DX=F",
@@ -289,6 +300,18 @@ filter_data_columns = {
         "CM_Energy_Value",
         "Energy_Value_Multiple",
         "SF_Predicted_Price_MA365",
+        "SPY_close",   # S&P 500 ETF
+        "QQQ_close",   # Nasdaq-100 ETF
+        "VTI_close",   # US Total Stock Market ETF
+        "VXUS_close",  # International Stock ETF
+        "XLK_close",   # Technology Sector ETF
+        "GLD_close",   # Gold ETF
+        "AGG_close",   # Aggregate Bond ETF
+        "^BCOM_close", # Bloomberg Commodity Index
+        "MSTR_close",  # MicroStrategy
+        "SQ_close",    # Block
+        "COIN_close",  # Coinbase
+        "WGMI_close",  # Bitcoin Miners ETF
     ]
 }
 
