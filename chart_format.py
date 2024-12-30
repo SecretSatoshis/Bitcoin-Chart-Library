@@ -2553,25 +2553,40 @@ cagr_comparison = {
     "y1_type": "linear",
     "y_data": [
         {"name": "Bitcoin", "data": "PriceUSD_4_Year_CAGR", "yaxis": "y"},
-        {"name": "Nasdaq", "data": "^IXIC_close_4_Year_CAGR", "yaxis": "y"},
-        {"name": "S&P500", "data": "^GSPC_close_4_Year_CAGR", "yaxis": "y"},
-        {"name": "XLF Financials ETF", "data": "XLF_close_4_Year_CAGR", "yaxis": "y"},
-        {"name": "XLE Energy ETF", "data": "XLE_close_4_Year_CAGR", "yaxis": "y"},
         {
-            "name": "FANG+ ETF",
-            "data": "FANG.AX_close_2_Year_CAGR",  # Using 2-Year CAGR as provided in the template
+            "name": "S&P 500 Index ETF",
+            "data": "SPY_close_4_Year_CAGR",
             "yaxis": "y",
         },
         {
-            "name": "BITQ Crypto Industry ETF",
-            "data": "BITQ_close_2_Year_CAGR",  # Using 2-Year CAGR as provided in the template
+            "name": "Nasdaq-100 ETF",
+            "data": "QQQ_close_4_Year_CAGR",
             "yaxis": "y",
         },
-        {"name": "Gold Futures", "data": "GC=F_close_4_Year_CAGR", "yaxis": "y"},
-        {"name": "US Dollar Futures", "data": "DX=F_close_4_Year_CAGR", "yaxis": "y"},
         {
-            "name": "TLT Treasury Bond ETF",
-            "data": "TLT_close_4_Year_CAGR",
+            "name": "Technology Sector ETF",
+            "data": "XLK_close_4_Year_CAGR",
+            "yaxis": "y",
+        },
+        {
+            "name": "Financials Sector ETF",
+            "data": "XLF_close_4_Year_CAGR",
+            "yaxis": "y",
+        },
+        {"name": "Gold ETF", "data": "GLD_close_4_Year_CAGR", "yaxis": "y"},
+        {
+            "name": "Aggregate Bond ETF",
+            "data": "AGG_close_4_Year_CAGR",
+            "yaxis": "y",
+        },
+        {
+            "name": "US Dollar Index",
+            "data": "DX=F_close_4_Year_CAGR",
+            "yaxis": "y",
+        },
+        {
+            "name": "Bitcoin Miners ETF",
+            "data": "WGMI_close_4_Year_CAGR",
             "yaxis": "y",
         },
     ],
@@ -2591,19 +2606,42 @@ mtd_return = {
     "y1_type": "linear",
     "y_data": [
         {"name": "Bitcoin", "data": "PriceUSD_MTD_change", "yaxis": "y"},
-        {"name": "Nasdaq", "data": "^IXIC_close_MTD_change", "yaxis": "y"},
-        {"name": "S&P500", "data": "^GSPC_close_MTD_change", "yaxis": "y"},
-        {"name": "XLF Financials ETF", "data": "XLF_close_MTD_change", "yaxis": "y"},
-        {"name": "XLE Energy ETF", "data": "XLE_close_MTD_change", "yaxis": "y"},
-        {"name": "FANG+ ETF", "data": "FANG.AX_close_MTD_change", "yaxis": "y"},
         {
-            "name": "BITQ Crypto Industry ETF",
-            "data": "BITQ_close_MTD_change",
+            "name": "S&P 500 Index ETF",
+            "data": "SPY_close_MTD_change",
             "yaxis": "y",
         },
-        {"name": "Gold Futures", "data": "GC=F_close_MTD_change", "yaxis": "y"},
-        {"name": "US Dollar Futures", "data": "DX=F_close_MTD_change", "yaxis": "y"},
-        {"name": "TLT Treasury Bond ETF", "data": "TLT_close_MTD_change", "yaxis": "y"},
+        {
+            "name": "Nasdaq-100 ETF",
+            "data": "QQQ_close_MTD_change",
+            "yaxis": "y",
+        },
+        {
+            "name": "Technology Sector ETF",
+            "data": "XLK_close_MTD_change",
+            "yaxis": "y",
+        },
+        {
+            "name": "Financials Sector ETF",
+            "data": "XLF_close_MTD_change",
+            "yaxis": "y",
+        },
+        {"name": "Gold ETF", "data": "GLD_close_MTD_change", "yaxis": "y"},
+        {
+            "name": "Aggregate Bond ETF",
+            "data": "AGG_close_MTD_change",
+            "yaxis": "y",
+        },
+        {
+            "name": "US Dollar Index",
+            "data": "DX=F_close_MTD_change",
+            "yaxis": "y",
+        },
+        {
+            "name": "Bitcoin Miners ETF",
+            "data": "WGMI_close_MTD_change",
+            "yaxis": "y",
+        },
     ],
     "title": f"Month To Date Return Comparison - {current_month_year}",
     "x_label": "Date",
@@ -2615,30 +2653,88 @@ mtd_return = {
     "filter_start_date": first_day_of_month,  # Start of the current month
 }
 
+# Shortened Year To Date Return Comparison
 ytd_return = {
     "x_data": "time",
     "y1_type": "linear",
     "y_data": [
         {"name": "Bitcoin", "data": "PriceUSD_YTD_change", "yaxis": "y"},
-        {"name": "Nasdaq", "data": "^IXIC_close_YTD_change", "yaxis": "y"},
-        {"name": "S&P500", "data": "^GSPC_close_YTD_change", "yaxis": "y"},
-        {"name": "XLF Financials ETF", "data": "XLF_close_YTD_change", "yaxis": "y"},
-        {"name": "XLE Energy ETF", "data": "XLE_close_YTD_change", "yaxis": "y"},
-        {"name": "FANG+ ETF", "data": "FANG.AX_close_YTD_change", "yaxis": "y"},
         {
-            "name": "BITQ Crypto Industry ETF",
-            "data": "BITQ_close_YTD_change",
+            "name": "S&P 500 Index ETF",
+            "data": "SPY_close_YTD_change",
             "yaxis": "y",
         },
-        {"name": "Gold Futures", "data": "GC=F_close_YTD_change", "yaxis": "y"},
-        {"name": "US Dollar Futures", "data": "DX=F_close_YTD_change", "yaxis": "y"},
-        {"name": "TLT Treasury Bond ETF", "data": "TLT_close_YTD_change", "yaxis": "y"},
+        {
+            "name": "Nasdaq-100 ETF",
+            "data": "QQQ_close_YTD_change",
+            "yaxis": "y",
+        },
+        {
+            "name": "Technology Sector ETF",
+            "data": "XLK_close_YTD_change",
+            "yaxis": "y",
+        },
+        {
+            "name": "Financials Sector ETF",
+            "data": "XLF_close_YTD_change",
+            "yaxis": "y",
+        },
+        {"name": "Gold ETF", "data": "GLD_close_YTD_change", "yaxis": "y"},
+        {
+            "name": "Aggregate Bond ETF",
+            "data": "AGG_close_YTD_change",
+            "yaxis": "y",
+        },
+        {
+            "name": "US Dollar Index",
+            "data": "DX=F_close_YTD_change",
+            "yaxis": "y",
+        },
+        {
+            "name": "Bitcoin Miners ETF",
+            "data": "WGMI_close_YTD_change",
+            "yaxis": "y",
+        },
     ],
     "title": f"Year To Date Return ({current_year})",
     "x_label": "Date",
     "y1_label": "Year To Date Return (Percentage)",
     "y2_label": "",
     "filename": "Bitcoin_YTD_Return_Comparison",
+    "chart_type": "line",
+    "data_source": "Data Source: CoinMetrics",
+    "filter_start_date": "2024-01-01",
+    "filter_metric": "time",
+}
+
+# Full list Year To Date Return Comparison
+ytd_return_full = {
+    "x_data": "time",
+    "y1_type": "linear",
+    "y_data": [
+        {"name": "BTC", "data": "PriceUSD_YTD_change", "yaxis": "y"},
+        {"name": "SPY", "data": "SPY_close_YTD_change", "yaxis": "y"},
+        {"name": "QQQ", "data": "QQQ_close_YTD_change", "yaxis": "y"},
+        {"name": "VTI", "data": "VTI_close_YTD_change", "yaxis": "y"},
+        {"name": "VXUS", "data": "VXUS_close_YTD_change", "yaxis": "y"},
+        {"name": "XLK", "data": "XLK_close_YTD_change", "yaxis": "y"},
+        {"name": "XLF", "data": "XLF_close_YTD_change", "yaxis": "y"},
+        {"name": "XLE", "data": "XLE_close_YTD_change", "yaxis": "y"},
+        {"name": "XLRE", "data": "XLRE_close_YTD_change", "yaxis": "y"},
+        {"name": "DXY", "data": "DX=F_close_YTD_change", "yaxis": "y"},
+        {"name": "GLD", "data": "GLD_close_YTD_change", "yaxis": "y"},
+        {"name": "AGG", "data": "AGG_close_YTD_change", "yaxis": "y"},
+        {"name": "BCOM", "data": "^BCOM_close_YTD_change", "yaxis": "y"},
+        {"name": "MSTR", "data": "MSTR_close_YTD_change", "yaxis": "y"},
+        {"name": "SQ", "data": "SQ_close_YTD_change", "yaxis": "y"},
+        {"name": "COIN", "data": "COIN_close_YTD_change", "yaxis": "y"},
+        {"name": "WGMI", "data": "WGMI_close_YTD_change", "yaxis": "y"},
+    ],
+    "title": f"Year To Date Return ({current_year})",
+    "x_label": "Date",
+    "y1_label": "Year To Date Return (Percentage)",
+    "y2_label": "",
+    "filename": "Bitcoin_YTD_Return_Comparison_full",
     "chart_type": "line",
     "data_source": "Data Source: CoinMetrics",
     "filter_start_date": "2024-01-01",
@@ -2703,6 +2799,56 @@ chart_halvings = {
     "data_source": "Data Source: CoinMetrics",
 }
 
+# Bitcoin Relative Valuation - Composite
+chart_rv = {
+    "x_data": "time",
+    "y_data": [
+        {"name": "Bitcoin", "data": "PriceUSD", "yaxis": "y"},
+        {"name": "Total Silver Market", "data": "silver_marketcap_btc_price", "yaxis": "y"},
+        {"name": "UK M0", "data": "United_Kingdom_btc_price", "yaxis": "y"},
+        {"name": "Meta", "data": "META_mc_btc_price", "yaxis": "y"},
+        {"name": "Amazon", "data": "AMZN_mc_btc_price", "yaxis": "y"},
+        {
+            "name": "Gold Country Holdings",
+            "data": "gold_official_country_holdings_marketcap_btc_price",
+            "yaxis": "y",
+        },
+        {"name": "NVIDIA", "data": "NVDA_mc_btc_price", "yaxis": "y"},
+        {
+            "name": "Gold Private Investment",
+            "data": "gold_private_investment_marketcap_btc_price",
+            "yaxis": "y",
+        },
+        {"name": "Apple", "data": "AAPL_mc_btc_price", "yaxis": "y"},
+        {"name": "US M0", "data": "United_States_btc_price", "yaxis": "y"},
+        {"name": "Total Gold Market", "data": "gold_marketcap_btc_price", "yaxis": "y"},
+    ],
+    "title": "Bitcoin Price Relative Valuation",
+    "x_label": "Date",
+    "y1_label": "Bitcoin Price (USD)",
+    "y2_label": "",
+    "filename": "Bitcoin_RV",
+    "chart_type": "line",
+    "data_source": "Data Source: CoinMetrics",
+    "filter_start_date": "2010-07-01",
+    "events": [
+        {
+            "name": "Halving",
+            "dates": ["2012-11-28", "2016-07-09", "2020-05-11", "2024-04-20"],
+            "orientation": "v",
+        },
+        {"name": "MtGox Launch", "dates": ["2010-07-01"], "orientation": "v"},
+        {"name": "MtGox Hack", "dates": ["2011-06-11"], "orientation": "v"},
+        {"name": "MtGox Bankruptcy", "dates": ["2014-02-01"], "orientation": "v"},
+        {"name": "BitLicense", "dates": ["2015-08-08"], "orientation": "v"},
+        {"name": "CME Futures Launch", "dates": ["2017-12-17"], "orientation": "v"},
+        {"name": "Bitcoin Winter", "dates": ["2018-12-15"], "orientation": "v"},
+        {"name": "Coinbase IPO", "dates": ["2021-04-14"], "orientation": "v"},
+        {"name": "FTX Bankruptcy", "dates": ["2022-11-11"], "orientation": "v"},
+        {"name": "Spot ETF Launch", "dates": ["2024-01-11"], "orientation": "v"},
+    ],
+}
+
 # List Of All Chart Templates
 chart_templates = [
     chart_supply,
@@ -2740,4 +2886,6 @@ chart_templates = [
     cagr_comparison,
     mtd_return,
     ytd_return,
+    ytd_return_full,
+    chart_rv,
 ]
