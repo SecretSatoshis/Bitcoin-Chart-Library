@@ -1034,13 +1034,12 @@ def create_indexed_yearly_returns(selected_metrics):
     # Convert indexed YTD prices to a DataFrame with 365 days
     daily_ytd_df = pd.DataFrame(indexed_ytd_prices)
 
-    # Generate a date range explicitly from January 1 to December 31, ensuring exactly 365 days
+    # Generate date range from January 1 to December 31 (365 days)
     start_date = datetime.date(current_year, 1, 1)
-    date_range = pd.date_range(start=start_date, periods=366).drop(
-        pd.Timestamp(f"{current_year}-02-29")
-    )
-    daily_ytd_df.index = date_range  # Assign the date range to the DataFrame index
+    date_range = pd.date_range(start=start_date, periods=365)
 
+    # Assign the date range to the DataFrame index
+    daily_ytd_df.index = date_range
     # Exclude the current year from median and average calculations
     historical_df = daily_ytd_df.drop(columns=[current_year], errors="ignore")
 
