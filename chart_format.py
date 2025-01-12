@@ -2702,7 +2702,7 @@ ytd_return = {
     "filename": "Bitcoin_YTD_Return_Comparison",
     "chart_type": "line",
     "data_source": "Data Source: CoinMetrics",
-    "filter_start_date": "2024-01-01",
+    "filter_start_date": "2025-01-01",
     "filter_metric": "time",
 }
 
@@ -2736,7 +2736,7 @@ ytd_return_full = {
     "filename": "Bitcoin_YTD_Return_Comparison_full",
     "chart_type": "line",
     "data_source": "Data Source: CoinMetrics",
-    "filter_start_date": "2024-01-01",
+    "filter_start_date": "2025-01-01",
     "filter_metric": "time",
 }
 
