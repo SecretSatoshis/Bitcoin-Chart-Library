@@ -1315,7 +1315,6 @@ chart_supply = {
     "x_data": "time",
     "y_data": [
         {"name": "Bitcion Supply", "data": "SplyCur", "yaxis": "y"},
-        {"name": "Future Supply", "data": "SplyExpFut10yr", "yaxis": "y"},
         {
             "name": "New Coins Issued 30 Day MA",
             "data": "30_day_ma_IssContNtv",
@@ -1664,7 +1663,6 @@ chart_address_balance = {
         {"name": "Address Balance USD 1k", "data": "AdrBalUSD1KCnt", "yaxis": "y2"},
         {"name": "Address Balance USD 10k", "data": "AdrBalUSD10KCnt", "yaxis": "y2"},
         {"name": "Address Balance USD 1M", "data": "AdrBalUSD1MCnt", "yaxis": "y2"},
-        {"name": "Address Balance USD 10M", "data": "AdrBalUSD10MCnt", "yaxis": "y2"},
     ],
     "title": "Address Balances",
     "x_label": "Date",
@@ -1739,7 +1737,6 @@ macro_supply = {
         {"name": "1 Hop Miner Supply", "data": "SplyMiner1HopAllNtv", "yaxis": "y2"},
         {"name": "Daily Tx Amount", "data": "TxTfrValAdjNtv", "yaxis": "y2"},
         {"name": "Current Supply", "data": "SplyCur", "yaxis": "y2"},
-        {"name": "Future Supply", "data": "SplyExpFut10yr", "yaxis": "y2"},
     ],
     "title": "Bitcoin Macro Supply",
     "x_label": "Date",
