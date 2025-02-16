@@ -20,7 +20,7 @@ tickers = {
         "PYPL",
         "GS",
         "COIN",
-        "SQ",
+        "XYZ",
         "MSTR",
         "MARA",
         "RIOT",
@@ -309,7 +309,7 @@ filter_data_columns = {
         "AGG_close",   # Aggregate Bond ETF
         "^BCOM_close", # Bloomberg Commodity Index
         "MSTR_close",  # MicroStrategy
-        "SQ_close",    # Block
+        "XYZ_close",    # Block
         "COIN_close",  # Coinbase
         "WGMI_close",  # Bitcoin Miners ETF
     ]
