@@ -2722,7 +2722,7 @@ ytd_return_full = {
         {"name": "AGG", "data": "AGG_close_YTD_change", "yaxis": "y"},
         {"name": "BCOM", "data": "^BCOM_close_YTD_change", "yaxis": "y"},
         {"name": "MSTR", "data": "MSTR_close_YTD_change", "yaxis": "y"},
-        {"name": "SQ", "data": "SQ_close_YTD_change", "yaxis": "y"},
+        {"name": "XYZ", "data": "XYZ_close_YTD_change", "yaxis": "y"},
         {"name": "COIN", "data": "COIN_close_YTD_change", "yaxis": "y"},
         {"name": "WGMI", "data": "WGMI_close_YTD_change", "yaxis": "y"},
     ],
