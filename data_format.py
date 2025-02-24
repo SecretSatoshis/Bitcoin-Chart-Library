@@ -60,45 +60,60 @@ def get_fear_and_greed_index() -> pd.DataFrame:
         return pd.DataFrame(columns=["value", "value_classification", "time"])
 
 
+
 def get_price(tickers: dict, start_date: str) -> pd.DataFrame:
-    """
-    Fetches historical stock price data for the given tickers from Yahoo Finance.
+    data_frames = []
+    end_date = datetime.today().strftime("%Y-%m-%d")
+    excluded_crypto_tickers = {
+        "ethereum",
+        "ripple",
+        "dogecoin",
+        "binancecoin",
+        "tether",
+    }
 
-    Parameters:
-    tickers (dict): A dictionary where keys are categories and values are lists of stock tickers.
-    start_date (str): The start date for fetching historical data.
+    # Create a continuous daily index (timezone-naive)
+    date_range = pd.date_range(start=start_date, end=end_date, freq="D")
 
-    Returns:
-    pd.DataFrame: DataFrame containing the historical stock price data.
-    """
-    data_frames = []  # Collect DataFrames to avoid repeated merges
     for category, ticker_list in tickers.items():
         for ticker in ticker_list:
-            try:
-                # Fetch stock data from Yahoo Finance
-                stock = si.get_data(ticker, start_date=start_date)
-                # Keep only the 'close' column
-                stock = stock[["close"]]
-                # Rename the column to include the ticker name
-                stock.columns = [f"{ticker}_close"]
-                # Resample to fill missing days using forward fill
-                stock = stock.resample("D").ffill()
-                # Add DataFrame to the list
-                data_frames.append(stock)
-            except Exception as e:
-                # Print error message for failed data fetches
-                print(
-                    f"Could not fetch data for {ticker} in category {category}. Reason: {str(e)}"
-                )
-    # Concatenate all DataFrames along the time axis
+            if category == "crypto" and ticker.lower() in excluded_crypto_tickers:
+                continue
+            for attempt in range(3):
+                try:
+                    stock = yf.Ticker(ticker)
+                    hist = stock.history(start=start_date, end=end_date)
+                    if hist.empty:
+                        raise ValueError(f"No data returned for {ticker}.")
+                    stock_data = hist[["Close"]].rename(
+                        columns={"Close": f"{ticker}_close"}
+                    )
+                    # Strip timezone from index before reindexing
+                    stock_data.index = pd.to_datetime(stock_data.index).tz_localize(
+                        None
+                    )
+                    # Reindex to daily and forward-fill
+                    stock_data = stock_data.reindex(date_range, method="ffill").fillna(
+                        method="ffill"
+                    )
+                    data_frames.append(stock_data)
+                    break
+                except Exception as e:
+                    if attempt < 2:
+                        print(f"Retrying {ticker}: {e}")
+                        time.sleep(2)
+                    else:
+                        print(f"Failed {ticker} in {category}: {e}")
+
     if data_frames:
-        data = pd.concat(data_frames, axis=1).reset_index()
-        # Rename 'index' to 'time'
+        data = pd.concat(data_frames, axis=1)
+        data.reset_index(inplace=True)
         data.rename(columns={"index": "time"}, inplace=True)
-        # Convert 'time' column to datetime type
-        data["time"] = pd.to_datetime(data["time"])
+        data["time"] = pd.to_datetime(data["time"]).dt.tz_localize(
+            None
+        )  # Ensure timezone-naive
     else:
-        data = pd.DataFrame()
+        data = pd.DataFrame(columns=["time"])
     return data
 
 
