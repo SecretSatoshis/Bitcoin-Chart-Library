@@ -4,6 +4,7 @@ from io import StringIO
 from yahoo_fin import stock_info as si
 import numpy as np
 import yfinance as yf
+from datetime import datetime, timedelta
 
 
 def get_coinmetrics_onchain(endpoint: str) -> pd.DataFrame:
