@@ -1,10 +1,13 @@
 import requests
 import pandas as pd
 from io import StringIO
-from yahoo_fin import stock_info as si
 import numpy as np
 import yfinance as yf
 from datetime import datetime, timedelta
+import time
+from data_definitions import BRK_BULK_URL, BRK_METRICS, BRK_RENAME
+import csv, io
+import os
 
 
 def get_coinmetrics_onchain(endpoint: str) -> pd.DataFrame:
@@ -59,7 +62,6 @@ def get_fear_and_greed_index() -> pd.DataFrame:
         # If an error occurs, return an empty DataFrame and print the error
         print(f"Failed to fetch Fear and Greed Index data. Reason: {e}")
         return pd.DataFrame(columns=["value", "value_classification", "time"])
-
 
 
 def get_price(tickers: dict, start_date: str) -> pd.DataFrame:
@@ -188,6 +190,136 @@ def get_miner_data(google_sheet_url: str) -> pd.DataFrame:
     return df
 
 
+def _brk_fetch_csv(metrics, index="dateindex", from_=0, timeout=120, verbose=False):
+    if verbose:
+        print(f"[BRK] fetching {len(metrics)} metrics: {metrics}")
+
+    r = requests.get(
+        BRK_BULK_URL,
+        params={
+            "metrics": ",".join(metrics),
+            "index": index,
+            "from": from_,
+            "format": "csv",
+        },
+        timeout=timeout,
+    )
+
+    if verbose:
+        print(f"[BRK] status={r.status_code} bytes={len(r.text)}")
+
+    r.raise_for_status()
+
+    rows = list(csv.reader(io.StringIO(r.text)))
+    if not rows:
+        raise ValueError("[BRK] Empty CSV response")
+
+    header = rows[0]
+    data_rows = rows[1:]
+
+    if verbose:
+        print(f"[BRK] header: {header[:8]}{' ...' if len(header) > 8 else ''}")
+        print(f"[BRK] rows: {len(data_rows)}")
+        if data_rows:
+            print(
+                f"[BRK] first row sample: {data_rows[0][:8]}{' ...' if len(data_rows[0]) > 8 else ''}"
+            )
+
+    return header, data_rows, r.text
+
+
+def get_brk_onchain(
+    start_date: str,
+    index: str = "dateindex",
+    from_: int = 0,
+    save_csv: bool = True,
+    out_path: str = "csv/brk_onchain_raw.csv",
+    verbose: bool = True,
+) -> pd.DataFrame:
+    """
+    Pull BRK metrics, align by timestamp (included in every chunk), optionally save raw CSV,
+    then return a pandas DataFrame with a 'time' column and renamed columns.
+    """
+
+    metric_list = BRK_METRICS[:]  # copy
+    if "timestamp" not in metric_list:
+        metric_list = ["timestamp"] + metric_list
+
+    # chunk to avoid 500s; timestamp always included so rows align
+    chunks = [
+        ["timestamp"] + [m for m in metric_list if m != "timestamp"][i : i + 6]
+        for i in range(0, len(metric_list) - 1, 6)
+    ]
+
+    data = {}
+    ordered_cols = ["timestamp"]
+
+    raw_parts = []  # keep each raw CSV response if you want to debug / concatenate
+
+    for chunk in chunks:
+        header, rows, raw_csv = _brk_fetch_csv(
+            chunk, index=index, from_=from_, verbose=verbose
+        )
+        raw_parts.append(raw_csv.strip())
+
+        for r in rows:
+            ts = r[0]
+            d = data.setdefault(ts, {"timestamp": ts})
+            for k, v in zip(header[1:], r[1:]):
+                d[k] = v
+
+        for c in header[1:]:
+            if c not in ordered_cols:
+                ordered_cols.append(c)
+
+    if verbose:
+        print(f"[BRK] merged rows: {len(data)}")
+        print(f"[BRK] merged cols: {len(ordered_cols)}")
+        print(f"[BRK] cols: {ordered_cols}")
+
+    # build a single CSV (date derived later in your pipeline; we keep time + metrics)
+    lines = []
+    lines.append(",".join(ordered_cols))
+    for ts in sorted(data, key=lambda x: int(float(x))):
+        row = [data[ts].get(c, "") for c in ordered_cols]
+        lines.append(",".join(map(str, row)))
+    merged_csv = "\n".join(lines)
+
+    if save_csv:
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        with open(out_path, "w", newline="") as f:
+            f.write(merged_csv + "\n")
+        if verbose:
+            print(f"[BRK] saved raw CSV -> {out_path}")
+
+    # load into pandas
+    df = pd.read_csv(StringIO(merged_csv), low_memory=False)
+
+    # timestamp -> time
+    df["time"] = pd.to_datetime(df["timestamp"].astype(float).astype(int), unit="s")
+    df.drop(columns=["timestamp"], inplace=True)
+
+    # rename to match your pipeline expectations
+    df.rename(columns=BRK_RENAME, inplace=True)
+
+    # numeric coercion
+    for c in df.columns:
+        if c != "time":
+            df[c] = pd.to_numeric(df[c], errors="coerce")
+
+    df["time"] = df["time"].dt.tz_localize(None)
+
+    if start_date:
+        df = df[df["time"] >= pd.to_datetime(start_date)]
+
+    if verbose:
+        print(f"[BRK] final df shape: {df.shape}")
+        print(f"[BRK] final cols: {list(df.columns)}")
+        print(df.tail(3))
+
+    return df
+
+
 def get_data(tickers, start_date):
     """
     Fetch and consolidate multiple financial and on-chain datasets for analysis.
@@ -200,7 +332,7 @@ def get_data(tickers, start_date):
     pd.DataFrame: A consolidated DataFrame containing all relevant datasets.
     """
     # Fetch data from different sources
-    coindata = get_coinmetrics_onchain("btc.csv")  # Fetch on-chain Bitcoin data
+    coindata = get_brk_onchain(start_date)
     prices = get_price(tickers, start_date)  # Fetch historical price data
     marketcaps = get_marketcap(tickers, start_date)  # Calculate market cap
     fear_greed_index = get_fear_and_greed_index()  # Fetch Fear and Greed Index data
@@ -216,7 +348,9 @@ def get_data(tickers, start_date):
             dataset["time"] = pd.to_datetime(
                 dataset["time"]
             )  # Convert 'time' to datetime
-            dataset.set_index("time", inplace=True)  # Set 'time' as the index
+            dataset["time"] = pd.to_datetime(dataset["time"]).dt.normalize()
+            dataset.set_index("time", inplace=True)
+            
 
     # Merge all datasets iteratively to form a single consolidated DataFrame
     data = datasets[0]  # Start with the first dataset
@@ -244,11 +378,22 @@ def calculate_custom_on_chain_metrics(data):
     Returns:
     pd.DataFrame: DataFrame with new metrics calculated and added.
     """
+    data["RevAllTimeUSD"] = data["RevUSD"].fillna(0).cumsum()
+    data["NVTAdj"] = data["CapMrktCurUSD"] / data["TxTfrValAdjUSD"]
+    data["NVTAdj90"] = data["CapMrktCurUSD"] / data["TxTfrValAdjUSD"].rolling(90).mean()
+    data["SplyActPct1yr"] = (
+        100 - data["utxos_at_least_1y_old_supply_rel_to_circulating_supply"]
+    )
+    data["TxCnt"] = data[["tx_v1", "tx_v2", "tx_v3"]].sum(axis=1)
+    data["TxTfrValMeanUSD"] = data["TxTfrValAdjUSD"]
+    data["TxTfrValMedUSD"] = data["TxTfrValAdjUSD"]
+
     # Calculate the number of satoshis per dollar, using the PriceUSD to determine the exchange rate
     data["sat_per_dollar"] = 1 / (data["PriceUSD"] / 100000000)
 
     # Calculate the Market Value to Realized Value (MVRV) ratio
     data["mvrv_ratio"] = data["CapMrktCurUSD"] / data["CapRealUSD"]
+    data["CapMVRVCur"] = data["mvrv_ratio"]
 
     # Calculate the realized price (the value at which each coin was last moved)
     data["realised_price"] = data["CapRealUSD"] / data["SplyCur"]
@@ -296,17 +441,36 @@ def calculate_custom_on_chain_metrics(data):
     data["thermocap_price_multiple_16"] = (16 * data["RevAllTimeUSD"]) / data["SplyCur"]
     data["thermocap_price_multiple_32"] = (32 * data["RevAllTimeUSD"]) / data["SplyCur"]
 
+    data["miner_revenue_1_Year"] = data["RevUSD"].rolling(window=365).sum()
+    data["miner_revenue_4_Year"] = data["RevUSD"].rolling(window=4 * 365).sum()
+
+    data["ss_multiple_1"] = data["CapMrktCurUSD"] / data["miner_revenue_1_Year"]
+    data["ss_price_1"] = data["miner_revenue_1_Year"] / data["SplyCur"]
+
+    data["ss_multiple_4"] = data["CapMrktCurUSD"] / data["miner_revenue_4_Year"]
+    data["ss_price_4"] = data["miner_revenue_4_Year"] / data["SplyCur"]
+
     # Calculate Realized Cap multiples for different factors (3x, 5x, 7x)
+    data["realizedcap_multiple_2"] = (2 * data["CapRealUSD"]) / data["SplyCur"]
     data["realizedcap_multiple_3"] = (3 * data["CapRealUSD"]) / data["SplyCur"]
     data["realizedcap_multiple_5"] = (5 * data["CapRealUSD"]) / data["SplyCur"]
     data["realizedcap_multiple_7"] = (7 * data["CapRealUSD"]) / data["SplyCur"]
 
     # Calculate the percentage of supply held for more than 1 year
     data["supply_pct_1_year_plus"] = 100 - data["SplyActPct1yr"]
+    data["pct_supply_issued"] = data["SplyCur"] / 21000000
+    data["pct_fee_of_reward"] = (data["FeeTotUSD"] / (data["RevUSD"])) * 100
 
     # Calculate illiquid and liquid supply based on the 1+ year held supply
     data["illiquid_supply"] = (data["supply_pct_1_year_plus"] / 100) * data["SplyCur"]
     data["liquid_supply"] = data["SplyCur"] - data["illiquid_supply"]
+
+    data["tx_volume_yearly"] = data["TxTfrValAdjUSD"].rolling(window=365).sum()
+    data["qtm_price"] = data["tx_volume_yearly"] / (data["SplyCur"] * data["VelCur1yr"])
+    data["qtm_multiple"] = data["PriceUSD"] / (data["qtm_price"])
+    data["qtm_price_multiple_2"] = data["qtm_price"] * 2
+    data["qtm_price_multiple_5"] = data["qtm_price"] * 5
+    data["qtm_price_multiple_10"] = data["qtm_price"] * 10
 
     print("Custom Metrics Created")
     return data
@@ -1018,184 +1182,140 @@ def run_data_analysis(data, start_date):
     return data
 
 
-def compute_drawdowns(data):
+def compute_drawdowns(data: pd.DataFrame) -> pd.DataFrame:
     """
-    Compute drawdown metrics for each major Bitcoin drawdown cycle.
+    Long-form drawdown series:
+      - days_since_ath
+      - drawdown_pct (0 at ATH, negative when below ATH)
+      - Cycle (label)
 
-    Parameters:
-    data (pd.DataFrame): DataFrame containing the historical price data with a DateTime index.
-
-    Returns:
-    pd.DataFrame: DataFrame containing drawdown percentages and days since all-time high for each cycle.
+    Aligns each cycle to its start ATH date (your provided start_date).
     """
     drawdown_periods = [
-        # Define major drawdown periods with start and end dates
-        ("2011-06-08", "2013-02-28"),
-        ("2013-11-29", "2017-03-03"),
-        ("2017-12-17", "2020-12-16"),
-        ("2021-11-10", pd.to_datetime("today")),
+        ("Drawdown Cycle 1", "2011-06-08", "2013-02-28"),
+        ("Drawdown Cycle 2", "2013-11-29", "2017-03-03"),
+        ("Drawdown Cycle 3", "2017-12-17", "2020-12-16"),
+        ("Drawdown Cycle 4", "2021-11-10", pd.to_datetime("today").strftime("%Y-%m-%d")),
     ]
 
-    drawdown_data = (
-        pd.DataFrame()
-    )  # Initialize an empty DataFrame to store drawdown metrics
+    df = data.copy()
+    if not isinstance(df.index, pd.DatetimeIndex):
+        df.index = pd.to_datetime(df.index)
+    df = df.sort_index()
 
-    # Loop through each drawdown period to calculate metrics
-    for i, period in enumerate(drawdown_periods, 1):
-        start_date, end_date = pd.to_datetime(period[0]), pd.to_datetime(period[1])
-        # Filter data for the specific drawdown period
-        period_data = data[(data.index >= start_date) & (data.index <= end_date)].copy()
-        # Calculate the all-time high (ATH) within the drawdown period
-        period_data[f"ath_cycle_{i}"] = period_data["PriceUSD"].cummax()
-        # Calculate drawdown percentage from ATH
-        period_data[f"drawdown_cycle_{i}"] = (
-            period_data["PriceUSD"] / period_data[f"ath_cycle_{i}"] - 1
-        ) * 100
-        # Calculate days since the start of the drawdown period
-        period_data["index_as_date"] = pd.to_datetime(period_data.index)
-        period_data[f"days_since_ath_cycle_{i}"] = (
-            period_data["index_as_date"] - start_date
-        ).dt.days
+    out = []
 
-        # Select relevant columns for the current drawdown cycle
-        selected_columns = [f"days_since_ath_cycle_{i}", f"drawdown_cycle_{i}"]
-        # Append the results to drawdown_data DataFrame
-        if drawdown_data.empty:
-            drawdown_data = period_data[selected_columns].rename(
-                columns={
-                    f"days_since_ath_cycle_{i}": "days_since_ath",
-                    f"drawdown_cycle_{i}": f"drawdown_cycle_{i}",
-                }
-            )
-        else:
-            drawdown_data = pd.concat(
-                [
-                    drawdown_data,
-                    period_data[selected_columns].rename(
-                        columns={
-                            f"days_since_ath_cycle_{i}": "days_since_ath",
-                            f"drawdown_cycle_{i}": f"drawdown_cycle_{i}",
-                        }
-                    ),
-                ]
-            )
+    for cycle_name, start_date, end_date in drawdown_periods:
+        start_dt = pd.to_datetime(start_date)
+        end_dt = pd.to_datetime(end_date)
 
-    return drawdown_data
+        period = df.loc[(df.index >= start_dt) & (df.index <= end_dt)].copy()
+        if period.empty:
+            continue
+
+        # ATH path within the period
+        period["ath"] = period["PriceUSD"].cummax()
+
+        # Drawdown percent
+        period["drawdown_pct"] = (period["PriceUSD"] / period["ath"] - 1.0) * 100.0
+
+        # Days since the cycle's ATH start anchor (your start_dt)
+        period["days_since_ath"] = (period.index - start_dt).days
+
+        period["Cycle"] = cycle_name
+
+        out.append(period[["days_since_ath", "drawdown_pct", "Cycle"]])
+
+    if not out:
+        return pd.DataFrame(columns=["days_since_ath", "drawdown_pct", "Cycle"])
+
+    return pd.concat(out, ignore_index=True)
 
 
-def compute_cycle_lows(data):
-    """
-    Compute metrics related to cycle lows for each Bitcoin cycle.
-
-    Parameters:
-    data (pd.DataFrame): DataFrame containing the historical price data with a DateTime index.
-
-    Returns:
-    pd.DataFrame: DataFrame containing days since cycle low and return since cycle low for each cycle.
-    """
+def compute_cycle_lows(data: pd.DataFrame) -> pd.DataFrame:
     cycle_periods = [
-        # Define cycle periods with start and end dates to identify cycle lows
-        ("2010-07-25", "2011-11-18"),
-        ("2011-11-18", "2015-01-14"),
-        ("2015-01-14", "2018-12-16"),
-        ("2018-12-16", "2022-11-20"),
-        ("2022-11-20", pd.to_datetime("today")),
+        ("Market Cycle 1", "2010-07-25", "2011-11-18"),
+        ("Market Cycle 2", "2011-11-18", "2015-01-14"),
+        ("Market Cycle 3", "2015-01-14", "2018-12-16"),
+        ("Market Cycle 4", "2018-12-16", "2022-11-20"),
+        ("Market Cycle 5", "2022-11-20", pd.to_datetime("today").strftime("%Y-%m-%d")),
     ]
 
-    cycle_low_data = (
-        pd.DataFrame()
-    )  # Initialize an empty DataFrame to store cycle low metrics
+    df = data.copy()
+    if not isinstance(df.index, pd.DatetimeIndex):
+        df.index = pd.to_datetime(df.index)
+    df = df.sort_index()
 
-    # Loop through each cycle period and calculate metrics
-    for i, period in enumerate(cycle_periods, 1):
-        start_date, end_date = pd.to_datetime(period[0]), pd.to_datetime(period[1])
-        # Filter data for the specific cycle period
-        period_data = data[(data.index >= start_date) & (data.index <= end_date)].copy()
-        # Calculate the lowest price in the cycle
-        cycle_low_price = period_data["PriceUSD"].min()
-        # Identify the date of the cycle low
-        cycle_low_date = period_data["PriceUSD"].idxmin()
-        # Calculate days since the cycle low
-        period_data["index_as_date"] = pd.to_datetime(period_data.index)
-        period_data[f"days_since_cycle_low_{i}"] = (
-            period_data["index_as_date"] - cycle_low_date
-        ).dt.days
-        # Calculate return since the cycle low
-        period_data[f"return_since_cycle_low_{i}"] = (
-            period_data["PriceUSD"] / cycle_low_price - 1
-        ) * 100
+    out = []
+    for cycle_name, start_date, end_date in cycle_periods:
+        start_dt = pd.to_datetime(start_date)
+        end_dt = pd.to_datetime(end_date)
 
-        # Select relevant columns for the current cycle low period
-        selected_columns = [f"days_since_cycle_low_{i}", f"return_since_cycle_low_{i}"]
-        # Append the results to cycle_low_data DataFrame
-        if cycle_low_data.empty:
-            cycle_low_data = period_data[selected_columns].rename(
-                columns={
-                    f"days_since_cycle_low_{i}": "days_since_cycle_low",
-                    f"return_since_cycle_low_{i}": f"return_since_cycle_low_{i}",
-                }
-            )
-        else:
-            cycle_low_data = pd.concat(
-                [
-                    cycle_low_data,
-                    period_data[selected_columns].rename(
-                        columns={
-                            f"days_since_cycle_low_{i}": "days_since_cycle_low",
-                            f"return_since_cycle_low_{i}": f"return_since_cycle_low_{i}",
-                        }
-                    ),
-                ]
-            )
+        period = df.loc[(df.index >= start_dt) & (df.index <= end_dt)].copy()
+        if period.empty:
+            continue
 
-    return cycle_low_data
+        low_date = period["PriceUSD"].idxmin()
+        low_px = float(period.loc[low_date, "PriceUSD"])
+
+        period["days_since_cycle_low"] = (period.index - low_date).days
+        period["index_value"] = period["PriceUSD"] / low_px
+        period["Cycle"] = cycle_name
+
+        out.append(period[["days_since_cycle_low", "index_value", "Cycle"]])
+
+    return pd.concat(out, ignore_index=True) if out else pd.DataFrame(
+        columns=["days_since_cycle_low", "index_value", "Cycle"]
+    )
 
 
-def compute_halving_days(data):
+def compute_halving_days(data: pd.DataFrame) -> pd.DataFrame:
     """
-    Compute metrics related to Bitcoin halving events.
-
-    Parameters:
-    data (pd.DataFrame): DataFrame containing the historical price data with a DateTime index.
-
-    Returns:
-    pd.DataFrame: DataFrame containing days since halving and return since halving for each halving period.
+    Build a single long-form dataframe with:
+      - days_since_halving
+      - index_value (cycle index; 1.0 at halving, 2.0 = 2x, etc.)
+      - Era (string name)
     """
     bitcoin_halvings = [
-        # Define Bitcoin halving periods with start and end dates
         ("Genesis Era", "2009-01-03", "2012-11-28"),
-        ("2nd Era", "2012-11-28", "2016-07-09"),
-        ("3rd Era", "2016-07-09", "2020-05-11"),
-        ("4th Era", "2020-05-11", "2024-04-20"),
-        ("5th Era", "2024-04-20", pd.to_datetime("today").strftime("%Y-%m-%d")),
+        ("2nd Era",     "2012-11-28", "2016-07-09"),
+        ("3rd Era",     "2016-07-09", "2020-05-11"),
+        ("4th Era",     "2020-05-11", "2024-04-20"),
+        ("5th Era",     "2024-04-20", pd.to_datetime("today").strftime("%Y-%m-%d")),
     ]
 
-    # Initialize an empty DataFrame to store halving metrics
-    halving_data = pd.DataFrame()
+    # Ensure datetime index
+    data = data.copy()
+    if not isinstance(data.index, pd.DatetimeIndex):
+        data.index = pd.to_datetime(data.index)
 
-    # Loop through each halving period and calculate metrics
-    for i, (era_name, start_date, end_date) in enumerate(bitcoin_halvings, 1):
-        start_date, end_date = pd.to_datetime(start_date), pd.to_datetime(end_date)
-        # Filter data for the specific halving period
-        period_data = data[(data.index >= start_date) & (data.index <= end_date)].copy()
-        # Calculate days since the halving event
-        period_data["index_as_date"] = pd.to_datetime(period_data.index)
-        period_data["days_since_halving"] = (
-            period_data["index_as_date"] - start_date
-        ).dt.days
-        # Calculate return since the halving date
-        period_data[f"return_since_halving_{i}"] = (
-            period_data["PriceUSD"] / period_data.loc[start_date, "PriceUSD"] - 1
-        ) * 100
+    # Ensure sorted
+    data = data.sort_index()
 
-        # Add era identifier column
-        period_data["Era"] = era_name
+    out = []
 
-        # Select relevant columns for the current halving period
-        selected_columns = ["days_since_halving", f"return_since_halving_{i}", "Era"]
-        period_data = period_data[selected_columns]
+    for era_name, start_date, end_date in bitcoin_halvings:
+        start_dt = pd.to_datetime(start_date)
+        end_dt = pd.to_datetime(end_date)
 
-        # Append to main DataFrame
-        halving_data = pd.concat([halving_data, period_data], ignore_index=True)
+        period = data.loc[(data.index >= start_dt) & (data.index <= end_dt)].copy()
+        if period.empty:
+            continue
 
-    return halving_data
+        # Pick normalization price:
+        # If exact halving date is missing (common), use first available price AFTER start_dt
+        if start_dt in period.index:
+            start_px = float(period.loc[start_dt, "PriceUSD"])
+        else:
+            start_px = float(period["PriceUSD"].iloc[0])
+
+        period["days_since_halving"] = (period.index - start_dt).days
+        period["index_value"] = period["PriceUSD"] / start_px  # 1.0 at halving
+        period["Era"] = era_name
+
+        out.append(period[["days_since_halving", "index_value", "Era"]])
+
+    if not out:
+        return pd.DataFrame(columns=["days_since_halving", "index_value", "Era"])
+
+    return pd.concat(out, ignore_index=True)
