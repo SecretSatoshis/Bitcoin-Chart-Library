@@ -152,7 +152,6 @@ moving_avg_metrics = [
 filter_data_columns = {
     "Report_Metrics": [
         "SplyCur",
-        "SplyExpFut10yr",
         "7_day_ma_IssContNtv",
         "365_day_ma_IssContNtv",
         "TxCnt",
@@ -190,18 +189,17 @@ filter_data_columns = {
         "365_day_ma_nvt_price",
         "NVTAdj",
         "NVTAdj90",
-        "NVTAdjFF",
         "realised_price",
         "VelCur1yr",
         "supply_pct_1_year_plus",
         "mvrv_ratio",
+        "realizedcap_multiple_2",
         "realizedcap_multiple_3",
         "realizedcap_multiple_5",
         "nupl",
         "AAPL_close",
         "CapMrktCurUSD",
         "^IXIC_close",
-        "RevHashRateUSD",
         "^GSPC_close",
         "XLF_close",
         "XLRE_close",
@@ -255,13 +253,9 @@ filter_data_columns = {
         "SplyAct2yr",
         "SplyAct5yr",
         "SplyAct10yr",
-        "SplyFF",
         "CapMVRVCur",
         "liquid_supply",
         "illiquid_supply",
-        "SplyMiner0HopAllNtv",
-        "SplyMiner1HopAllNtv",
-        "TxTfrValAdjNtv",
         "United_Kingdom_btc_price",
         "United_Kingdom_cap",
         "United_States_btc_price",
@@ -311,7 +305,19 @@ filter_data_columns = {
         "MSTR_close",  # MicroStrategy
         "XYZ_close",    # Block
         "COIN_close",  # Coinbase
-        "WGMI_close",  # Bitcoin Miners ETF
+        "WGMI_close",
+        "qtm_price",
+        "qtm_multiple",
+        "qtm_price_multiple_2",
+        "qtm_price_multiple_5",
+        "qtm_price_multiple_10",
+        "tx_volume_yearly",
+        "miner_revenue_1_Year",
+        "miner_revenue_4_Year",
+        "ss_price_1",
+        "ss_multiple_1",
+        "ss_price_4",
+        "ss_multiple_4",   # Bitcoin Miners ETF
     ]
 }
 
@@ -320,3 +326,133 @@ stats_start_date = "2012-11-28"
 
 # Timeframes to calculate volatitlity for
 volatility_windows = [30, 90, 180, 365]
+
+
+BRK_BULK_URL = "https://eu1.bitview.space/api/metrics/bulk"
+
+
+BRK_METRICS = [
+    "timestamp",
+    "price_close",
+    "market_cap",
+    "block_count",
+    "difficulty",
+    "difficulty_adjustment",
+    "hash_rate",
+    "realized_price",
+    "realized_cap",
+    "sth_realized_price",
+    "sth_realized_cap",
+    "lth_realized_price",
+    "lth_realized_cap",
+    "coindays_destroyed",
+    "utxo_count",
+    "supply_btc",
+    "supply_usd",
+    "sth_supply",
+    "lth_supply",
+    "fee_usd_sum",
+    "fee_btc_sum",
+    "subsidy_usd_sum",
+    "subsidy_btc_sum",
+    "coinbase_usd_sum",
+    "coinbase_btc_sum",
+    "fee_usd_avg",
+    "fee_btc_avg",
+    "fee_rate_avg",
+    "fee_dominance",
+    "utxos_at_least_1y_old_supply_rel_to_circulating_supply",
+    "tx_v1",
+    "tx_v2",
+    "tx_v3",
+    "tx_btc_velocity",
+    "tx_usd_velocity",
+    "sent_usd",
+    "inflation_rate",
+    "addrs_above_1sat_addr_count",
+    "addrs_above_10k_sats_addr_count",
+    "addrs_above_1sat_sent",
+    # Address balance distribution (address counts)
+    "addrs_under_1btc_addr_count",
+    "addrs_under_10btc_addr_count",
+    "addrs_under_10k_sats_addr_count",
+    "addrs_under_1k_sats_addr_count",
+    "addrs_under_10sats_addr_count",
+
+    # Active supply buckets (UTXO age band supply)
+    "utxos_up_to_1d_supply",
+    "utxos_up_to_1m_old_supply",
+    "utxos_up_to_3m_old_supply",
+    "utxos_up_to_6m_old_supply",
+    "utxos_up_to_1y_old_supply",
+    "utxos_up_to_2y_old_supply",
+    "utxos_up_to_3y_old_supply",
+    "utxos_up_to_4y_old_supply",
+    "utxos_up_to_5y_old_supply",
+    "utxos_up_to_10y_old_supply",
+]
+
+
+BRK_RENAME = {
+    "price_close": "PriceUSD",
+    "market_cap": "CapMrktCurUSD",
+    "realized_cap": "CapRealUSD",
+    "realized_price": "RealizedPriceUSD",
+    "supply_btc": "SplyCur",
+
+    # Difficulty / hash
+    "difficulty": "DiffLast",
+    "hash_rate": "HashRate",
+
+    # Velocity (keep both)
+    "tx_btc_velocity": "VelCur1yr_BTC",
+    "tx_usd_velocity": "VelCur1yr",
+
+    # Tx volume (your TxTfrValAdjUSD input)
+    "sent_usd": "TxTfrValAdjUSD",
+
+    # Inflation / issuance %
+    "inflation_rate": "IssContPctAnn",
+
+    # Fee mean native
+    "transactioncoinmining_fee_btc": "FeeMeanNtv",
+
+    # Active/addrs (per your selection)
+    "addrs_above_1sat_sent": "AdrActCnt",
+    "addrs_above_1sat_addr_count": "AdrBalCnt",
+    "addrs_above_10k_sats_addr_count": "AdrBalUSD10Cnt",
+
+   
+    "fee_usd_avg": "FeeMeanUSD",
+    "fee_btc_avg": "FeeMeanNtv",
+    "fee_rate_avg": "FeeRateAvg",
+    # Fees (daily totals)
+    "fee_usd_sum": "FeeTotUSD",
+    "fee_btc_sum": "FeeTotNtv",   # optional but useful
+
+    # Subsidy (daily totals)
+    "subsidy_usd_sum": "IssContUSD",
+    "subsidy_btc_sum": "IssContNtv",
+
+    # Total miner revenue (fees + subsidy)
+    "coinbase_usd_sum": "RevUSD",
+    "coinbase_btc_sum": "RevNtv",
+
+    "addrs_under_1btc_addr_count":  "AdrBalUSD1MCnt",
+    "addrs_under_10btc_addr_count": "AdrBalUSD10MCnt",
+    "addrs_under_10k_sats_addr_count": "AdrBalUSD10KCnt",
+    "addrs_under_1k_sats_addr_count":  "AdrBalUSD1KCnt",
+    "addrs_under_10sats_addr_count":   "AdrBalUSD1Cnt",
+
+    "utxos_up_to_1d_supply":   "SplyAct1d",
+    "utxos_up_to_1m_old_supply": "SplyAct30d",
+    "utxos_up_to_3m_old_supply": "SplyAct90d",
+    "utxos_up_to_6m_old_supply": "SplyAct180d",
+    "utxos_up_to_1y_old_supply": "SplyAct1yr",
+    "utxos_up_to_2y_old_supply": "SplyAct2yr",
+    "utxos_up_to_3y_old_supply": "SplyAct3yr",
+    "utxos_up_to_4y_old_supply": "SplyAct4yr",
+    "utxos_up_to_5y_old_supply": "SplyAct5yr",
+    "utxos_up_to_10y_old_supply": "SplyAct10yr",
+
+}
