@@ -2,6 +2,7 @@ import datetime
 import pandas as pd
 
 # TradFi Data
+# TradFi Data
 tickers = {
     "stocks": [
         "AAPL",
@@ -61,14 +62,10 @@ tickers = {
         "JPYUSD=X",
         "RUBUSD=X",
     ],
-    "crypto": ["ethereum", "ripple", "dogecoin", "binancecoin", "tether"],
 }
 
 # Start date for TradFi Data
 market_data_start_date = "2010-01-01"
-
-# First Halving Date Start Stats Calculation
-stats_start_date = "2012-11-28"
 
 # Fiat Money Supply M0 Data
 fiat_money_data_top10 = pd.DataFrame(
@@ -132,7 +129,7 @@ today = datetime.date.today()
 # Get yesterday's date
 yesterday = today - datetime.timedelta(days=1)
 
-# Create report data and convert to pandas.Timestamp
+# Creat report data and convert to pandas.Timestamp
 report_date = pd.Timestamp(yesterday)
 
 # On-Chain Metrics to create moving averages of for data smoothing
@@ -169,18 +166,14 @@ filter_data_columns = {
         "200_day_multiple",
         "200_week_ma_priceUSD",
         "TxTfrValAdjUSD",
-        "7_day_ma_TxTfrValMeanUSD",
         "7_day_ma_TxTfrValAdjUSD",
         "365_day_ma_TxTfrValAdjUSD",
         "RevUSD",
-        "pct_fee_of_reward",
-        "IssContPctAnn",
-        "IssContNtv",
-        "pct_supply_issued",
         "AdrActCnt",
         "7_day_ma_priceUSD",
         "30_day_ma_AdrActCnt",
         "365_day_ma_AdrActCnt",
+        "7_day_ma_TxTfrValMeanUSD",
         "FeeTotUSD",
         "thermocap_price",
         "thermocap_multiple",
@@ -200,14 +193,12 @@ filter_data_columns = {
         "VelCur1yr",
         "supply_pct_1_year_plus",
         "mvrv_ratio",
+        "realizedcap_multiple_2",
         "realizedcap_multiple_3",
         "realizedcap_multiple_5",
         "nupl",
-        "CapMrktCurUSD",
-        "AdrBalUSD10Cnt",
-        "AdrBalCnt",
-        "DiffLast",
         "AAPL_close",
+        "CapMrktCurUSD",
         "^IXIC_close",
         "^GSPC_close",
         "XLF_close",
@@ -223,17 +214,7 @@ filter_data_columns = {
         "^IRX_close",
         "XLE_close",
         "BITQ_close",
-        "^BCOM_close",
         "FANG.AX_close",
-        "SPY_close",
-        "IEMG_close",
-        "AGG_close",
-        "WGMI_close",
-        "QQQ_close",
-        "VTI_close",
-        "GLD_close",
-        "XLK_close",
-        "VXUS_close",
         "AAPL_mc_btc_price",
         "AAPL_MarketCap",
         "AUDUSD=X_close",
@@ -255,6 +236,24 @@ filter_data_columns = {
         "365_day_ma_RevUSD",
         "30_day_ma_TxTfrValMeanUSD",
         "30_day_ma_TxTfrValMedUSD",
+        "AdrBalUSD1MCnt",
+        "AdrBalUSD10MCnt",
+        "AdrBalUSD10KCnt",
+        "AdrBalUSD1KCnt",
+        "AdrBalUSD10Cnt",
+        "AdrBalUSD1Cnt",
+        "AdrBalCnt",
+        "SplyAct1d",
+        "SplyAct30d",
+        "SplyAct90d",
+        "SplyAct180d",
+        "SplyAct1yr",
+        "SplyAct3yr",
+        "SplyAct4yr",
+        "SplyAct2yr",
+        "SplyAct5yr",
+        "SplyAct10yr",
+        "CapMVRVCur",
         "liquid_supply",
         "illiquid_supply",
         "United_Kingdom_btc_price",
@@ -295,150 +294,38 @@ filter_data_columns = {
         "CM_Energy_Value",
         "Energy_Value_Multiple",
         "SF_Predicted_Price_MA365",
-        "ethereum_close",
-        "ripple_close",
-        "dogecoin_close",
-        "binancecoin_close",
-        "tether_close",
-        "bitcoin_dominance",
-        "btc_trading_volume",
-        "ethereum_market_cap",
-        "ripple_market_cap",
-        "dogecoin_market_cap",
-        "binancecoin_market_cap",
-        "tether_market_cap",
-        "COIN_close",
-        "XYZ_close",
-        "MSTR_close",
-        "MARA_close",
-        "RIOT_close",
-        "CL=F_close",
+        "SPY_close",   # S&P 500 ETF
+        "QQQ_close",   # Nasdaq-100 ETF
+        "VTI_close",   # US Total Stock Market ETF
+        "VXUS_close",  # International Stock ETF
+        "XLK_close",   # Technology Sector ETF
+        "GLD_close",   # Gold ETF
+        "AGG_close",   # Aggregate Bond ETF
+        "^BCOM_close", # Bloomberg Commodity Index
+        "MSTR_close",  # MicroStrategy
+        "XYZ_close",    # Block
+        "COIN_close",  # Coinbase
+        "WGMI_close",
         "qtm_price",
+        "qtm_multiple",
         "qtm_price_multiple_2",
         "qtm_price_multiple_5",
         "qtm_price_multiple_10",
+        "tx_volume_yearly",
+        "miner_revenue_1_Year",
+        "miner_revenue_4_Year",
+        "ss_price_1",
+        "ss_multiple_1",
+        "ss_price_4",
+        "ss_multiple_4",   # Bitcoin Miners ETF
     ]
 }
 
-# Timeframes to calculate volatility 
+# First Halving Date Start Stats Calculation
+stats_start_date = "2012-11-28"
+
+# Timeframes to calculate volatitlity for
 volatility_windows = [30, 90, 180, 365]
-
-# Data to run correlations on
-correlation_data = [
-    "PriceUSD",
-    "AAPL_close",
-    "MSFT_close",
-    "GOOGL_close",
-    "AMZN_close",
-    "NVDA_close",
-    "TSLA_close",
-    "META_close",
-    "BRK-A_close",
-    "BRK-B_close",
-    "TSM_close",
-    "V_close",
-    "JPM_close",
-    "PYPL_close",
-    "GS_close",
-    "FANG.AX_close",
-    "BITQ_close",
-    "CLOU_close",
-    "ARKK_close",
-    "XLK_close",
-    "QQQ_close",
-    "IUIT.L_close",
-    "VTI_close",
-    "TLT_close",
-    "LQD_close",
-    "JNK_close",
-    "GLD_close",
-    "XLF_close",
-    "XLRE_close",
-    "SHY_close",
-    "XLE_close",
-    "SPY_close",
-    "IEMG_close",
-    "AGG_close",
-    "WGMI_close",
-    "VXUS_close",
-    "^GSPC_close",
-    "^VIX_close",
-    "^IXIC_close",
-    "^TNX_close",
-    "^TYX_close",
-    "^FVX_close",
-    "^IRX_close",
-    "GC=F_close",
-    "CL=F_close",
-    "SI=F_close",
-    "DX=F_close",
-    "AUDUSD=X_close",
-    "^BCOM_close",
-    "CHFUSD=X_close",
-    "CNYUSD=X_close",
-    "EURUSD=X_close",
-    "GBPUSD=X_close",
-    "HKDUSD=X_close",
-    "INRUSD=X_close",
-    "JPYUSD=X_close",
-    "RUBUSD=X_close",
-    "ethereum_close",
-    "ripple_close",
-    "dogecoin_close",
-    "binancecoin_close",
-    "tether_close",
-    "COIN_close",
-    "XYZ_close",
-    "MSTR_close",
-    "MARA_close",
-    "RIOT_close",
-]
-
-# Weekly Fundamentals Table Metrics
-metrics_template = {
-    "Network Performance": {
-        "Total Address Count": ("AdrBalCnt", "number"),
-        "Address Count > $10": ("AdrBalUSD10Cnt", "number"),
-        "Active Addresses": ("AdrActCnt", "number"),
-        "Supply Held 1+ Year %": ("supply_pct_1_year_plus", "percent"),
-        "Transaction Count": ("TxCnt", "number"),
-        "Transaction Volume": ("TxTfrValAdjUSD", "currency"),
-        "Transaction Fee USD": ("FeeTotUSD", "currency"),
-    },
-    "Network Security": {
-        "Hash Rate": ("HashRate", "number"),
-        "Network Difficulty": ("DiffLast", "number"),
-        "Miner Revenue": ("RevUSD", "currency"),
-        "Fee % Of Reward": ("pct_fee_of_reward", "percent"),
-    },
-    "Network Economics": {
-        "Bitcoin Supply": ("SplyCur", "number"),
-        "% Supply Issued": ("pct_supply_issued", "percent"),
-        "Bitcoin Mined Per Day": ("IssContNtv", "number"),
-        "Annual Inflation Rate": ("IssContPctAnn", "percent"),
-        "Velocity": ("VelCur1yr", "number2"),
-    },
-    "Network Valuation": {
-        "Market Cap": ("CapMrktCurUSD", "currency"),
-        "Bitcoin Price": ("PriceUSD", "currency"),
-        "Realised Price": ("realised_price", "currency"),
-        "Thermocap Price": ("thermocap_price", "currency"),
-    },
-}
-
-# Chart Template OHLC
-chart_template = {
-    "title": "Bitcoin Weekly Price Chart",
-    "x_label": "Date",
-    "y1_label": "USD Price",
-    "filename": "png/Bitcoin_OHLC",
-    "events": [
-        {"name": "CME Futures", "dates": ["2017-12-17"], "orientation": "v"},
-        {"name": "Bitcoin Winter", "dates": ["2018-12-15"], "orientation": "v"},
-        {"name": "Coinbase IPO", "dates": ["2021-04-14"], "orientation": "v"},
-        {"name": "FTX Bankrupt", "dates": ["2022-11-11"], "orientation": "v"},
-    ],
-}
 
 
 BRK_BULK_URL = "https://eu1.bitview.space/api/metrics/bulk"
