@@ -304,7 +304,7 @@ def create_line_chart(chart_template, selected_metrics):
                     )
                 # Set a unified y position for all annotations
                 y_position = (
-                    selected_metrics.max().max() * 1.05
+                    selected_metrics.select_dtypes(include=[np.number]).max().max() * 1.05
                 )  # Position slightly above the maximum value
 
                 # Add annotation with text rotation and slight horizontal offset
