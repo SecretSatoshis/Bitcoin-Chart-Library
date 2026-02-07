@@ -1,12 +1,10 @@
 # Importing Resources
 import warnings
-import pandas as pd
-from datetime import timedelta
 import sys
 
 sys.dont_write_bytecode = True
 
-# Importing From Files``
+# Importing From Files
 import data_format
 from chart_format import (
     create_charts,
@@ -29,7 +27,7 @@ from data_definitions import (
     gold_silver_supply,
     gold_supply_breakdown,
     stock_tickers,
-    filter_data_columns,
+    analysis_columns,
     stats_start_date,
 )
 
@@ -53,8 +51,8 @@ data = data_format.electric_price_models(data)
 # Forward fill the data for all columns
 data.ffill(inplace=True)
 
-# Flatten the list of columns from the dictionary
-columns_to_keep = [item for sublist in filter_data_columns.values() for item in sublist]
+# Filter to analysis columns that exist in the dataframe
+columns_to_keep = [col for col in analysis_columns if col in data.columns]
 
 # Filter the dataframe
 filter_data = data[columns_to_keep]
@@ -62,11 +60,17 @@ filter_data = data[columns_to_keep]
 # Run Data Analysis On Report Data
 report_data = data_format.run_data_analysis(filter_data, stats_start_date)
 
-# Calcualte Grwoth Rate Data
+# Calculate Growth Rate Data
 cagr_results = data_format.calculate_rolling_cagr_for_all_metrics(data)
 
 report_data = report_data.merge(
     cagr_results, left_index=True, right_index=True, how="left"
+)
+
+# Merge report_data (with change calculations) back into full data for chart access
+report_data = data.merge(
+    report_data[[col for col in report_data.columns if col not in data.columns]],
+    left_index=True, right_index=True, how="left"
 )
 
 # --- Data Processing --- #
@@ -87,9 +91,8 @@ create_indexed_yearly_returns(report_data)
 # --- Chart Creation --- #
 generated_figures = create_charts(report_data, chart_templates)
 
-# Assuming 'figures' is a list you have previously defined to store all your figures
 figures.extend(generated_figures)
 
 # --- Start the Dash App --- #
-#app_with_charts = generate_dash_app()
-#app_with_charts.run_server(debug=True, use_reloader=False, host="0.0.0.0", port=8080)
+app_with_charts = generate_dash_app()
+app_with_charts.run_server(debug=True, use_reloader=False, host="0.0.0.0", port=8080)
