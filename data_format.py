@@ -1,34 +1,43 @@
+"""
+Data Format Module - Bitcoin Analytics Data Pipeline
+
+This module handles all data fetching, transformation, and metric calculation for Bitcoin
+market and on-chain analytics. It integrates multiple data sources and computes derived
+metrics used throughout the reporting pipeline.
+
+Data Sources:
+    - BRK (Bitview): On-chain metrics, difficulty, supply data
+    - Yahoo Finance: Equities, ETFs, indices, commodities, forex
+    - CoinGecko: Altcoin prices, market caps, dominance
+    - Kraken: Bitcoin OHLC price data
+    - Alternative.me: Fear & Greed Index
+    - Google Sheets: Miner efficiency data
+"""
+
 import requests
 import pandas as pd
-from io import StringIO
 import numpy as np
 import yfinance as yf
 from datetime import datetime, timedelta
+from io import StringIO
 import time
-from data_definitions import BRK_BULK_URL, BRK_METRICS, BRK_RENAME
-import csv, io
-import os
+import csv
+from typing import Optional
+from data_definitions import (
+    BRK_BULK_URL,
+    BRK_METRICS,
+    ELECTRICITY_COST,
+    PUE,
+    ELEC_TO_TOTAL_COST_RATIO,
+    MINER_DATA_SHEET_URL,
+    API_TIMEOUT,
+    SATS_PER_BTC,
+    STOCK_TRADING_DAYS,
+    CRYPTO_TRADING_DAYS,
+)
 
 
-def get_coinmetrics_onchain(endpoint: str) -> pd.DataFrame:
-    """
-    Fetches on-chain data from CoinMetrics in CSV format.
-
-    Parameters:
-    endpoint (str): The endpoint to specify the CSV file from CoinMetrics repository.
-
-    Returns:
-    pd.DataFrame: DataFrame containing the on-chain data.
-    """
-    # Construct the URL to fetch the CSV data from CoinMetrics repository
-    url = f"https://raw.githubusercontent.com/coinmetrics/data/master/csv/{endpoint}"
-    # Send a GET request to the URL
-    response = requests.get(url)
-    # Read the response text as CSV into a DataFrame
-    data = pd.read_csv(StringIO(response.text), low_memory=False)
-    # Convert 'time' column to datetime
-    data["time"] = pd.to_datetime(data["time"])
-    return data
+# Get Data
 
 
 def get_fear_and_greed_index() -> pd.DataFrame:
@@ -38,13 +47,13 @@ def get_fear_and_greed_index() -> pd.DataFrame:
     Returns:
     pd.DataFrame: DataFrame containing the Fear and Greed Index data.
     """
-    # URL to fetch the Fear and Greed Index data
+    # URL to fetch the Fear and Greed Index data (limit=0 fetches all historical data)
     url = "https://api.alternative.me/fng/?limit=0"
 
     try:
         # Attempt to send a GET request to the URL
         response = requests.get(
-            url, timeout=10
+            url, timeout=API_TIMEOUT
         )  # Set a timeout to avoid indefinite waits
         response.raise_for_status()  # Raise an error for unsuccessful status codes
 
@@ -64,7 +73,257 @@ def get_fear_and_greed_index() -> pd.DataFrame:
         return pd.DataFrame(columns=["value", "value_classification", "time"])
 
 
+def get_bitcoin_dominance() -> pd.DataFrame:
+    """
+    Fetches the current Bitcoin dominance from the CoinGecko API.
+
+    Returns:
+    pd.DataFrame: DataFrame containing Bitcoin dominance and timestamp.
+    """
+    url = "https://api.coingecko.com/api/v3/global"
+    try:
+        response = requests.get(url, timeout=API_TIMEOUT)
+        response.raise_for_status()
+
+        data = response.json()
+        bitcoin_dominance = data["data"]["market_cap_percentage"]["btc"]
+        timestamp = pd.to_datetime(data["data"]["updated_at"], unit="s")
+
+        df = pd.DataFrame(
+            {"bitcoin_dominance": [bitcoin_dominance], "time": [timestamp]}
+        )
+
+        return df
+
+    except requests.RequestException as e:
+        print(f"Failed to fetch Bitcoin dominance: {e}")
+        return pd.DataFrame(columns=["bitcoin_dominance", "time"])
+    except (KeyError, ValueError) as e:
+        print(f"Failed to parse Bitcoin dominance data: {e}")
+        return pd.DataFrame(columns=["bitcoin_dominance", "time"])
+
+
+def get_kraken_ohlc(pair: str, since: int) -> pd.DataFrame:
+    """
+    Fetches historical OHLC data from the Kraken API with retry logic.
+
+    Parameters:
+    pair (str): The Kraken asset pair (e.g., 'BTCUSD').
+    since (int): Timestamp from which to fetch data.
+
+    Returns:
+    pd.DataFrame: DataFrame with OHLC data resampled to weekly intervals.
+    """
+    url = "https://api.kraken.com/0/public/OHLC"
+    interval = 1440  # Daily interval
+    data_frames = []  # Use a list to collect data chunks for a single concat outside the loop
+    max_retries = 3
+    retry_delay = 5
+
+    while True:
+        retries = 0
+        success = False
+
+        while not success and retries < max_retries:
+            try:
+                params = {"pair": pair, "interval": interval, "since": since}
+                response = requests.get(url, params=params, timeout=API_TIMEOUT)
+                response.raise_for_status()
+
+                data = response.json()
+                if data.get("error"):
+                    print(f"Error in Kraken data: {data['error']}")
+                    return pd.DataFrame(columns=["Open", "High", "Low", "Close", "VWAP", "Volume", "Count"])
+
+                ohlc_data = data["result"][list(data["result"].keys())[0]]
+                since = data["result"]["last"]
+
+                temp_df = pd.DataFrame(
+                    ohlc_data,
+                    columns=[
+                        "Time",
+                        "Open",
+                        "High",
+                        "Low",
+                        "Close",
+                        "VWAP",
+                        "Volume",
+                        "Count",
+                    ],
+                )
+                temp_df["Time"] = pd.to_datetime(temp_df["Time"], unit="s", utc=True)
+                data_frames.append(temp_df)
+
+                success = True
+
+                if len(ohlc_data) < 720:
+                    # No more data to fetch
+                    break
+
+                time.sleep(1)
+
+            except requests.RequestException as e:
+                retries += 1
+                if retries < max_retries:
+                    print(f"Error fetching Kraken OHLC data (attempt {retries}/{max_retries}): {e}")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                else:
+                    print(f"Failed to fetch Kraken OHLC data after {max_retries} retries: {e}")
+                    break
+
+        if not success:
+            # Failed after all retries, stop trying
+            break
+
+        # Break out of outer loop if we got all data
+        if success and len(ohlc_data) < 720:
+            break
+
+    if not data_frames:
+        return pd.DataFrame(columns=["Open", "High", "Low", "Close", "VWAP", "Volume", "Count"])
+
+    df = pd.concat(data_frames)
+    df.set_index("Time", inplace=True)
+    float_cols = ["Open", "High", "Low", "Close", "VWAP", "Volume"]
+    df[float_cols] = df[float_cols].astype(float)
+    df = df.resample("W-SUN").agg(
+        {
+            "Open": "first",
+            "High": "max",
+            "Low": "min",
+            "Close": "last",
+            "VWAP": "mean",
+            "Volume": "sum",
+            "Count": "sum",
+        }
+    )
+
+    return df
+
+
+def get_btc_trade_volume_14d() -> pd.DataFrame:
+    """
+    Fetches the past 14 days of Bitcoin trade volume from CoinGecko.
+
+    Returns:
+    pd.DataFrame: DataFrame with daily Bitcoin trade volume.
+    """
+    url = "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart"
+    params = {"vs_currency": "usd", "days": "14", "interval": "daily"}
+
+    try:
+        response = requests.get(url, params=params, timeout=API_TIMEOUT)
+        response.raise_for_status()
+
+        volume_data = response.json()["total_volumes"]
+        df = pd.DataFrame(volume_data, columns=["time", "btc_trading_volume"])
+        df["time"] = pd.to_datetime(df["time"], unit="ms")
+
+        return df
+
+    except requests.RequestException as e:
+        print(f"Failed to fetch Bitcoin trading volume: {e}")
+        return pd.DataFrame(columns=["time", "btc_trading_volume"])
+    except (KeyError, ValueError) as e:
+        print(f"Failed to parse Bitcoin trading volume data: {e}")
+        return pd.DataFrame(columns=["time", "btc_trading_volume"])
+
+
+def get_crypto_data(ticker_list: list) -> pd.DataFrame:
+    """
+    Fetches historical daily data for a list of cryptocurrencies from the CoinGecko API.
+
+    Parameters:
+    ticker_list (list): List of CoinGecko-compatible cryptocurrency tickers.
+
+    Returns:
+    pd.DataFrame: DataFrame containing merged close prices, volumes, and market caps.
+    """
+    data_frames = []  # Collect all DataFrames for efficient concatenation
+    max_retries = 5  # Maximum number of retries per ticker
+    initial_retry_delay = 60  # Initial delay in seconds for retry attempts
+
+    for ticker in ticker_list:
+        success = False
+        retries = 0
+        retry_delay = initial_retry_delay
+
+        while not success and retries < max_retries:
+            try:
+                # Define API endpoint and parameters
+                url = f"https://api.coingecko.com/api/v3/coins/{ticker}/market_chart"
+                params = {"vs_currency": "usd", "days": "365", "interval": "daily"}
+                response = requests.get(url, params=params, timeout=API_TIMEOUT)
+                response.raise_for_status()
+
+                # Parse JSON response into DataFrames
+                json_data = response.json()
+                prices = pd.DataFrame(
+                    json_data["prices"], columns=["time", f"{ticker}_close"]
+                )
+                volumes = pd.DataFrame(
+                    json_data["total_volumes"], columns=["time", f"{ticker}_volume"]
+                )
+                market_caps = pd.DataFrame(
+                    json_data["market_caps"], columns=["time", f"{ticker}_market_cap"]
+                )
+
+                # Convert timestamps to datetime
+                prices["time"] = pd.to_datetime(prices["time"], unit="ms")
+                volumes["time"] = pd.to_datetime(volumes["time"], unit="ms")
+                market_caps["time"] = pd.to_datetime(market_caps["time"], unit="ms")
+
+                # Merge DataFrames on the 'time' column
+                merged_data = pd.merge(prices, volumes, on="time")
+                merged_data = pd.merge(merged_data, market_caps, on="time")
+                merged_data.set_index("time", inplace=True)
+
+                # Collect the merged data
+                data_frames.append(merged_data)
+
+                success = True  # Set success flag to True after successful data fetch
+
+            except requests.HTTPError as http_err:
+                if http_err.response.status_code == 429:
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff for rate limits
+                    retries += 1
+                else:
+                    print(f"HTTP error for {ticker}: {http_err}")
+                    break  # Break the loop for non-429 HTTP errors
+            except Exception as err:
+                print(f"An error occurred for {ticker}: {err}")
+                break
+
+        if not success:
+            print(f"Failed to fetch data for {ticker} after {max_retries} retries.")
+
+        # Delay between requests to avoid hitting API rate limits
+        time.sleep(1)
+
+    # Concatenate all DataFrames at once (O(n) instead of O(n²))
+    if data_frames:
+        data = pd.concat(data_frames, axis=1)
+        # Resample to fill any missing daily data
+        data = data.resample("D").ffill().reset_index()
+    else:
+        data = pd.DataFrame()
+
+    return data
+
+
 def get_price(tickers: dict, start_date: str) -> pd.DataFrame:
+    """
+    Fetches historical price data for stocks and cryptocurrencies using yfinance.
+
+    Parameters:
+    tickers (dict): Dictionary with categories as keys and ticker lists as values.
+    start_date (str): Start date for fetching historical data (format: 'YYYY-MM-DD').
+
+    Returns:
+    pd.DataFrame: DataFrame containing close prices for all tickers with 'time' column.
+    """
     data_frames = []
     end_date = datetime.today().strftime("%Y-%m-%d")
     excluded_crypto_tickers = {
@@ -96,9 +355,7 @@ def get_price(tickers: dict, start_date: str) -> pd.DataFrame:
                         None
                     )
                     # Reindex to daily and forward-fill
-                    stock_data = stock_data.reindex(date_range, method="ffill").fillna(
-                        method="ffill"
-                    )
+                    stock_data = stock_data.reindex(date_range).ffill()
                     data_frames.append(stock_data)
                     break
                 except Exception as e:
@@ -168,29 +425,49 @@ def get_marketcap(tickers: dict, start_date: str) -> pd.DataFrame:
     return data
 
 
-def get_miner_data(google_sheet_url: str) -> pd.DataFrame:
+def get_miner_data(google_sheet_url: str = "") -> pd.DataFrame:
     """
     Fetches miner data from a Google Sheets URL and returns it as a pandas DataFrame.
 
     Parameters:
     google_sheet_url (str): The Google Sheets URL to extract data from.
+                            Defaults to MINER_DATA_SHEET_URL from config.
+                            Must be a valid Google Sheets sharing URL.
 
     Returns:
-    pd.DataFrame: DataFrame containing the miner data.
+    pd.DataFrame: DataFrame containing the miner data with 'time' column.
+                  Returns empty DataFrame with 'time' column on error.
     """
-    # Construct the CSV export URL from the Google Sheets URL
-    csv_export_url = google_sheet_url.replace("/edit?usp=sharing", "/export?format=csv")
+    if not google_sheet_url:
+        google_sheet_url = MINER_DATA_SHEET_URL
 
-    # Load the data into a pandas DataFrame
-    df = pd.read_csv(csv_export_url)
-    # Ensure 'time' is in datetime format
-    df["time"] = pd.to_datetime(df["time"], errors="coerce")
-    # Drop rows with invalid datetime values
-    df.dropna(subset=["time"], inplace=True)
-    return df
+    try:
+        # Convert Google Sheets sharing URL to CSV export URL
+        csv_export_url = google_sheet_url.replace("/edit?usp=sharing", "/export?format=csv")
+        df = pd.read_csv(csv_export_url)
+        # Parse datetime and drop rows with invalid dates
+        df["time"] = pd.to_datetime(df["time"], errors="coerce")
+        df = df.dropna(subset=["time"])
+        return df
+    except Exception as e:
+        print(f"Failed to fetch miner data from Google Sheets: {e}")
+        return pd.DataFrame(columns=["time"])
 
 
 def _brk_fetch_csv(metrics, index="dateindex", from_=0, timeout=120, verbose=False):
+    """
+    Fetch metrics from BRK bulk API as CSV.
+
+    Parameters:
+    metrics (list): List of metric names to fetch.
+    index (str): Index type for the API request.
+    from_ (int): Starting timestamp for data retrieval.
+    timeout (int): Request timeout in seconds.
+    verbose (bool): If True, print debug information.
+
+    Returns:
+    tuple: (header, data_rows, raw_text) - CSV header, data rows, and raw response text.
+    """
     if verbose:
         print(f"[BRK] fetching {len(metrics)} metrics: {metrics}")
 
@@ -210,7 +487,7 @@ def _brk_fetch_csv(metrics, index="dateindex", from_=0, timeout=120, verbose=Fal
 
     r.raise_for_status()
 
-    rows = list(csv.reader(io.StringIO(r.text)))
+    rows = list(csv.reader(StringIO(r.text)))
     if not rows:
         raise ValueError("[BRK] Empty CSV response")
 
@@ -232,20 +509,16 @@ def get_brk_onchain(
     start_date: str,
     index: str = "dateindex",
     from_: int = 0,
-    save_csv: bool = True,
-    out_path: str = "csv/brk_onchain_raw.csv",
-    verbose: bool = True,
+    verbose: bool = False,
 ) -> pd.DataFrame:
     """
-    Pull BRK metrics, align by timestamp (included in every chunk), optionally save raw CSV,
-    then return a pandas DataFrame with a 'time' column and renamed columns.
+    Pull BRK metrics, align by timestamp, return DataFrame with 'time' column.
     """
-
-    metric_list = BRK_METRICS[:]  # copy
+    metric_list = BRK_METRICS[:]
     if "timestamp" not in metric_list:
         metric_list = ["timestamp"] + metric_list
 
-    # chunk to avoid 500s; timestamp always included so rows align
+    # Chunk requests to avoid 500 errors; timestamp included so rows align
     chunks = [
         ["timestamp"] + [m for m in metric_list if m != "timestamp"][i : i + 6]
         for i in range(0, len(metric_list) - 1, 6)
@@ -254,13 +527,10 @@ def get_brk_onchain(
     data = {}
     ordered_cols = ["timestamp"]
 
-    raw_parts = []  # keep each raw CSV response if you want to debug / concatenate
-
     for chunk in chunks:
-        header, rows, raw_csv = _brk_fetch_csv(
+        header, rows, _ = _brk_fetch_csv(
             chunk, index=index, from_=from_, verbose=verbose
         )
-        raw_parts.append(raw_csv.strip())
 
         for r in rows:
             ts = r[0]
@@ -277,30 +547,19 @@ def get_brk_onchain(
         print(f"[BRK] merged cols: {len(ordered_cols)}")
         print(f"[BRK] cols: {ordered_cols}")
 
-    # build a single CSV (date derived later in your pipeline; we keep time + metrics)
-    lines = []
-    lines.append(",".join(ordered_cols))
+    # Build CSV string for pandas ingestion
+    lines = [",".join(ordered_cols)]
     for ts in sorted(data, key=lambda x: int(float(x))):
         row = [data[ts].get(c, "") for c in ordered_cols]
         lines.append(",".join(map(str, row)))
     merged_csv = "\n".join(lines)
 
-    if save_csv:
-        os.makedirs(os.path.dirname(out_path), exist_ok=True)
-        with open(out_path, "w", newline="") as f:
-            f.write(merged_csv + "\n")
-        if verbose:
-            print(f"[BRK] saved raw CSV -> {out_path}")
-
-    # load into pandas
+    # Load into pandas
     df = pd.read_csv(StringIO(merged_csv), low_memory=False)
 
     # timestamp -> time
     df["time"] = pd.to_datetime(df["timestamp"].astype(float).astype(int), unit="s")
     df.drop(columns=["timestamp"], inplace=True)
-
-    # rename to match your pipeline expectations
-    df.rename(columns=BRK_RENAME, inplace=True)
 
     # numeric coercion
     for c in df.columns:
@@ -320,157 +579,256 @@ def get_brk_onchain(
     return df
 
 
-def get_data(tickers, start_date):
+def get_data(tickers: dict, start_date: str) -> pd.DataFrame:
     """
-    Fetch and consolidate multiple financial and on-chain datasets for analysis.
+    Primary data orchestration function that fetches and merges all data sources into unified dataset.
+
+    This is the main entry point for data ingestion. It coordinates API calls to 8 different data
+    sources, normalizes timestamps to UTC midnight, and performs left-join merges to create a
+    complete time-series dataset. The resulting DataFrame contains 400+ columns spanning on-chain
+    metrics, market prices, market caps, sentiment indicators, and crypto altcoin data.
+
+    Data Sources Integrated:
+    1. BRK (Bitview) API: Bitcoin on-chain metrics (difficulty, hash rate, supply, fees, etc.)
+    2. Yahoo Finance: Stock/ETF/commodity/forex prices via yfinance library
+    3. Yahoo Finance: Market capitalizations for public companies
+    4. Alternative.me: Fear & Greed Index sentiment indicator
+    5. Google Sheets: Bitcoin miner efficiency data (J/TH)
+    6. CoinGecko: Bitcoin dominance percentage
+    7. CoinGecko: 14-day Bitcoin trade volume
+    8. CoinGecko: Altcoin prices (ETH, XRP, DOGE, BNB, USDT)
 
     Parameters:
-    tickers (list): List of stock or cryptocurrency tickers to fetch data for.
-    start_date (str): The start date from which to fetch data.
-
-    Returns:
-    pd.DataFrame: A consolidated DataFrame containing all relevant datasets.
+    tickers (dict): Asset ticker dictionary from data_definitions.py with keys:
+                    'stocks', 'etfs', 'indices', 'commodities', 'forex', 'crypto'.
+                    Example: {"stocks": ["AAPL", "MSFT"], "crypto": ["ethereum"]}
+    start_date (str): Historical data start date in 'YYYY-MM-DD' format. Typically '2010-01-01'
+                      to capture maximum history from Yahoo Finance. BRK data starts ~2009.
     """
-    # Fetch data from different sources
+    # Fetch data
     coindata = get_brk_onchain(start_date)
-    prices = get_price(tickers, start_date)  # Fetch historical price data
-    marketcaps = get_marketcap(tickers, start_date)  # Calculate market cap
-    fear_greed_index = get_fear_and_greed_index()  # Fetch Fear and Greed Index data
-    miner_data = get_miner_data(
-        "https://docs.google.com/spreadsheets/d/1GXaY6XE2mx5jnCu5uJFejwV95a0gYDJYHtDE0lmkGeA/edit?usp=sharing"
-    )  # Fetch miner data
+    prices = get_price(tickers, start_date)
+    marketcaps = get_marketcap(tickers, start_date)
+    fear_greed_index = get_fear_and_greed_index()
+    miner_data = get_miner_data()  # Now uses MINER_DATA_SHEET_URL from config
+    bitcoin_dominance = get_bitcoin_dominance()
+    if not bitcoin_dominance.empty and "time" in bitcoin_dominance.columns:
+        bitcoin_dominance["time"] = pd.to_datetime(bitcoin_dominance["time"]).dt.normalize()
+    btc_trade_volume_14d = get_btc_trade_volume_14d()
+    crypto_data = get_crypto_data(tickers["crypto"])
 
-    # Ensure 'time' column is converted to datetime format and set as the index for each DataFrame
-    datasets = [coindata, prices, marketcaps, fear_greed_index, miner_data]
-    for dataset in datasets:
-        # Only process the dataset if it is not empty and contains the 'time' column
+    datasets = [
+        ("coindata", coindata),
+        ("prices", prices),
+        ("marketcaps", marketcaps),
+        ("fear_greed_index", fear_greed_index),
+        ("miner_data", miner_data),
+        ("bitcoin_dominance", bitcoin_dominance),
+        ("btc_trade_volume_14d", btc_trade_volume_14d),
+        ("crypto_data", crypto_data),
+    ]
+
+    processed_datasets = []
+    for name, dataset in datasets:
         if not dataset.empty and "time" in dataset.columns:
-            dataset["time"] = pd.to_datetime(
-                dataset["time"]
-            )  # Convert 'time' to datetime
-            dataset["time"] = pd.to_datetime(dataset["time"]).dt.normalize()
+            dataset["time"] = pd.to_datetime(dataset["time"]).dt.tz_localize(None)
             dataset.set_index("time", inplace=True)
-            
+            processed_datasets.append(dataset)
 
-    # Merge all datasets iteratively to form a single consolidated DataFrame
-    data = datasets[0]  # Start with the first dataset
-    for dataset in datasets[1:]:
+    if not processed_datasets:
+        return pd.DataFrame()
+
+    # Start with coindata
+    data = processed_datasets[0]  # coindata
+    for i, dataset in enumerate(processed_datasets[1:], 1):
         data = pd.merge(data, dataset, left_index=True, right_index=True, how="left")
 
-    # Check for and drop duplicate indices to ensure clean time series data
+    # Handle duplicates
+    if data.columns.duplicated().any():
+        data = data.loc[:, ~data.columns.duplicated()]
     if data.index.duplicated().any():
-        print("Warning: Duplicate timestamps found. Dropping duplicates.")
         data = data[~data.index.duplicated()]
-
-    # Forward fill missing values to handle gaps in data availability
-    data.ffill(inplace=True)
 
     return data
 
 
-def calculate_custom_on_chain_metrics(data):
+# Metric Calculation
+
+
+def calculate_custom_on_chain_metrics(data: pd.DataFrame) -> pd.DataFrame:
     """
-    Calculate custom on-chain metrics for cryptocurrency data.
+    Calculate comprehensive Bitcoin on-chain valuation and network health metrics.
+
+    This function computes 40+ derived metrics including valuation models (MVRV, NVT, Thermocap,
+    Stock-to-Flow), price moving averages, profitability indicators (NUPL), and miner revenue
+    multiples. These metrics are essential for Bitcoin fundamental analysis and market cycle timing.
 
     Parameters:
-    data (pd.DataFrame): A DataFrame containing on-chain data.
-
-    Returns:
-    pd.DataFrame: DataFrame with new metrics calculated and added.
+    data (pd.DataFrame): DataFrame with DatetimeIndex containing BRK API on-chain metrics.
+                         Must include columns listed above for full metric calculation.
     """
-    data["RevAllTimeUSD"] = data["RevUSD"].fillna(0).cumsum()
-    data["NVTAdj"] = data["CapMrktCurUSD"] / data["TxTfrValAdjUSD"]
-    data["NVTAdj90"] = data["CapMrktCurUSD"] / data["TxTfrValAdjUSD"].rolling(90).mean()
+    data["RevAllTimeUSD"] = data["coinbase_usd_sum"].fillna(0).cumsum()
+    data["NVTAdj"] = data["market_cap"] / data["sent_usd"]
+    data["NVTAdj90"] = data["market_cap"] / data["sent_usd"].rolling(90).mean()
     data["SplyActPct1yr"] = (
-        100 - data["utxos_at_least_1y_old_supply_rel_to_circulating_supply"]
+        100 - data["utxos_over_1y_old_supply_rel_to_circulating_supply"]
     )
     data["TxCnt"] = data[["tx_v1", "tx_v2", "tx_v3"]].sum(axis=1)
-    data["TxTfrValMeanUSD"] = data["TxTfrValAdjUSD"]
-    data["TxTfrValMedUSD"] = data["TxTfrValAdjUSD"]
+    data["TxTfrValMeanUSD"] = data["sent_usd"]
+    data["TxTfrValMedUSD"] = data["sent_usd"]
 
-    # Calculate the number of satoshis per dollar, using the PriceUSD to determine the exchange rate
-    data["sat_per_dollar"] = 1 / (data["PriceUSD"] / 100000000)
+    # Calculate block reward from daily subsidy / blocks mined
+    data["block_reward"] = data["subsidy_btc_sum"] / data["block_count"]
+
+    # Calculate the number of satoshis per dollar
+    data["sat_per_dollar"] = SATS_PER_BTC / data["price_close"]
+
+    # Convert STH/LTH supply from satoshis to BTC
+    data["sth_supply"] = data["sth_supply"] / SATS_PER_BTC
+    data["lth_supply"] = data["lth_supply"] / SATS_PER_BTC
 
     # Calculate the Market Value to Realized Value (MVRV) ratio
-    data["mvrv_ratio"] = data["CapMrktCurUSD"] / data["CapRealUSD"]
+    data["mvrv_ratio"] = data["market_cap"] / data["realized_cap"]
     data["CapMVRVCur"] = data["mvrv_ratio"]
 
     # Calculate the realized price (the value at which each coin was last moved)
-    data["realised_price"] = data["CapRealUSD"] / data["SplyCur"]
+    data["realized_price"] = data["realized_cap"] / data["supply_btc"]
 
     # Calculate the Net Unrealized Profit/Loss (NUPL)
-    data["nupl"] = (data["CapMrktCurUSD"] - data["CapRealUSD"]) / data["CapMrktCurUSD"]
+    data["nupl"] = (data["market_cap"] - data["realized_cap"]) / data["market_cap"]
 
     # Calculate NVT price based on adjusted NVT ratio, with a rolling median to smooth data
     data["nvt_price"] = (
-        data["NVTAdj"].rolling(window=365 * 2).median() * data["TxTfrValAdjUSD"]
-    ) / data["SplyCur"]
+        data["NVTAdj"].rolling(window=365 * 2).median() * data["sent_usd"]
+    ) / data["supply_btc"]
 
     # Calculate adjusted NVT price using a 365-day rolling median for smoothing
     data["nvt_price_adj"] = (
-        data["NVTAdj90"].rolling(window=365).median() * data["TxTfrValAdjUSD"]
-    ) / data["SplyCur"]
+        data["NVTAdj90"].rolling(window=365).median() * data["sent_usd"]
+    ) / data["supply_btc"]
 
     # Calculate NVT price multiple (current price compared to NVT price)
-    data["nvt_price_multiple"] = data["PriceUSD"] / data["nvt_price"]
+    data["nvt_price_multiple"] = data["price_close"] / data["nvt_price"]
 
     # Calculate 14-day moving average of NVT price multiple for trend analysis
     data["nvt_price_multiple_ma"] = data["nvt_price_multiple"].rolling(window=14).mean()
 
     # Calculate price moving averages for different time windows to analyze price trends
-    data["7_day_ma_priceUSD"] = data["PriceUSD"].rolling(window=7).mean()  # 7-day MA
-    data["50_day_ma_priceUSD"] = data["PriceUSD"].rolling(window=50).mean()  # 50-day MA
-    data["100_day_ma_priceUSD"] = (
-        data["PriceUSD"].rolling(window=100).mean()
-    )  # 100-day MA
-    data["200_day_ma_priceUSD"] = (
-        data["PriceUSD"].rolling(window=200).mean()
-    )  # 200-day MA
-    data["200_week_ma_priceUSD"] = (
-        data["PriceUSD"].rolling(window=200 * 7).mean()
-    )  # 200-week MA
+    data["7_day_ma_price_close"] = data["price_close"].rolling(window=7).mean()
+    data["50_day_ma_price_close"] = data["price_close"].rolling(window=50).mean()
+    data["100_day_ma_price_close"] = data["price_close"].rolling(window=100).mean()
+    data["200_day_ma_price_close"] = data["price_close"].rolling(window=200).mean()
+    data["200_week_ma_price_close"] = data["price_close"].rolling(window=200 * 7).mean()
 
     # Calculate the price multiple relative to the 200-day moving average
-    data["200_day_multiple"] = data["PriceUSD"] / data["200_day_ma_priceUSD"]
+    data["200_day_multiple"] = data["price_close"] / data["200_day_ma_price_close"]
 
     # Calculate Thermocap multiples and associated pricing metrics
-    data["thermocap_multiple"] = data["CapMrktCurUSD"] / data["RevAllTimeUSD"]
-    data["thermocap_price"] = data["RevAllTimeUSD"] / data["SplyCur"]
-    data["thermocap_price_multiple_4"] = (4 * data["RevAllTimeUSD"]) / data["SplyCur"]
-    data["thermocap_price_multiple_8"] = (8 * data["RevAllTimeUSD"]) / data["SplyCur"]
-    data["thermocap_price_multiple_16"] = (16 * data["RevAllTimeUSD"]) / data["SplyCur"]
-    data["thermocap_price_multiple_32"] = (32 * data["RevAllTimeUSD"]) / data["SplyCur"]
+    data["thermocap_multiple"] = data["market_cap"] / data["RevAllTimeUSD"]
+    data["thermocap_price"] = data["RevAllTimeUSD"] / data["supply_btc"]
+    data["thermocap_price_multiple_4"] = (4 * data["RevAllTimeUSD"]) / data["supply_btc"]
+    data["thermocap_price_multiple_8"] = (8 * data["RevAllTimeUSD"]) / data["supply_btc"]
+    data["thermocap_price_multiple_16"] = (16 * data["RevAllTimeUSD"]) / data["supply_btc"]
+    data["thermocap_price_multiple_32"] = (32 * data["RevAllTimeUSD"]) / data["supply_btc"]
 
-    data["miner_revenue_1_Year"] = data["RevUSD"].rolling(window=365).sum()
-    data["miner_revenue_4_Year"] = data["RevUSD"].rolling(window=4 * 365).sum()
+    data["miner_revenue_1_Year"] = data["coinbase_usd_sum"].rolling(window=365).sum()
+    data["miner_revenue_4_Year"] = data["coinbase_usd_sum"].rolling(window=4 * 365).sum()
 
-    data["ss_multiple_1"] = data["CapMrktCurUSD"] / data["miner_revenue_1_Year"]
-    data["ss_price_1"] = data["miner_revenue_1_Year"] / data["SplyCur"]
+    data["ss_multiple_1"] = data["market_cap"] / data["miner_revenue_1_Year"]
+    data["ss_price_1"] = data["miner_revenue_1_Year"] / data["supply_btc"]
 
-    data["ss_multiple_4"] = data["CapMrktCurUSD"] / data["miner_revenue_4_Year"]
-    data["ss_price_4"] = data["miner_revenue_4_Year"] / data["SplyCur"]
+    data["ss_multiple_4"] = data["market_cap"] / data["miner_revenue_4_Year"]
+    data["ss_price_4"] = data["miner_revenue_4_Year"] / data["supply_btc"]
 
-    # Calculate Realized Cap multiples for different factors (3x, 5x, 7x)
-    data["realizedcap_multiple_2"] = (2 * data["CapRealUSD"]) / data["SplyCur"]
-    data["realizedcap_multiple_3"] = (3 * data["CapRealUSD"]) / data["SplyCur"]
-    data["realizedcap_multiple_5"] = (5 * data["CapRealUSD"]) / data["SplyCur"]
-    data["realizedcap_multiple_7"] = (7 * data["CapRealUSD"]) / data["SplyCur"]
+    # Calculate Realized Cap multiples for different factors (2x, 3x, 5x, 7x)
+    data["realizedcap_multiple_2"] = (2 * data["realized_cap"]) / data["supply_btc"]
+    data["realizedcap_multiple_3"] = (3 * data["realized_cap"]) / data["supply_btc"]
+    data["realizedcap_multiple_5"] = (5 * data["realized_cap"]) / data["supply_btc"]
+    data["realizedcap_multiple_7"] = (7 * data["realized_cap"]) / data["supply_btc"]
 
-    # Calculate the percentage of supply held for more than 1 year
-    data["supply_pct_1_year_plus"] = 100 - data["SplyActPct1yr"]
-    data["pct_supply_issued"] = data["SplyCur"] / 21000000
-    data["pct_fee_of_reward"] = (data["FeeTotUSD"] / (data["RevUSD"])) * 100
+    # Calculate the percentage of supply held for more than 1 year (simplified from double negation)
+    data["supply_pct_1_year_plus"] = data["utxos_over_1y_old_supply_rel_to_circulating_supply"]
+    data["pct_supply_issued"] = data["supply_btc"] / 21000000
+    data["pct_fee_of_reward"] = (data["fee_btc_sum"] / data["coinbase_btc_sum"]) * 100
 
     # Calculate illiquid and liquid supply based on the 1+ year held supply
-    data["illiquid_supply"] = (data["supply_pct_1_year_plus"] / 100) * data["SplyCur"]
-    data["liquid_supply"] = data["SplyCur"] - data["illiquid_supply"]
+    data["illiquid_supply"] = (data["supply_pct_1_year_plus"] / 100) * data["supply_btc"]
+    data["liquid_supply"] = data["supply_btc"] - data["illiquid_supply"]
 
-    data["tx_volume_yearly"] = data["TxTfrValAdjUSD"].rolling(window=365).sum()
-    data["qtm_price"] = data["tx_volume_yearly"] / (data["SplyCur"] * data["VelCur1yr"])
-    data["qtm_multiple"] = data["PriceUSD"] / (data["qtm_price"])
+    data["tx_volume_yearly"] = data["sent_usd"].rolling(window=365).sum()
+    # QTM: Price = Transaction Volume / (Supply * Velocity)
+    # Using btc_velocity (how many times each BTC transacts per year)
+    data["qtm_price"] = data["tx_volume_yearly"] / (data["supply_btc"] * data["btc_velocity"])
+    data["qtm_multiple"] = data["price_close"] / data["qtm_price"]
     data["qtm_price_multiple_2"] = data["qtm_price"] * 2
     data["qtm_price_multiple_5"] = data["qtm_price"] * 5
     data["qtm_price_multiple_10"] = data["qtm_price"] * 10
+
+    # Calculate daily active addresses from per-block averages
+    data["daily_active_addresses_sending"] = data["address_activity_sending_average"] * data["block_count"]
+    data["daily_active_addresses_receiving"] = data["address_activity_receiving_average"] * data["block_count"]
+
+    # =========================================================================
+    # Reserve Risk Pipeline (calculated from raw BDD, Price, Supply)
+    # =========================================================================
+
+    # Step 1: Adjusted BDD = BDD / Circulating Supply
+    data["adjusted_bdd"] = data["coindays_destroyed"] / data["supply_btc"]
+
+    # Step 2: Mean Adjusted BDD (binary indicator: above/below average)
+    data["adjusted_bdd_mean"] = data["adjusted_bdd"].expanding().mean()
+    data["adjusted_bdd_above_avg"] = data["adjusted_bdd"] > data["adjusted_bdd_mean"]
+
+    # Step 3: VOCD = Price × Adjusted BDD
+    data["vocd"] = data["price_close"] * data["adjusted_bdd"]
+
+    # Step 4: MVOCD = 30-day rolling median of VOCD
+    data["mvocd"] = data["vocd"].rolling(window=30).median()
+
+    # Step 5: HODL Bank = cumulative opportunity cost (when MVOCD < Price)
+    data["daily_hodl_value"] = (data["price_close"] - data["mvocd"]).clip(lower=0)
+    data["hodl_bank_calc"] = data["daily_hodl_value"].cumsum()
+
+    # Step 6: Reserve Risk = Price / HODL Bank
+    data["reserve_risk_calc"] = data["price_close"] / data["hodl_bank_calc"]
+
+    # =========================================================================
+    # Average Cap and Delta Cap
+    # =========================================================================
+
+    # Average Cap = Cumulative Sum of Market Cap / Days Since Start
+    data["cumulative_market_cap"] = data["market_cap"].cumsum()
+    data["days_since_start"] = range(1, len(data) + 1)
+    data["average_cap"] = data["cumulative_market_cap"] / data["days_since_start"]
+
+    # Delta Cap = Realized Cap - Average Cap
+    data["delta_cap"] = data["realized_cap"] - data["average_cap"]
+
+    # Price targets based on these caps
+    data["average_cap_price"] = data["average_cap"] / data["supply_btc"]
+    data["delta_cap_price"] = data["delta_cap"] / data["supply_btc"]
+
+    # =========================================================================
+    # Bitcoin Volatility Metrics
+    # =========================================================================
+
+    # Calculate daily returns
+    daily_returns = data["price_close"].pct_change()
+
+    # 30-day rolling volatility (annualized)
+    data["VtyDayRet30d"] = daily_returns.rolling(30).std() * np.sqrt(365)
+
+    # 180-day rolling volatility (annualized)
+    data["VtyDayRet180d"] = daily_returns.rolling(180).std() * np.sqrt(365)
+
+    # =========================================================================
+    # Supply in Profit/Loss Percentages
+    # API returns values in satoshis, convert to BTC first
+    # =========================================================================
+    data["supply_in_profit_btc"] = data["supply_in_profit"] / SATS_PER_BTC
+    data["supply_in_loss_btc"] = data["supply_in_loss"] / SATS_PER_BTC
+    data["supply_in_profit_pct"] = (data["supply_in_profit_btc"] / data["supply_btc"]) * 100
+    data["supply_in_loss_pct"] = (data["supply_in_loss_btc"] / data["supply_btc"]) * 100
 
     print("Custom Metrics Created")
     return data
@@ -478,20 +836,30 @@ def calculate_custom_on_chain_metrics(data):
 
 def calculate_moving_averages(data: pd.DataFrame, metrics: list) -> pd.DataFrame:
     """
-    Calculate moving averages for each specified metric and add them to the DataFrame.
+    Calculate 7-day, 30-day, and 365-day moving averages for specified metrics.
 
     Parameters:
-    data (pd.DataFrame): DataFrame containing the metrics to calculate moving averages for.
-    metrics (list): List of metric names to calculate moving averages for.
-
-    Returns:
-    pd.DataFrame: DataFrame with added columns for moving averages of the specified metrics.
+    data (pd.DataFrame): DataFrame with DatetimeIndex containing the metrics to smooth.
+    metrics (list): List of column names to calculate moving averages for.
     """
-    for metric in metrics:
-        # Calculate 7-day, 30-day, and 365-day moving averages for each metric
-        data[f"7_day_ma_{metric}"] = data[metric].rolling(window=7).mean()
-        data[f"30_day_ma_{metric}"] = data[metric].rolling(window=30).mean()
-        data[f"365_day_ma_{metric}"] = data[metric].rolling(window=365).mean()
+    moving_averages = {
+        f"7_day_ma_{metric}": data[metric].rolling(window=7).mean()
+        for metric in metrics
+    }
+    moving_averages.update(
+        {
+            f"30_day_ma_{metric}": data[metric].rolling(window=30).mean()
+            for metric in metrics
+        }
+    )
+    moving_averages.update(
+        {
+            f"365_day_ma_{metric}": data[metric].rolling(window=365).mean()
+            for metric in metrics
+        }
+    )
+
+    data = pd.concat([data, pd.DataFrame(moving_averages)], axis=1)
     return data
 
 
@@ -591,19 +959,19 @@ def calculate_btc_price_to_surpass_metal_categories(
     Calculate the BTC price needed to surpass various metal market caps.
 
     Parameters:
-    data (pd.DataFrame): DataFrame containing existing financial data.
+    data (pd.DataFrame): DataFrame containing existing financial data with BRK native field names.
     gold_supply_breakdown (pd.DataFrame): DataFrame containing breakdown percentages for gold supply.
 
     Returns:
     pd.DataFrame: DataFrame with added columns for BTC prices needed to surpass metal categories.
     """
-    # Ensure 'SplyCur' is forward filled to avoid NaN values
-    data["SplyCur"].ffill(inplace=True)
+    # Ensure 'supply_btc' is forward filled to avoid NaN values
+    data["supply_btc"] = data["supply_btc"].ffill()
 
-    # Early return if 'SplyCur' for the latest row is zero or NaN to avoid division by zero
-    if data["SplyCur"].iloc[-1] == 0 or pd.isna(data["SplyCur"].iloc[-1]):
+    # Early return if 'supply_btc' for the latest row is zero or NaN to avoid division by zero
+    if data["supply_btc"].iloc[-1] == 0 or pd.isna(data["supply_btc"].iloc[-1]):
         print(
-            "Warning: 'SplyCur' is zero or NaN for the latest row. Skipping calculations."
+            "Warning: 'supply_btc' is zero or NaN for the latest row. Skipping calculations."
         )
         return data
 
@@ -612,7 +980,7 @@ def calculate_btc_price_to_surpass_metal_categories(
     # Calculating BTC prices required to match or surpass gold market cap
     gold_marketcap_billion_usd = data["gold_marketcap_billion_usd"].iloc[-1]
     new_columns["gold_marketcap_btc_price"] = (
-        gold_marketcap_billion_usd / data["SplyCur"]
+        gold_marketcap_billion_usd / data["supply_btc"]
     )
 
     # Iterating through gold supply breakdown to calculate BTC prices for specific categories
@@ -621,12 +989,12 @@ def calculate_btc_price_to_surpass_metal_categories(
         percentage_of_market = row["Percentage Of Market"] / 100.0
         new_columns[f"gold_{category}_marketcap_btc_price"] = (
             gold_marketcap_billion_usd * percentage_of_market
-        ) / data["SplyCur"]
+        ) / data["supply_btc"]
 
     # Silver market cap calculations
     silver_marketcap_billion_usd = data["silver_marketcap_billion_usd"].iloc[-1]
     new_columns["silver_marketcap_btc_price"] = (
-        silver_marketcap_billion_usd / data["SplyCur"]
+        silver_marketcap_billion_usd / data["supply_btc"]
     )
 
     # Convert the dictionary to a DataFrame and concatenate it with the original DataFrame
@@ -643,24 +1011,26 @@ def calculate_btc_price_to_surpass_fiat(
     Calculate the BTC price needed to surpass the fiat supply of different countries.
 
     Parameters:
-    data (pd.DataFrame): DataFrame containing existing financial data.
+    data (pd.DataFrame): DataFrame containing existing financial data with BRK native field names.
     fiat_money_data (pd.DataFrame): DataFrame containing fiat supply data for different countries.
 
     Returns:
     pd.DataFrame: DataFrame with added columns for BTC prices needed to surpass fiat supplies.
     """
+    fiat_marketcap = {}
+
     for _, row in fiat_money_data.iterrows():
-        country = row["Country"]
+        country = row["Country"].replace(" ", "_")
         fiat_supply_usd_trillion = row["US Dollar Trillion"]
 
         # Convert the fiat supply from trillions to units
         fiat_supply_usd = fiat_supply_usd_trillion * 1e12
 
-        # Compute the price of Bitcoin needed to surpass this country's M0 money supply
-        metric_name_price = country.replace(" ", "_") + "_btc_price"
-        metric_name_cap = country.replace(" ", "_") + "_cap"
-        data[metric_name_price] = fiat_supply_usd / data["SplyCur"]
-        data[metric_name_cap] = fiat_supply_usd
+        # Compute the price of Bitcoin needed to surpass this country's fiat supply
+        fiat_marketcap[f"{country}_btc_price"] = fiat_supply_usd / data["supply_btc"]
+        fiat_marketcap[f"{country}_cap"] = fiat_supply_usd
+
+    data = pd.concat([data, pd.DataFrame(fiat_marketcap)], axis=1)
     return data
 
 
@@ -671,32 +1041,32 @@ def calculate_btc_price_for_stock_mkt_caps(
     Calculate the BTC price needed to surpass market caps of different stocks.
 
     Parameters:
-    data (pd.DataFrame): DataFrame containing existing financial data.
+    data (pd.DataFrame): DataFrame containing existing financial data with BRK native field names.
     stock_tickers (list): List of stock tickers to calculate market cap-based BTC prices for.
 
     Returns:
     pd.DataFrame: DataFrame with added columns for BTC prices needed to surpass stock market caps.
     """
-    new_columns = {}
-    for ticker in stock_tickers:
-        # Calculate the BTC price needed to match each stock's market cap
-        new_columns[ticker + "_mc_btc_price"] = (
-            data[ticker + "_MarketCap"] / data["SplyCur"]
-        )
-    # Concatenate the new columns with the original DataFrame
-    data = pd.concat([data, pd.DataFrame(new_columns)], axis=1)
+    stock_marketcap_prices = {
+        f"{ticker}_mc_btc_price": data[f"{ticker}_MarketCap"] / data["supply_btc"]
+        for ticker in stock_tickers
+    }
+
+    data = pd.concat([data, pd.DataFrame(stock_marketcap_prices)], axis=1)
     return data
+
+
+## Onchain Models Calculation
 
 
 def calculate_stock_to_flow_metrics(data):
     """
-    Calculate stock-to-flow metrics for the given data using the PlanB model curve.
+    Calculate Bitcoin Stock-to-Flow (S2F) valuation model using PlanB's power law regression.
+
+    Uses Market Value = exp(14.6) * S2F^3.3 where SF = supply / annual issuance.
 
     Parameters:
-    data (pd.DataFrame): DataFrame containing the current supply (SplyCur) and price (PriceUSD) data.
-
-    Returns:
-    pd.DataFrame: DataFrame with new stock-to-flow metrics added.
+    data (pd.DataFrame): DataFrame with supply_btc and price_close columns.
     """
     # Initialize a dictionary to hold new columns
     new_columns = {}
@@ -707,7 +1077,7 @@ def calculate_stock_to_flow_metrics(data):
     power = 3.3
 
     # Calculate S2F using yearly supply difference to align with PlanB's original model
-    new_columns["SF"] = data["SplyCur"] / data["SplyCur"].diff(periods=365).fillna(0)
+    new_columns["SF"] = data["supply_btc"] / data["supply_btc"].diff(periods=365).fillna(0)
 
     # Applying the PlanB linear regression formula
     new_columns["SF_Predicted_Market_Value"] = (
@@ -716,7 +1086,7 @@ def calculate_stock_to_flow_metrics(data):
 
     # Calculating the predicted market price using supply
     new_columns["SF_Predicted_Price"] = (
-        new_columns["SF_Predicted_Market_Value"] / data["SplyCur"]
+        new_columns["SF_Predicted_Market_Value"] / data["supply_btc"]
     )
 
     # Apply a 365-day moving average to the predicted S2F price to smooth the curve
@@ -725,7 +1095,7 @@ def calculate_stock_to_flow_metrics(data):
     )
 
     # Calculating the S/F multiple using the actual price and the predicted price
-    new_columns["SF_Multiple"] = data["PriceUSD"] / new_columns["SF_Predicted_Price"]
+    new_columns["SF_Multiple"] = data["price_close"] / new_columns["SF_Predicted_Price"]
 
     # Concatenate all new columns to the DataFrame at once
     data = pd.concat([data, pd.DataFrame(new_columns)], axis=1)
@@ -900,109 +1270,95 @@ def calculate_bitcoin_production_cost(
 
 def electric_price_models(data):
     """
-    Calculate various electricity-based Bitcoin production cost models for each row in the provided dataset.
+    Calculate electricity-based Bitcoin valuation models.
+
+    Models: Production Cost, Hayes Network Price, Energy Value (Capriole), Energy Value Multiple.
+    Uses hash_rate, difficulty, inflation_rate, block_reward, and miner efficiency data.
 
     Parameters:
-    data (pd.DataFrame): DataFrame containing relevant mining and network data.
-
-    Returns:
-    pd.DataFrame: Updated DataFrame with additional metrics related to electricity cost models.
+    data (pd.DataFrame): DataFrame with mining metrics and miner efficiency columns.
     """
-    # Constants for energy value calculation.
-    FIAT_FACTOR = 2.0e-15  # Conversion factor from energy to USD.
-    SECONDS_PER_YEAR = 365.25 * 24 * 60 * 60  # Total seconds in a year.
-    ELECTRICITY_COST = 0.05  # Cost of electricity per kWh.
-    PUE = 1.1  # Power Usage Effectiveness factor.
-    elec_to_total_cost_ratio = (
-        0.6  # Ratio of electricity cost to total production cost.
+    # Constants
+    FIAT_FACTOR = 2.0e-15
+    SECONDS_PER_YEAR = 365.25 * 24 * 60 * 60
+    SECONDS_PER_HOUR = 3600
+    HOURS_PER_DAY = 24
+    SHA_256_CONSTANT = 2**32
+
+    # Build all new columns in a dictionary to avoid fragmentation
+    new_cols = {}
+
+    # Convert hash_rate from H/s (BRK API) to TH/s for calculations
+    hash_rate_th_s = data["hash_rate"] / 1e12
+
+    # Daily electricity consumption in kWh
+    efficiency_j_th = data["lagged_efficiency_j_gh"] * 1000
+    new_cols["daily_electricity_consumption_kwh"] = (
+        hash_rate_th_s * efficiency_j_th * 3600 * 24 / (1000 * 3600)
     )
 
-    # Iterate over each row in the DataFrame to calculate metrics.
-    for index, row in data.iterrows():
-        # Calculate daily electricity consumption in kWh based on network hashrate and miner efficiency.
-        daily_electricity_consumption_kwh = (
-            calculate_daily_electricity_consumption_kwh_from_hashrate(
-                row["HashRate"], row["lagged_efficiency_j_gh"]
-            )
-        )
+    # Bitcoin production cost
+    total_electricity_cost = (
+        new_cols["daily_electricity_consumption_kwh"] * ELECTRICITY_COST * PUE
+    )
+    bitcoin_electricity_price = total_electricity_cost / data["subsidy_btc_sum"]
+    new_cols["Bitcoin_Production_Cost"] = (
+        bitcoin_electricity_price / ELEC_TO_TOTAL_COST_RATIO
+    )
+    new_cols["Electricity_Cost"] = (
+        new_cols["Bitcoin_Production_Cost"] * ELEC_TO_TOTAL_COST_RATIO
+    )
 
-        # Calculate Bitcoin production cost for the day.
-        production_cost = calculate_bitcoin_production_cost(
-            daily_electricity_consumption_kwh,
-            ELECTRICITY_COST,
-            PUE,
-            row["IssContNtv"],  # Coinbase Issuance.
-            elec_to_total_cost_ratio,
-        )
+    # Hayes Network Price Per BTC
+    THETA = HOURS_PER_DAY * SHA_256_CONSTANT / SECONDS_PER_HOUR
+    btc_per_day_network_expected = (
+        THETA * (data["block_reward"] * hash_rate_th_s) / data["difficulty"]
+    )
+    e_day_network = (
+        ELECTRICITY_COST * 24 * data["lagged_efficiency_j_gh"] * hash_rate_th_s
+    )
+    new_cols["Hayes_Network_Price_Per_BTC"] = np.where(
+        btc_per_day_network_expected != 0,
+        e_day_network / btc_per_day_network_expected,
+        None,
+    )
 
-        # Update the DataFrame with calculated Bitcoin production cost and electricity cost.
-        data.at[index, "Bitcoin_Production_Cost"] = production_cost
-        data.at[index, "Electricity_Cost"] = production_cost * elec_to_total_cost_ratio
+    # Lagged Energy Value
+    supply_growth_rate_s = data["inflation_rate"] / 100 / SECONDS_PER_YEAR
+    miner_efficiency_w_th = data["lagged_efficiency_j_gh"] * 1000
+    energy_input_watts = hash_rate_th_s * miner_efficiency_w_th
+    new_cols["Lagged_Energy_Value"] = np.where(
+        supply_growth_rate_s != 0,
+        (energy_input_watts / supply_growth_rate_s) * FIAT_FACTOR,
+        0,
+    )
 
-        # Calculate the network price per BTC using the Hayes model.
-        network_price = calculate_hayes_network_price_per_btc(
-            ELECTRICITY_COST,  # Assumed electricity cost per kWh.
-            row["lagged_efficiency_j_gh"],
-            row["HashRate"],
-            row["block_reward"],
-            row["DiffLast"],
-        )
-        data.at[index, "Hayes_Network_Price_Per_BTC"] = network_price
+    # Energy Value Multiple
+    new_cols["Energy_Value_Multiple"] = np.where(
+        new_cols["Lagged_Energy_Value"] != 0,
+        data["price_close"] / new_cols["Lagged_Energy_Value"],
+        None,
+    )
 
-        # Calculate the energy value for the lagged efficiency.
-        energy_value = calculate_energy_value(
-            row["HashRate"], row["lagged_efficiency_j_gh"], row["IssContPctAnn"]
-        )
-        data.at[index, "Lagged_Energy_Value"] = energy_value
+    # CM Energy Value
+    miner_efficiency_w_th_cm = data["cm_efficiency_j_gh"] * 1000
+    energy_input_watts_cm = hash_rate_th_s * miner_efficiency_w_th_cm
+    new_cols["CM_Energy_Value"] = np.where(
+        supply_growth_rate_s != 0,
+        (energy_input_watts_cm / supply_growth_rate_s) * FIAT_FACTOR,
+        0,
+    )
 
-        # Calculate the energy value multiple as the ratio of actual price to energy value.
-        if energy_value != 0:
-            energy_value_multiple = row["PriceUSD"] / energy_value
-        else:
-            energy_value_multiple = None
+    # Add all new columns at once to avoid DataFrame fragmentation
+    data = pd.concat([data, pd.DataFrame(new_cols, index=data.index)], axis=1)
 
-        data.at[index, "Energy_Value_Multiple"] = energy_value_multiple
-
-        # Calculate the energy value using current miner efficiency (CM Efficiency).
-        energy_value = calculate_energy_value(
-            row["HashRate"], row["cm_efficiency_j_gh"], row["IssContPctAnn"]
-        )
-        data.at[index, "CM_Energy_Value"] = energy_value
     return data
 
 
-def calculate_statistics(data, start_date):
-    """
-    Calculate statistical metrics, including percentiles and z-scores, for the given data after a specified start date.
-
-    Parameters:
-    data (pd.DataFrame): The input DataFrame containing financial or numerical data.
-    start_date (str): The start date from which to filter data.
-
-    Returns:
-    tuple: Two DataFrames containing percentiles and z-scores, respectively.
-    """
-    # Convert start_date to datetime to ensure consistent filtering
-    start_date = pd.to_datetime(start_date)
-
-    # Filter data to only include rows after start_date
-    data = data[data.index >= start_date]
-
-    # Calculate percentiles and z-scores for numeric columns
-    numeric_data = data.select_dtypes(include=[np.number])
-
-    # Calculate percentiles for each numeric column
-    percentiles = numeric_data.rank(pct=True)
-    percentiles.columns = [str(col) + "_percentile" for col in percentiles.columns]
-
-    # Calculate z-scores for each numeric column (standard score)
-    z_scores = (numeric_data - numeric_data.mean()) / numeric_data.std()
-    z_scores.columns = [str(col) + "_zscore" for col in z_scores.columns]
-
-    return percentiles, z_scores
+# Timeframe Calculations
 
 
-def rolling_cagr_for_all_columns(data, years):
+def calculate_rolling_cagr_for_all_columns(data, years):
     """
     Calculate the rolling Compound Annual Growth Rate (CAGR) for all columns in the DataFrame over the specified number of years.
 
@@ -1014,17 +1370,24 @@ def rolling_cagr_for_all_columns(data, years):
     pd.DataFrame: DataFrame containing the calculated CAGR for each column.
     """
     # Ensure that all data is numeric by coercing non-numeric values to NaN
+    # Exclude boolean columns which are not meaningful for CAGR
+    data = data.select_dtypes(exclude=["bool"])
     data = data.apply(pd.to_numeric, errors="coerce")
-
-    # Handle missing values by filling with 0 to avoid issues during CAGR calculation
-    data.fillna(0, inplace=True)
 
     # Calculate the start value for CAGR by shifting data backward by the number of years in days
     days_per_year = 365
     start_value = data.shift(int(years * days_per_year))
 
+    # Replace zero start values with NaN to avoid division by zero
+    start_value = start_value.replace(0, np.nan)
+
     # Calculate CAGR using the formula: ((End Value / Start Value)^(1/years)) - 1
-    cagr = ((data / start_value) ** (1 / years) - 1) * 100  # Convert to percentage
+    # Division by zero or negative values will produce NaN/inf, which is mathematically correct
+    with pd.option_context("mode.use_inf_as_na", True):
+        cagr = ((data / start_value) ** (1 / years) - 1) * 100  # Convert to percentage
+        # Replace inf values with NaN for cleaner output
+        cagr = cagr.replace([np.inf, -np.inf], np.nan)
+
     cagr.columns = [f"{col}_{years}_Year_CAGR" for col in cagr.columns]
 
     return cagr
@@ -1032,19 +1395,21 @@ def rolling_cagr_for_all_columns(data, years):
 
 def calculate_rolling_cagr_for_all_metrics(data):
     """
-    Calculate rolling CAGR for all columns in the DataFrame for both 4-year and 2-year periods.
+    Calculate rolling CAGR for all metrics across 4-year and 2-year windows.
+
+    CAGR Formula: ((End Value / Start Value)^(1/years) - 1) * 100
 
     Parameters:
-    data (pd.DataFrame): The input DataFrame containing numerical data.
+    data (pd.DataFrame): DataFrame with DatetimeIndex containing numeric metrics.
 
     Returns:
-    pd.DataFrame: DataFrame containing the calculated 4-year and 2-year CAGR for each column.
+    pd.DataFrame: DataFrame with {metric}_4_Year_CAGR and {metric}_2_Year_CAGR columns.
     """
     # Calculate 4-year CAGR for all columns
-    cagr_4yr = rolling_cagr_for_all_columns(data, 4)
+    cagr_4yr = calculate_rolling_cagr_for_all_columns(data, 4)
 
     # Calculate 2-year CAGR for all columns
-    cagr_2yr = rolling_cagr_for_all_columns(data, 2)
+    cagr_2yr = calculate_rolling_cagr_for_all_columns(data, 2)
 
     # Concatenate the results to return a DataFrame containing both 4-year and 2-year CAGR metrics
     return pd.concat([cagr_4yr, cagr_2yr], axis=1)
@@ -1109,6 +1474,69 @@ def calculate_yoy_change(data):
     return yoy_change
 
 
+def calculate_trading_week_change(data):
+    """
+    Calculates the weekly change in trading data by comparing each day's value to the Monday of the same week.
+
+    Parameters:
+    data (pd.DataFrame): DataFrame containing daily trading data with datetime index.
+
+    Returns:
+    pd.DataFrame: DataFrame with columns indicating the weekly change for each numeric column.
+    """
+    # Determine the Monday of the week for each date
+    start_of_week = data.index - pd.to_timedelta(data.index.dayofweek, unit="d")
+
+    # Get numeric columns only
+    numeric_cols = data.select_dtypes(include=[np.number]).columns
+
+    # VECTORIZED: Get Monday values for each week using groupby + transform
+    monday_values = data[numeric_cols].groupby(start_of_week).transform("first")
+
+    # VECTORIZED: Calculate weekly change (current - monday) / monday
+    trading_week_change = (data[numeric_cols] - monday_values) / monday_values
+
+    # Rename columns with _trading_week_change suffix
+    trading_week_change.columns = [
+        f"{col}_trading_week_change" for col in numeric_cols
+    ]
+
+    # Forward fill the NaN values in the trading week change DataFrame
+    trading_week_change.ffill(inplace=True)
+
+    return trading_week_change
+
+
+def calculate_all_changes(data: pd.DataFrame, periods: Optional[list] = None) -> pd.DataFrame:
+    """
+    Calculate time-based changes for each column in the DataFrame.
+
+    Parameters:
+    data (pd.DataFrame): The input DataFrame containing numerical data.
+    periods (list of int, optional): List of time periods (in days) to calculate changes for.
+                                     Defaults to [7, 90] which are the most commonly used.
+
+    Returns:
+    pd.DataFrame: DataFrame containing all calculated changes.
+    """
+    # Default to only the periods actually used in reports
+    if periods is None:
+        periods = [7, 90]
+
+    # Calculate changes for the specified periods
+    changes = calculate_time_changes(data, periods)
+
+    # Calculate YTD, MTD, and YOY changes (always needed for reports)
+    ytd_change = calculate_ytd_change(data)
+    mtd_change = calculate_mtd_change(data)
+    yoy_change = calculate_yoy_change(data)
+
+    # Concatenate all changes into a single DataFrame
+    changes = pd.concat([changes, ytd_change, mtd_change, yoy_change], axis=1)
+
+    return changes
+
+
 def calculate_time_changes(data, periods):
     """
     Calculate percentage changes for the given periods for each column in the DataFrame.
@@ -1132,54 +1560,488 @@ def calculate_time_changes(data, periods):
     return changes
 
 
-def calculate_all_changes(data):
+def calculate_statistics(data, start_date):
     """
-    Calculate various time-based changes for each column in the DataFrame, including daily, weekly, monthly, quarterly, yearly, and multi-year changes.
+    Calculate statistical metrics, including percentiles and z-scores, for the given data after a specified start date.
 
     Parameters:
-    data (pd.DataFrame): The input DataFrame containing numerical data.
+    data (pd.DataFrame): The input DataFrame containing financial or numerical data.
+    start_date (str): The start date from which to filter data.
 
     Returns:
-    pd.DataFrame: DataFrame containing all calculated changes.
+    tuple: Two DataFrames containing percentiles and z-scores, respectively.
     """
-    # Define the periods (in days) for which we want to calculate changes
-    periods = [1, 7, 30, 90, 365, 2 * 365, 3 * 365, 4 * 365, 5 * 365]
+    # Convert start_date to datetime to ensure consistent filtering
+    start_date = pd.to_datetime(start_date)
 
-    # Calculate changes for the specified periods
-    changes = calculate_time_changes(data, periods)
+    # Filter data to only include rows after start_date
+    data = data[data.index >= start_date]
 
-    # Calculate YTD, MTD, and YoY changes
-    ytd_change = calculate_ytd_change(data)
-    mtd_change = calculate_mtd_change(data)
-    yoy_change = calculate_yoy_change(data)
+    # Calculate percentiles and z-scores for numeric columns
+    numeric_data = data.select_dtypes(include=[np.number])
 
-    # Concatenate all changes into a single DataFrame to avoid fragmentation
-    changes = pd.concat([changes, ytd_change, mtd_change, yoy_change], axis=1)
+    # Calculate percentiles for each numeric column
+    percentiles = numeric_data.rank(pct=True)
+    percentiles.columns = [str(col) + "_percentile" for col in percentiles.columns]
 
-    return changes
+    # Calculate z-scores for each numeric column (standard score)
+    z_scores = (numeric_data - numeric_data.mean()) / numeric_data.std()
+    z_scores.columns = [str(col) + "_zscore" for col in z_scores.columns]
+
+    return percentiles, z_scores
 
 
-def run_data_analysis(data, start_date):
+def run_data_analysis(data: pd.DataFrame, start_date: str, periods: Optional[list] = None, include_statistics: bool = False) -> pd.DataFrame:
     """
-    Run a comprehensive data analysis by calculating changes, percentiles, and z-scores for each column in the DataFrame.
+    Calculate time-based percentage changes (7d, 90d, MTD, YTD) for all metrics in the dataset.
+
+    This is the primary analysis function that enriches raw data with calculated percentage changes
+    across multiple time periods. These change columns are essential for performance tables and
+    time-series analysis. Optionally includes percentile and z-score statistics.
+
+    The function calculates:
+    - Fixed period changes: 7-day, 90-day percentage changes
+    - Month-to-date (MTD) changes: Performance since start of current month
+    - Year-to-date (YTD) changes: Performance since January 1st of current year
+    - Optional statistics: Percentile rankings and z-scores since start_date
 
     Parameters:
-    data (pd.DataFrame): The input DataFrame containing numerical data.
-    start_date (str): The start date from which to begin analysis.
+    data (pd.DataFrame): DataFrame with DatetimeIndex containing metrics to analyze. Typically
+                         a subset of the full dataset containing only analysis_columns from
+                         data_definitions.py (optimized to ~28 columns instead of 400+).
+    start_date (str): Start date for statistical calculations in 'YYYY-MM-DD' format.
+                      Only used if include_statistics=True. Typically '2012-11-28' (first halving).
+    periods (Optional[list]): List of day periods for fixed-window changes. Default: [7, 90].
+                              Custom periods can be specified (e.g., [7, 30, 90, 365]).
+    include_statistics (bool): If True, calculates percentile and z-score for each metric relative
+                               to historical data since start_date. Default: False (not used in
+                               current reports but available for advanced analysis).
 
     Returns:
-    pd.DataFrame: DataFrame containing the original data along with calculated changes, percentiles, and z-scores.
+    pd.DataFrame: Original data with added change columns:
+        - {column}_7_change: 7-day percentage change for each metric
+        - {column}_90_change: 90-day percentage change for each metric
+        - {column}_MTD_change: Month-to-date percentage change
+        - {column}_YTD_change: Year-to-date percentage change
+        - {column}_percentile: Percentile rank (0-1) if include_statistics=True
+        - {column}_zscore: Standard score if include_statistics=True
+
     """
-    # Calculate various time-based changes for the data
-    changes = calculate_all_changes(data)
+    # Calculate time-based changes for the data
+    changes = calculate_all_changes(data, periods)
 
-    # Calculate statistical metrics (percentiles and z-scores) for the data
-    percentiles, z_scores = calculate_statistics(data, start_date)
+    # Merge the changes with the original data
+    data = pd.concat([data, changes], axis=1)
 
-    # Merge the changes, percentiles, and z-scores with the original data
-    data = pd.concat([data, changes, percentiles, z_scores], axis=1)
+    # Optionally include percentiles and z-scores (not used in current reports)
+    if include_statistics:
+        percentiles, z_scores = calculate_statistics(data, start_date)
+        data = pd.concat([data, percentiles, z_scores], axis=1)
 
     return data
+
+
+# Create Market Statistics
+
+
+def calculate_rolling_correlations(data, periods):
+    """
+    Calculates rolling return correlations for specified periods.
+
+    Parameters:
+    data (pd.DataFrame): DataFrame containing historical daily price data for assets as columns.
+    periods (list): List of integers representing rolling window sizes in days.
+
+    Returns:
+    dict: Dictionary where keys are periods and values are DataFrames of rolling correlations.
+    """
+    # Calculate daily returns for each asset
+    returns = data.pct_change()
+
+    # Initialize a dictionary to store rolling correlations for each period
+    correlations = {}
+    for period in periods:
+        # Calculate rolling correlation of returns
+        correlations[period] = returns.rolling(window=period).corr()
+
+    return correlations
+
+
+def calculate_volatility_tradfi(prices, windows):
+    """
+    Calculates rolling annualized volatility for traditional financial assets.
+
+    Parameters:
+    prices (pd.DataFrame): DataFrame containing daily price data for each asset as columns.
+    windows (list): List of integers specifying rolling window sizes in days.
+
+    Returns:
+    pd.DataFrame: DataFrame of annualized volatilities for each specified window.
+    """
+    # Calculate daily returns based on price data
+    returns = prices.pct_change()
+
+    # Initialize a DataFrame to store the volatilities for each window
+    volatilities = pd.DataFrame(index=prices.index)
+    for window in windows:
+        # Compute rolling standard deviation of returns for the given window
+        volatility = returns.rolling(window).std()
+        # Annualize volatility using trading days for traditional financial assets
+        annualized_volatility = volatility * np.sqrt(STOCK_TRADING_DAYS)
+        # Store the annualized volatility for the current window
+        volatilities[f"{window}_day_volatility"] = annualized_volatility
+
+    return volatilities
+
+
+def calculate_volatility_crypto(prices, windows):
+    """
+    Calculates rolling annualized volatility for cryptocurrency assets.
+
+    Parameters:
+    prices (pd.DataFrame): DataFrame containing daily price data for each cryptocurrency as columns.
+    windows (list): List of integers specifying rolling window sizes in days.
+
+    Returns:
+    pd.DataFrame: DataFrame of annualized volatilities for each specified window.
+    """
+    # Calculate daily returns based on price data
+    returns = prices.pct_change()
+
+    # Initialize a DataFrame to store the volatilities for each window
+    volatilities = pd.DataFrame(index=prices.index)
+    for window in windows:
+        # Compute rolling standard deviation of returns for the given window
+        volatility = returns.rolling(window).std()
+        # Annualize volatility using trading days for cryptocurrency assets
+        annualized_volatility = volatility * np.sqrt(CRYPTO_TRADING_DAYS)
+        # Store the annualized volatility for the current window
+        volatilities[f"{window}_day_volatility"] = annualized_volatility
+
+    return volatilities
+
+
+def calculate_daily_expected_return(price_series, time_frame, trading_days_in_year):
+    """
+    Calculates the rolling expected annualized return for an asset.
+
+    Parameters:
+    price_series (pd.Series): Series containing daily price data for the asset.
+    time_frame (int): Rolling window size in days.
+    trading_days_in_year (int): Number of trading days in a year (e.g., 252 for stocks, 365 for crypto).
+
+    Returns:
+    pd.Series: Series of the rolling expected annualized return.
+    """
+    # Calculate daily returns based on price data
+    daily_returns = price_series.pct_change()
+    # Compute rolling average of daily returns and annualize it
+    rolling_avg_return = (
+        daily_returns.rolling(window=time_frame).mean() * trading_days_in_year
+    )
+
+    return rolling_avg_return
+
+
+def calculate_standard_deviation_of_returns(
+    price_series, time_frame, trading_days_in_year
+):
+    """
+    Calculates the rolling standard deviation of returns, annualized.
+
+    Parameters:
+    price_series (pd.Series): Series containing daily price data for the asset.
+    time_frame (int): Rolling window size in days.
+    trading_days_in_year (int): Number of trading days in a year (e.g., 252 for stocks, 365 for crypto).
+
+    Returns:
+    pd.Series: Series of the rolling annualized standard deviation of returns.
+    """
+    # Calculate daily returns based on price data
+    daily_returns = price_series.pct_change()
+    # Compute rolling standard deviation of returns and annualize it
+    rolling_std_dev = daily_returns.rolling(window=time_frame).std() * (
+        trading_days_in_year**0.5
+    )
+    return rolling_std_dev
+
+
+def calculate_sharpe_ratio(
+    expected_return_series, std_dev_series, risk_free_rate_series
+):
+    """
+    Calculates the Sharpe ratio based on expected returns, standard deviation of returns, and risk-free rate.
+
+    Parameters:
+    expected_return_series (pd.Series): Series of expected returns (annualized).
+    std_dev_series (pd.Series): Series of standard deviations of returns (annualized).
+    risk_free_rate_series (pd.Series): Series of risk-free rate values, aligned with asset data.
+
+    Returns:
+    pd.Series: Series of Sharpe ratios.
+    """
+    # Calculate Sharpe ratio as the excess return over risk-free rate, divided by volatility
+    sharpe_ratio_series = (
+        expected_return_series - risk_free_rate_series
+    ) / std_dev_series
+    return sharpe_ratio_series
+
+
+def calculate_daily_sharpe_ratios(data):
+    """
+    Calculates rolling Sharpe ratios for multiple assets over various time frames.
+
+    Parameters:
+    data (pd.DataFrame): DataFrame with daily price data for assets, including a risk-free rate column.
+
+    Returns:
+    pd.DataFrame: DataFrame containing rolling Sharpe ratios for each asset and time frame.
+    """
+    # Define time frames in trading days for stocks and cryptocurrencies
+    time_frames = {
+        "1_year": {"stock": STOCK_TRADING_DAYS, "crypto": CRYPTO_TRADING_DAYS},
+        "2_year": {"stock": STOCK_TRADING_DAYS * 2, "crypto": CRYPTO_TRADING_DAYS * 2},
+        "3_year": {"stock": STOCK_TRADING_DAYS * 3, "crypto": CRYPTO_TRADING_DAYS * 3},
+        "4_year": {"stock": STOCK_TRADING_DAYS * 4, "crypto": CRYPTO_TRADING_DAYS * 4},
+    }
+
+    # Convert the risk-free rate to decimal form (from percentage)
+    risk_free_rate_series = data["^IRX_close"] / 100
+
+    # Initialize a dictionary to store Sharpe ratios for each asset
+    sharpe_ratios = {}
+
+    for column in data.columns:
+        # Skip the risk-free rate column in calculations
+        if column == "^TNX_close":
+            continue
+
+        # Determine if asset is TradFi or crypto based on column naming convention
+        asset_type = "crypto" if column == "price_close" else "stock"
+        sharpe_ratios[column] = {}
+
+        for time_frame_label, time_frame_days in time_frames.items():
+            # Calculate rolling expected return (annualized)
+            expected_return_series = calculate_daily_expected_return(
+                data[column], time_frame_days[asset_type], time_frame_days[asset_type]
+            )
+            # Calculate rolling standard deviation (annualized)
+            std_dev_series = calculate_standard_deviation_of_returns(
+                data[column], time_frame_days[asset_type], time_frame_days[asset_type]
+            )
+            # Calculate Sharpe ratio
+            sharpe_ratio_series = calculate_sharpe_ratio(
+                expected_return_series, std_dev_series, risk_free_rate_series
+            )
+            # Store Sharpe ratio for the current time frame
+            sharpe_ratios[column][time_frame_label] = sharpe_ratio_series
+
+    # Convert the Sharpe ratios dictionary to a DataFrame and return it
+    sharpe_ratios_df = pd.DataFrame.from_dict(
+        {
+            (asset, time_frame): sharpe_ratios[asset][time_frame]
+            for asset in sharpe_ratios.keys()
+            for time_frame in sharpe_ratios[asset].keys()
+        },
+        orient="columns",
+    )
+
+    return sharpe_ratios_df
+
+
+def calculate_52_week_high_low(data, current_date):
+    """
+    Calculates the 52-week high and low for each column in the provided data.
+
+    Parameters:
+    data (pd.DataFrame): DataFrame with a datetime index containing time series data for various assets.
+    current_date (str or datetime): The reference date for calculating the 52-week high and low.
+
+    Returns:
+    dict: A dictionary containing the 52-week high and low for each column in `data`.
+    """
+    high_low = {}  # Initialize a dictionary to store 52-week high and low values
+
+    # Check if current_date is a string; if so, convert it to a datetime object
+    if isinstance(current_date, str):
+        current_date = datetime.strptime(current_date, "%Y-%m-%d")
+
+    # Calculate the date 52 weeks (1 year) prior to the current date
+    start_date = current_date - timedelta(weeks=52)
+
+    # Filter the data to include only the last 52 weeks, from start_date to current_date
+    data = data[(data.index >= start_date) & (data.index <= current_date)]
+
+    # Iterate over each column in the data to calculate high and low values
+    for column in data.columns:
+        # Calculate the maximum value in the past 52 weeks for the column
+        high = data[column].max()
+        # Calculate the minimum value in the past 52 weeks for the column
+        low = data[column].min()
+        # Store the 52-week high and low in the dictionary for this column
+        high_low[column] = {"52_week_high": high, "52_week_low": low}
+
+    # Return the dictionary containing the 52-week high and low values for each column
+    return high_low
+
+
+# Difficulty Adjustment Data
+
+
+def check_difficulty_change(data: pd.DataFrame) -> dict:
+    """
+    Gets the last two difficulty adjustments from BRK data.
+
+    Parameters:
+    data (pd.DataFrame): DataFrame containing 'difficulty' and 'difficulty_adjustment' columns.
+
+    Returns:
+    dict: Report with the last and previous difficulty changes, and the difficulty change percentage.
+    """
+    # Find dates where difficulty_adjustment is non-zero (adjustment days)
+    adjustment_mask = (data["difficulty_adjustment"] != 0) & (data["difficulty_adjustment"].notna())
+    adjustment_dates = data.index[adjustment_mask].sort_values(ascending=False)
+
+    if len(adjustment_dates) < 2:
+        raise ValueError("Not enough difficulty adjustment dates found in BRK data")
+
+    # Get the last two adjustment dates
+    last_adjustment_date = adjustment_dates[0]
+    previous_adjustment_date = adjustment_dates[1]
+
+    # Extract difficulty values and adjustment percentage
+    last_difficulty = data.loc[last_adjustment_date, "difficulty"]
+    previous_difficulty = data.loc[previous_adjustment_date, "difficulty"]
+    difficulty_change_percentage = data.loc[last_adjustment_date, "difficulty_adjustment"]
+
+    # Construct report dict (maintaining same structure for compatibility)
+    report = {
+        "last_difficulty_change": {
+            "timestamp": int(last_adjustment_date.timestamp()),
+            "difficulty": last_difficulty,
+            "date": last_adjustment_date,
+        },
+        "previous_difficulty_change": {
+            "timestamp": int(previous_adjustment_date.timestamp()),
+            "difficulty": previous_difficulty,
+            "date": previous_adjustment_date,
+        },
+        "difficulty_change_percentage": difficulty_change_percentage,
+    }
+
+    return report
+
+
+def calculate_difficulty_period_change(difficulty_report: dict, df: pd.DataFrame) -> pd.Series:
+    """
+    Calculates the percentage change in specified metrics between two Bitcoin difficulty adjustment intervals.
+
+    Parameters:
+    difficulty_report (dict): Report dictionary containing dates of the last two difficulty changes.
+    df (pd.DataFrame): DataFrame with time-indexed metrics to calculate percentage changes over the interval.
+
+    Returns:
+    pd.Series: Percentage change for each numeric column in `df` over the specified time period.
+    """
+    # Select only numeric columns in the DataFrame
+    numeric_cols = df.select_dtypes(include=[np.number]).columns
+    df = df[numeric_cols]
+
+    # Ensure data is sorted by date to maintain correct time sequence
+    df = df.sort_index()
+
+    # Get the dates from the report (support both new date format and legacy timestamp format)
+    if "date" in difficulty_report["last_difficulty_change"]:
+        last_difficulty_change_time = difficulty_report["last_difficulty_change"]["date"]
+        previous_difficulty_change_time = difficulty_report["previous_difficulty_change"]["date"]
+    else:
+        # Legacy format with Unix timestamps
+        last_difficulty_change_time = pd.to_datetime(
+            difficulty_report["last_difficulty_change"]["timestamp"], unit="s"
+        )
+        previous_difficulty_change_time = pd.to_datetime(
+            difficulty_report["previous_difficulty_change"]["timestamp"], unit="s"
+        )
+
+    # Filter the DataFrame for rows within the interval of the last two difficulty adjustments
+    df_filtered = df.loc[previous_difficulty_change_time:last_difficulty_change_time]
+
+    # Calculate percentage change between the start and end of the filtered period
+    percentage_changes = (
+        (df_filtered.iloc[-1] - df_filtered.iloc[0]) / df_filtered.iloc[0] * 100
+    ).round(2)
+
+    return percentage_changes
+
+
+# Calculate Custom Datasets
+
+
+def create_btc_correlation_data(report_date, tickers, correlations_data):
+    """
+    Calculate Bitcoin's rolling correlation with all tracked assets for a specific date.
+
+    Computes correlations across 7, 30, 90, and 365-day windows. Uses nearest available date
+    if report_date is not in dataset.
+
+    Parameters:
+    report_date (str or pd.Timestamp): Target date for correlation snapshot.
+    tickers (dict): Asset ticker dictionary from data_definitions.py.
+    correlations_data (pd.DataFrame): DataFrame with price_close and {ticker}_close columns.
+
+    Returns:
+    dict: Keys are "price_close_{period}_days", values are correlation Series (-1 to +1).
+    """
+    report_date = pd.to_datetime(report_date)
+    all_tickers = [ticker for ticker_list in tickers.values() for ticker in ticker_list]
+    ticker_list_with_suffix = ["price_close"] + [
+        f"{ticker}_close" for ticker in all_tickers
+    ]
+
+    filtered_data = correlations_data[ticker_list_with_suffix].dropna(
+        subset=["price_close"]
+    )
+
+    if filtered_data.empty:
+        empty_corr = pd.Series(
+            index=[f"{ticker}_close" for ticker in all_tickers], dtype=float
+        )
+        return {f"price_close_{p}_days": empty_corr for p in [7, 30, 90, 365]}
+
+    correlations = calculate_rolling_correlations(
+        filtered_data, periods=[7, 30, 90, 365]
+    )
+    closest_date = (
+        filtered_data.index[
+            filtered_data.index.get_indexer([report_date], method="nearest")[0]
+        ]
+        if report_date not in filtered_data.index
+        else report_date
+    )
+
+    btc_correlations = {}
+    for period in [7, 30, 90, 365]:
+        corr_df = correlations[period]
+        try:
+            if report_date in corr_df.index:
+                btc_correlations[f"price_close_{period}_days"] = corr_df.loc[
+                    report_date
+                ].loc[["price_close"]]
+            else:
+                btc_correlations[f"price_close_{period}_days"] = corr_df.loc[
+                    closest_date
+                ].loc[["price_close"]]
+        except KeyError:
+            btc_correlations[f"price_close_{period}_days"] = pd.Series(
+                index=[f"{ticker}_close" for ticker in all_tickers], dtype=float
+            )
+
+    return btc_correlations
+
+
+# =============================================================================
+# CYCLE ANALYSIS FUNCTIONS
+# =============================================================================
 
 
 def compute_drawdowns(data: pd.DataFrame) -> pd.DataFrame:
@@ -1214,10 +2076,10 @@ def compute_drawdowns(data: pd.DataFrame) -> pd.DataFrame:
             continue
 
         # ATH path within the period
-        period["ath"] = period["PriceUSD"].cummax()
+        period["ath"] = period["price_close"].cummax()
 
         # Drawdown percent
-        period["drawdown_pct"] = (period["PriceUSD"] / period["ath"] - 1.0) * 100.0
+        period["drawdown_pct"] = (period["price_close"] / period["ath"] - 1.0) * 100.0
 
         # Days since the cycle's ATH start anchor (your start_dt)
         period["days_since_ath"] = (period.index - start_dt).days
@@ -1233,6 +2095,14 @@ def compute_drawdowns(data: pd.DataFrame) -> pd.DataFrame:
 
 
 def compute_cycle_lows(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Compute market cycle performance indexed from cycle lows.
+
+    Returns DataFrame with:
+      - days_since_cycle_low
+      - index_value (1.0 at cycle low, 2.0 = 2x gain, etc.)
+      - Cycle (label)
+    """
     cycle_periods = [
         ("Market Cycle 1", "2010-07-25", "2011-11-18"),
         ("Market Cycle 2", "2011-11-18", "2015-01-14"),
@@ -1255,11 +2125,11 @@ def compute_cycle_lows(data: pd.DataFrame) -> pd.DataFrame:
         if period.empty:
             continue
 
-        low_date = period["PriceUSD"].idxmin()
-        low_px = float(period.loc[low_date, "PriceUSD"])
+        low_date = period["price_close"].idxmin()
+        low_px = float(period.loc[low_date, "price_close"])
 
         period["days_since_cycle_low"] = (period.index - low_date).days
-        period["index_value"] = period["PriceUSD"] / low_px
+        period["index_value"] = period["price_close"] / low_px
         period["Cycle"] = cycle_name
 
         out.append(period[["days_since_cycle_low", "index_value", "Cycle"]])
@@ -1305,12 +2175,12 @@ def compute_halving_days(data: pd.DataFrame) -> pd.DataFrame:
         # Pick normalization price:
         # If exact halving date is missing (common), use first available price AFTER start_dt
         if start_dt in period.index:
-            start_px = float(period.loc[start_dt, "PriceUSD"])
+            start_px = float(period.loc[start_dt, "price_close"])
         else:
-            start_px = float(period["PriceUSD"].iloc[0])
+            start_px = float(period["price_close"].iloc[0])
 
         period["days_since_halving"] = (period.index - start_dt).days
-        period["index_value"] = period["PriceUSD"] / start_px  # 1.0 at halving
+        period["index_value"] = period["price_close"] / start_px  # 1.0 at halving
         period["Era"] = era_name
 
         out.append(period[["days_since_halving", "index_value", "Era"]])
