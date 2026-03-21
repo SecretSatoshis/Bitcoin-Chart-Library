@@ -2088,7 +2088,7 @@ cagr_comparison = {
         },
         {
             "name": "US Dollar Index",
-            "data": "DX=F_close_4_Year_CAGR",
+            "data": "DX-Y.NYB_close_4_Year_CAGR",
             "yaxis": "y",
         },
         {
@@ -2141,7 +2141,7 @@ mtd_return = {
         },
         {
             "name": "US Dollar Index",
-            "data": "DX=F_close_MTD_change",
+            "data": "DX-Y.NYB_close_MTD_change",
             "yaxis": "y",
         },
         {
@@ -2194,7 +2194,7 @@ ytd_return = {
         },
         {
             "name": "US Dollar Index",
-            "data": "DX=F_close_YTD_change",
+            "data": "DX-Y.NYB_close_YTD_change",
             "yaxis": "y",
         },
         {
@@ -2228,7 +2228,7 @@ ytd_return_full = {
         {"name": "XLF", "data": "XLF_close_YTD_change", "yaxis": "y"},
         {"name": "XLE", "data": "XLE_close_YTD_change", "yaxis": "y"},
         {"name": "XLRE", "data": "XLRE_close_YTD_change", "yaxis": "y"},
-        {"name": "DXY", "data": "DX=F_close_YTD_change", "yaxis": "y"},
+        {"name": "DXY", "data": "DX-Y.NYB_close_YTD_change", "yaxis": "y"},
         {"name": "GLD", "data": "GLD_close_YTD_change", "yaxis": "y"},
         {"name": "AGG", "data": "AGG_close_YTD_change", "yaxis": "y"},
         {"name": "BCOM", "data": "^BCOM_close_YTD_change", "yaxis": "y"},
