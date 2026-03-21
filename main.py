@@ -1,11 +1,21 @@
-# Importing Resources
-import warnings
+"""
+Bitcoin Chart Library - Visualization Pipeline
+
+This script reads pre-computed data from Bitcoin-Report-Library's CSV output
+and generates interactive HTML charts, static PNG images, and optional Dash dashboards.
+
+Data source:
+  Default — GitHub Pages: https://secretsatoshis.github.io/Bitcoin-Report-Library/csv/
+  Local   — set REPORT_CSV_DIR=../Bitcoin-Report-Library/csv
+"""
+
 import sys
+import warnings
+
+import pandas as pd
 
 sys.dont_write_bytecode = True
 
-# Importing From Files
-import data_format
 from chart_format import (
     create_charts,
     chart_templates,
@@ -19,80 +29,48 @@ from chart_format import (
     create_indexed_yearly_returns,
 )
 from dash_app import generate_dash_app, figures
-from data_definitions import (
-    tickers,
-    market_data_start_date,
-    moving_avg_metrics,
-    fiat_money_data_top10,
-    gold_silver_supply,
-    gold_supply_breakdown,
-    stock_tickers,
-    analysis_columns,
-    stats_start_date,
-)
+from chart_definitions import csv_path, csv_source_is_remote
 
 # Ignore any FutureWarnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
-# Fetch the data
-data = data_format.get_data(tickers, market_data_start_date)
-data = data_format.calculate_custom_on_chain_metrics(data)
-data = data_format.calculate_moving_averages(data, moving_avg_metrics)
-data = data_format.calculate_btc_price_to_surpass_fiat(data, fiat_money_data_top10)
-data = data_format.calculate_metal_market_caps(data, gold_silver_supply)
-data = data_format.calculate_gold_market_cap_breakdown(data, gold_supply_breakdown)
-data = data_format.calculate_btc_price_to_surpass_metal_categories(
-    data, gold_supply_breakdown
-)
-data = data_format.calculate_btc_price_for_stock_mkt_caps(data, stock_tickers)
-data = data_format.calculate_stock_to_flow_metrics(data)
-data = data_format.electric_price_models(data)
+# --- Load Pre-Computed Data from Report Library --- #
 
-# Forward fill the data for all columns
-data.ffill(inplace=True)
+master_csv = csv_path("master_metrics_data.csv.gz")
 
-# Filter to analysis columns that exist in the dataframe
-columns_to_keep = [col for col in analysis_columns if col in data.columns]
+try:
+    report_data = pd.read_csv(master_csv, index_col=0, parse_dates=True, low_memory=False)
+except Exception as e:
+    if csv_source_is_remote():
+        print(
+            f"Error: Could not fetch {master_csv}\n"
+            f"  {e}\n"
+            "Ensure the Bitcoin-Report-Library GitHub Pages site is deployed."
+        )
+    else:
+        print(
+            f"Error: {master_csv} not found.\n"
+            "Run Bitcoin-Report-Library/main.py first to generate data."
+        )
+    sys.exit(1)
 
-# Filter the dataframe
-filter_data = data[columns_to_keep]
+drawdown_data = pd.read_csv(csv_path("drawdown_data.csv"))
+cycle_low_data = pd.read_csv(csv_path("cycle_low_data.csv"))
+halving_data = pd.read_csv(csv_path("halving_data.csv"))
 
-# Run Data Analysis On Report Data
-report_data = data_format.run_data_analysis(filter_data, stats_start_date)
+# --- Chart Creation --- #
 
-# Calculate Growth Rate Data
-cagr_results = data_format.calculate_rolling_cagr_for_all_metrics(data)
-
-report_data = report_data.merge(
-    cagr_results, left_index=True, right_index=True, how="left"
-)
-
-# Merge report_data (with change calculations) back into full data for chart access
-report_data = data.merge(
-    report_data[[col for col in report_data.columns if col not in data.columns]],
-    left_index=True, right_index=True, how="left"
-)
-
-# --- Data Processing --- #
-drawdown_data = data_format.compute_drawdowns(report_data)
 create_days_since_chart(drawdown_data, chart_drawdowns)
-
-cycle_low_data = data_format.compute_cycle_lows(report_data)
 create_days_since_chart(cycle_low_data, chart_cycle_lows)
-
-halving_data = data_format.compute_halving_days(report_data)
-
 create_days_since_chart(halving_data, chart_halvings)
 create_monthly_returns(report_data)
 create_indexed_monthly_returns(report_data)
 create_yearly_returns(report_data)
 create_indexed_yearly_returns(report_data)
 
-# --- Chart Creation --- #
 generated_figures = create_charts(report_data, chart_templates)
-
 figures.extend(generated_figures)
 
-# --- Start the Dash App --- #
-#app_with_charts = generate_dash_app()
-#app_with_charts.run_server(debug=True, use_reloader=False, host="0.0.0.0", port=8080)
+# --- Start the Dash App (uncomment to enable) --- #
+# app_with_charts = generate_dash_app()
+# app_with_charts.run_server(debug=True, use_reloader=False, host="0.0.0.0", port=8080)
