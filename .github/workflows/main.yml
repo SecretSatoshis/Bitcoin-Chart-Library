@@ -1,20 +1,21 @@
-name: Update Bitcoin charts
+name: Update Bitcoin Charts
 
 on:
   schedule:
-    - cron:  '00 16 * * *'
+    # Runs 5 min after Report Library (16:00 UTC) to ensure fresh data
+    - cron:  '05 16 * * *'
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
-        token: ${{ secrets.GITHUB_TOKEN }} 
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Set up Python 3.10
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: '3.10'
 
@@ -23,12 +24,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run the script and update the charts
+    - name: Run the script and update charts
+      run: python main.py
+
+    - name: Commit and push changes
       run: |
-        python main.py
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git pull origin main # Pull the latest changes from the repository
-        git add .
+        git pull origin main
+        git add Chart_Images/ Charts/
         git commit -m "Update Charts" || echo "No changes to commit"
         git push origin HEAD:main

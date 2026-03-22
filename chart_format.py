@@ -92,7 +92,7 @@ HALVING_EVENTS = [
 ]
 
 
-def add_branding(fig, data_source="Data Source: CoinMetrics"):
+def add_branding(fig, data_source="Data Source: BRK (bitview.space)"):
     """
     Add standard branding elements to a Plotly figure.
 
@@ -591,7 +591,7 @@ def create_monthly_returns(selected_metrics):
     )
 
     # Add branding elements (watermark, logo, data source)
-    add_branding(fig, "Data Source: CoinMetrics")
+    add_branding(fig, "Data Source: Bitview")
 
     fig.write_image("Chart_Images/MTD_Return_By_Year_Percentage.png")
     fig.write_html("Charts/MTD_Return_By_Year_Percentage.html")
@@ -758,7 +758,7 @@ def create_indexed_monthly_returns(selected_metrics):
     )
 
     # Add branding elements (watermark, logo, data source)
-    add_branding(fig, "Data Source: CoinMetrics")
+    add_branding(fig, "Data Source: Bitview")
 
     # Save the chart
     os.makedirs("Chart_Images", exist_ok=True)
@@ -917,7 +917,7 @@ def create_yearly_returns(selected_metrics):
     )
 
     # Add branding elements (watermark, logo, data source)
-    add_branding(fig, "Data Source: CoinMetrics")
+    add_branding(fig, "Data Source: Bitview")
 
     fig.write_image("Chart_Images/Bitcoin_YTD_Return_By_Year_Percentage.png")
     fig.write_html("Charts/Bitcoin_YTD_Return_By_Year_Percentage.html")
@@ -1087,7 +1087,7 @@ def create_indexed_yearly_returns(selected_metrics):
     )
 
     # Add branding elements (watermark, logo, data source)
-    add_branding(fig, "Data Source: CoinMetrics")
+    add_branding(fig, "Data Source: Bitview")
 
     # Save the chart
     os.makedirs("Chart_Images", exist_ok=True)
@@ -1253,7 +1253,7 @@ chart_supply = {
     "y2_label": "New Bitcoins Created Each Day",
     "filename": "Bitcoin_Supply",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "events": HALVING_EVENTS,
 }
 
@@ -1271,7 +1271,7 @@ chart_transactions = {
     "y2_label": "Daily Transactions",
     "filename": "Bitcoin_Transactions",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
 
@@ -1289,7 +1289,7 @@ chart_hashrate = {
     "y2_label": "Network Hashrate",
     "filename": "Bitcoin_Hashrate",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
 
@@ -1306,7 +1306,7 @@ chart_price = {
     "y2_label": "Bitcoin Market Cap (USD)",
     "filename": "Bitcoin_Price",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
@@ -1336,7 +1336,7 @@ chart_transferred_value = {
     "y2_label": "Transaction Volume",
     "filename": "Bitcoin_Transaction_Value",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
@@ -1362,7 +1362,7 @@ chart_miner_revenue = {
     "y2_label": "Miner Revenue",
     "filename": "Bitcoin_Miner_Revenue",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
@@ -1390,7 +1390,7 @@ chart_active_addresses = {
     "y2_label": "Active Addresses",
     "filename": "Bitcoin_Active_Addresses",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
@@ -1419,7 +1419,7 @@ chart_transaction_size = {
     "y2_label": "Transaction Size",
     "filename": "Bitcoin_Transaction_Size",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
@@ -1437,7 +1437,7 @@ chart_transaction_fee_USD = {
     "y2_label": "Fees In US Dollars",
     "filename": "Bitcoin_Transaction_Fee",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
@@ -1489,7 +1489,7 @@ chart_1_year_supply = {
     "y2_label": "1+ Year Supply Percentage",
     "filename": "Bitcoin_1_Year_Supply",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
 
@@ -1513,7 +1513,7 @@ macro_supply = {
     "y2_label": "Bitcoins Supply",
     "filename": "Bitcoin_Macro_Supply",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
 
@@ -1552,7 +1552,7 @@ chart_thermocap_multiple = {
     "filename": "Bitcoin_Thermocap_Multiples",
     "chart_type": "line",
     "filter_metric": "thermocap_multiple",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
@@ -1579,7 +1579,7 @@ chart_realizedcap_multiple = {
     "filename": "Bitcoin_Realized_Price",
     "chart_type": "line",
     #"filter_metric": "CapMVRVCur",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
@@ -1603,7 +1603,7 @@ chart_nvt_price = {
     "y2_label": "",
     "filename": "Bitcoin_NVT_Price",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
@@ -1634,7 +1634,7 @@ electricity_price = {
     "filename": "Bitcoin_Production_Price",
     "chart_type": "line",
     "filter_start_date": "2010-07-01",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
 
@@ -1655,7 +1655,7 @@ s2f_price = {
     "filename": "Bitcoin_S2F_Price",
     "chart_type": "line",
     "filter_start_date": "2010-07-01",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
 
@@ -1680,7 +1680,7 @@ qtm_price = {
     "filename": "Bitcoin_QTM_Price",
     "chart_type": "line",
     "filter_start_date": "2010-07-01",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
 
@@ -1697,7 +1697,7 @@ chart_NUPL = {
     "y2_label": "NUPL Ratio",
     "filename": "Bitcoin_NUPL",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
@@ -1721,7 +1721,7 @@ chart_price_ma = {
     "y2_label": "200 Day Moving Average Multiple",
     "filename": "Bitcoin_Price_Chart_MA",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
@@ -1741,7 +1741,7 @@ yoy_return = {
     "filter_metric": "price_close_YOY_change",
     "filename": "Bitcoin_YOY_Return_Comparison",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
 }
 
 # Bitcoin CAGR Comparison
@@ -1759,7 +1759,7 @@ cagr_overview = {
     "filter_metric": "price_close_4_Year_CAGR",
     "filename": "Bitcoin_CAGR",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
 }
 
 # Hashrate Chart
@@ -1775,7 +1775,7 @@ chart_sats_per_dollar = {
     "y2_label": "1 Full Bitcion Price",
     "filename": "Bitcoin_Sats_Per_Dollar",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
@@ -1801,7 +1801,7 @@ chart_m0 = {
     "y2_label": "",
     "filename": "Bitcoin_M0",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
@@ -1828,7 +1828,7 @@ chart_equities = {
     "y2_label": "",
     "filename": "Bitcoin_Equities",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
@@ -1871,7 +1871,7 @@ chart_gold = {
     "y2_label": "",
     "filename": "Bitcoin_Gold",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
@@ -1897,7 +1897,7 @@ chart_promo = {
     "y2_label": "hash_rate",
     "filename": "Bitcoin_Promo",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
@@ -1926,7 +1926,7 @@ chart_rv_metals = {
     "y2_label": "",
     "filename": "Bitcoin_RV_metals",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
@@ -1948,7 +1948,7 @@ chart_rv_stocks = {
     "y2_label": "",
     "filename": "Bitcoin_RV_stocks",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
@@ -1970,7 +1970,7 @@ chart_rv_m0 = {
     "y2_label": "",
     "filename": "Bitcoin_RV_M0",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
@@ -2004,7 +2004,7 @@ chart_on_chain = {
     "y2_label": "",
     "filename": "Bitcoin_On_Chain",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
@@ -2024,7 +2024,7 @@ chart_hashrate_price = {
     "y2_label": "hash_rate",
     "filename": "Bitcoin_Hashrate_Price",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
 
@@ -2103,7 +2103,7 @@ cagr_comparison = {
     "y2_label": "",
     "filename": "Bitcoin_CAGR_Comparison",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2015-05-01",
 }
 
@@ -2156,7 +2156,7 @@ mtd_return = {
     "y2_label": "",
     "filename": "Bitcoin_MTD_Return_Comparison",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": first_day_of_month,  # Start of the current month
 }
 
@@ -2209,7 +2209,7 @@ ytd_return = {
     "y2_label": "",
     "filename": "Bitcoin_YTD_Return_Comparison",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2025-01-01",
     "filter_metric": "time",
 }
@@ -2243,7 +2243,7 @@ ytd_return_full = {
     "y2_label": "",
     "filename": "Bitcoin_YTD_Return_Comparison_full",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2025-01-01",
     "filter_metric": "time",
 }
@@ -2265,7 +2265,7 @@ chart_drawdowns = {
     "y1_label": "Drawdown (%)",
     "filename": "Bitcoin_ATH_Drawdown",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "hovertemplate": "Drawdown %{y:,.2f}%<extra>%{fullData.name}</extra>",
     "y_tickformat": ",.2f",
 }
@@ -2287,7 +2287,7 @@ chart_cycle_lows = {
     "x_label": "Days Since Cycle Low",
     "y1_label": "Cycle Index Value (1.0 = cycle low price)",
     "filename": "Bitcoin_Cycle_Low",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "hovertemplate": "Index %{y:,.2f}×<extra>%{fullData.name}</extra>",
     "y_tickformat": "~g",
 }
@@ -2309,7 +2309,7 @@ chart_halvings = {
     "y1_label": "Cycle Index Value (1.0 = halving price)",
     "filename": "Bitcoin_Halving_Cycle",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "hovertemplate": "Index %{y:,.2f}×<extra>%{fullData.name}</extra>",
     "y_tickformat": "~g",
 }
@@ -2344,7 +2344,7 @@ chart_rv = {
     "y2_label": "",
     "filename": "Bitcoin_RV",
     "chart_type": "line",
-    "data_source": "Data Source: CoinMetrics",
+    "data_source": "Data Source: Bitview",
     "filter_start_date": "2010-07-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
