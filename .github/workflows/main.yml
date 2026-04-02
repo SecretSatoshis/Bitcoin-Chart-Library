@@ -2,8 +2,8 @@ name: Update Bitcoin Charts
 
 on:
   schedule:
-    # Runs 5 min after Report Library (16:00 UTC) to ensure fresh data
-    - cron:  '05 16 * * *'
+    # Runs 10 min after Report Library (16:00 UTC) to ensure fresh data
+    - cron:  '10 16 * * *'
   workflow_dispatch:
 
 jobs:
