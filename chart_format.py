@@ -1675,31 +1675,6 @@ s2f_price = {
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
 
-# Stock To Flow Chart
-qtm_price = {
-    "x_data": "time",
-    "y2_type": "log",
-    "y_data": [
-        {"name": "Bitcoin Price", "data": "price_close", "yaxis": "y"},
-        {"name": "QTM Price", "data": "qtm_price", "yaxis": "y"},
-        {"name": "QTM Price 2", "data": "qtm_price_multiple_2", "yaxis": "y"},
-        {"name": "QTM Price 5", "data": "qtm_price_multiple_5", "yaxis": "y"},
-        {"name": "QTM Price 10", "data": "qtm_price_multiple_10", "yaxis": "y"},
-        {"name": "QTM Multiple", "data": "qtm_multiple", "yaxis": "y2"},
-        {"name": "Velocity", "data": "velocity_usd", "yaxis": "y2"},
-        
-    ],
-    "title": "Bitcoin Quantaity Theory Of Money Price",
-    "x_label": "Date",
-    "y1_label": "Bitcoin Price",
-    "y2_label": "QTM Multiple",
-    "filename": "Bitcoin_QTM_Price",
-    "chart_type": "line",
-    "filter_start_date": "2010-07-01",
-    "data_source": "Data Source: Bitview",
-    "events": BITCOIN_HISTORICAL_EVENTS,
-}
-
 # NUPL Chart
 chart_NUPL = {
     "x_data": "time",
@@ -2593,7 +2568,6 @@ chart_templates = [
     # === PRICE MODELS ===
     electricity_price,
     s2f_price,
-    qtm_price,
     # === ASSET COMPARISONS ===
     chart_gold,
     chart_rv_metals,
