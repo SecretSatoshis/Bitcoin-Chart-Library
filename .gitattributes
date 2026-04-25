@@ -1,0 +1,4 @@
+# Generated output files — always take the incoming version on conflict
+# CI is the sole producer of these files; local runs should not commit them.
+Chart_Images/*.png merge=ours binary
+Charts/*.html      merge=ours
