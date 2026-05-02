@@ -1411,35 +1411,6 @@ chart_active_addresses = {
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
 
-# Transaction Size Chart
-chart_transaction_size = {
-    "x_data": "time",
-    "y1_type": "linear",
-    "y2_type": "log",
-    "y_data": [
-        {"name": "Bitcoin Price", "data": "price_close", "yaxis": "y"},
-        {
-            "name": "30 Day Avg Tx Value",
-            "data": "30_day_ma_TxTfrValMeanUSD",
-            "yaxis": "y2",
-        },
-        {
-            "name": "30 Day Median Tx Value",
-            "data": "30_day_ma_TxTfrValMedUSD",
-            "yaxis": "y2",
-        },
-    ],
-    "title": "Bitcoin Transaction Size ",
-    "x_label": "Date",
-    "y1_label": "Bitcoin Price",
-    "y2_label": "Transaction Size",
-    "filename": "Bitcoin_Transaction_Size",
-    "chart_type": "line",
-    "data_source": "Data Source: Bitview",
-    "filter_start_date": "2010-07-01",
-    "events": BITCOIN_HISTORICAL_EVENTS,
-}
-
 # Transaction Fee USD Chart
 chart_transaction_fee_USD = {
     "x_data": "time",
@@ -1596,7 +1567,7 @@ chart_realizedcap_multiple = {
     "chart_type": "line",
     #"filter_metric": "CapMVRVCur",
     "data_source": "Data Source: Bitview",
-    "filter_start_date": "2010-07-01",
+    "filter_start_date": "2011-01-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
 
@@ -1628,20 +1599,25 @@ chart_nvt_price = {
 electricity_price = {
     "x_data": "time",
     "y2_type": "linear",
-    "y_data": [
+        "y_data": [
         {"name": "Bitcoin Price", "data": "price_close", "yaxis": "y"},
-        {"name": "Energy Value", "data": "Lagged_Energy_Value", "yaxis": "y"},
         {
-            "name": "Bitcoin Production Cost",
-            "data": "Bitcoin_Production_Cost",
+            "name": "Capriole Electricity Cost",
+            "data": "Electricity_Cost",
             "yaxis": "y",
         },
-        {"name": "Electricity Cost", "data": "Electricity_Cost", "yaxis": "y"},
         {
-            "name": "Energy Value Multiple",
-            "data": "Energy_Value_Multiple",
-            "yaxis": "y2",
+            "name": "Hayes Network Price Per BTC",
+            "data": "Hayes_Network_Price_Per_BTC",
+            "yaxis": "y",
         },
+        {
+
+            "name": "Hayes Price Multiple",
+            "data": "Hayes_Network_Price_Multiple",
+            "yaxis": "y2",
+
+        }
     ],
     "title": "Bitcoin Production Price",
     "x_label": "Date",
@@ -1713,7 +1689,7 @@ chart_price_ma = {
     "filename": "Bitcoin_Price_Chart_MA",
     "chart_type": "line",
     "data_source": "Data Source: Bitview",
-    "filter_start_date": "2010-07-01",
+    "filter_start_date": "2011-01-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
 
@@ -1971,21 +1947,15 @@ chart_on_chain = {
     "x_data": "time",
     "y_data": [
         {"name": "Bitcoin Price", "data": "price_close", "yaxis": "y"},
+        {"name": "200 Week MA", "data": "200_week_ma_price_close", "yaxis": "y"},
+
         {
-            "name": "Bitcoin Production Price",
-            "data": "Lagged_Energy_Value",
+            "name": "Hayes Network Price Per BTC",
+            "data": "Hayes_Network_Price_Per_BTC",
             "yaxis": "y",
         },
-        {
-            "name": "8x Thermocap Multiple",
-            "data": "thermocap_price_multiple_8",
-            "yaxis": "y",
-        },
-        {
-            "name": "16x Thermocap Multiple",
-            "data": "thermocap_price_multiple_16",
-            "yaxis": "y",
-        },
+        {"name": "STH Realized Price", "data": "sth_realized_price", "yaxis": "y"},
+        {"name": "LTH Realized Price", "data": "lth_realized_price", "yaxis": "y"},
         {"name": "Realized Price", "data": "realized_price", "yaxis": "y"},
         {"name": "3x Realized Price", "data": "realizedcap_multiple_3", "yaxis": "y"},
     ],
@@ -2377,7 +2347,7 @@ chart_puell_multiple = {
     "filename": "Bitcoin_Puell_Multiple",
     "chart_type": "line",
     "data_source": "Data Source: BRK",
-    "filter_start_date": "2010-07-01",
+    "filter_start_date": "2011-01-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
 
@@ -2463,7 +2433,7 @@ chart_sopr = {
     "filename": "Bitcoin_SOPR",
     "chart_type": "line",
     "data_source": "Data Source: BRK",
-    "filter_start_date": "2010-07-01",
+    "filter_start_date": "2012-01-01",
     "events": BITCOIN_HISTORICAL_EVENTS,
 }
 
@@ -2542,7 +2512,6 @@ chart_templates = [
     chart_supply_age,
     # === NETWORK ACTIVITY ===
     chart_transactions,
-    chart_transaction_size,
     chart_transaction_fee_USD,
     chart_transferred_value,
     chart_active_addresses,
