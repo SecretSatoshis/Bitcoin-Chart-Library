@@ -18,7 +18,6 @@ ENV/
 .DS_Store
 
 # Generated output
-Chart_Images/*.png
 Charts/*.html
 
 # Environment variables

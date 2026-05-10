@@ -2,7 +2,7 @@
 Bitcoin Chart Library - Visualization Pipeline
 
 This script reads pre-computed data from Bitcoin-Report-Library's CSV output
-and generates interactive HTML charts, static PNG images, and optional Dash dashboards.
+and generates interactive HTML charts and optional Dash dashboards.
 
 Data source:
   Default — GitHub Pages: https://secretsatoshis.github.io/Bitcoin-Report-Library/csv/
@@ -61,7 +61,7 @@ halving_data = pd.read_csv(csv_path("halving_data.csv"))
 # --- Chart Creation --- #
 
 create_days_since_chart(drawdown_data, chart_drawdowns)
-create_days_since_chart(cycle_low_data, chart_cycle_lows)
+create_days_since_chart(cycle_low_data, chart_cycle_lows, report_data)
 create_days_since_chart(halving_data, chart_halvings)
 create_monthly_returns(report_data)
 create_indexed_monthly_returns(report_data)

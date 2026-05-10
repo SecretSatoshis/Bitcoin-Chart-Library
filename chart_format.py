@@ -1,8 +1,6 @@
 import plotly.graph_objects as go
-import plotly.io as pio
 import pandas as pd
 import os
-import copy
 import numpy as np
 import datetime
 
@@ -12,6 +10,37 @@ first_day_of_month = pd.Timestamp.now().replace(day=1).strftime("%Y-%m-%d")
 current_month_year = pd.Timestamp.now().strftime("%B %Y")  # Example: "October 2024"
 # Get current year
 current_year = pd.Timestamp.now().year
+
+
+def save_chart_html(fig, filename):
+    """Persist an interactive chart as HTML."""
+    html_directory = "Charts"
+    os.makedirs(html_directory, exist_ok=True)
+    html_filepath = os.path.join(html_directory, f"{filename}.html")
+    fig.write_html(html_filepath, auto_open=False)
+    return html_filepath
+
+
+def get_price_on_or_after(selected_metrics, date, price_col="price_close"):
+    """Return the first available Bitcoin price on or after a target date."""
+    if selected_metrics is None:
+        raise ValueError("selected_metrics is required when scaling a chart to Bitcoin price.")
+
+    metrics = selected_metrics.copy()
+    if not isinstance(metrics.index, pd.DatetimeIndex):
+        metrics.index = pd.to_datetime(metrics.index)
+    metrics = metrics.sort_index()
+
+    target_date = pd.to_datetime(date)
+    target_date = target_date.tz_localize(None) if target_date.tzinfo else target_date
+    if metrics.index.tz is not None:
+        metrics.index = metrics.index.tz_localize(None)
+
+    values = metrics.loc[metrics.index >= target_date, price_col].dropna()
+    if values.empty:
+        raise ValueError(f"No {price_col} value available on or after {target_date.date()}.")
+
+    return float(values.iloc[0])
 
 
 # =============================================================================
@@ -330,7 +359,11 @@ def create_line_chart(chart_template, selected_metrics):
     return fig
 
 
-def create_days_since_chart(df: pd.DataFrame, chart_template: dict):
+def create_days_since_chart(
+    df: pd.DataFrame,
+    chart_template: dict,
+    selected_metrics: pd.DataFrame | None = None,
+):
     """
     Universal small-multiples overlay function.
 
@@ -346,6 +379,14 @@ def create_days_since_chart(df: pd.DataFrame, chart_template: dict):
     x_col = chart_template["x_data"]
     y_col = chart_template.get("value_col", "index_value")
     g_col = chart_template.get("group_col", "Era")
+    price_scale = chart_template.get("price_scale")
+    y_multiplier = 1.0
+    if price_scale:
+        y_multiplier = get_price_on_or_after(
+            selected_metrics,
+            price_scale["anchor_date"],
+            price_scale.get("price_col", "price_close"),
+        )
 
     required = {x_col, y_col, g_col}
     missing = required - set(df.columns)
@@ -369,11 +410,12 @@ def create_days_since_chart(df: pd.DataFrame, chart_template: dict):
 
         # optional: sort by x for clean lines
         d = d.sort_values(x_col)
+        y_values = d[y_col] * y_multiplier
 
         fig.add_trace(
             go.Scatter(
                 x=d[x_col],
-                y=d[y_col],
+                y=y_values,
                 mode="lines",
                 name=series["name"],
                 line=dict(color=CHART_COLORS[i % len(CHART_COLORS)], width=2),
@@ -432,8 +474,7 @@ def create_days_since_chart(df: pd.DataFrame, chart_template: dict):
     add_branding(fig, chart_template.get("data_source", ""))
 
     filename = chart_template.get("filename", "chart")
-    filepath = f"Charts/{filename}.html"
-    pio.write_html(fig, file=filepath, auto_open=False)
+    save_chart_html(fig, filename)
 
     return fig
 
@@ -593,8 +634,7 @@ def create_monthly_returns(selected_metrics):
     # Add branding elements (watermark, logo, data source)
     add_branding(fig, "Data Source: Bitview")
 
-    fig.write_image("Chart_Images/MTD_Return_By_Year_Percentage.png")
-    fig.write_html("Charts/MTD_Return_By_Year_Percentage.html")
+    save_chart_html(fig, "MTD_Return_By_Year_Percentage")
 
     return fig
 
@@ -760,13 +800,8 @@ def create_indexed_monthly_returns(selected_metrics):
     # Add branding elements (watermark, logo, data source)
     add_branding(fig, "Data Source: Bitview")
 
-    # Save the chart
-    os.makedirs("Chart_Images", exist_ok=True)
-    os.makedirs("Charts", exist_ok=True)
-    fig.write_image("Chart_Images/Bitcoin_MTD_Return_By_Month_Indexed.png")
-    fig.write_html("Charts/Bitcoin_MTD_Return_By_Month_Indexed.html")
+    save_chart_html(fig, "Bitcoin_MTD_Return_By_Month_Indexed")
 
-    print("Chart saved as PNG and HTML.")
     return fig
 
 
@@ -919,8 +954,7 @@ def create_yearly_returns(selected_metrics):
     # Add branding elements (watermark, logo, data source)
     add_branding(fig, "Data Source: Bitview")
 
-    fig.write_image("Chart_Images/Bitcoin_YTD_Return_By_Year_Percentage.png")
-    fig.write_html("Charts/Bitcoin_YTD_Return_By_Year_Percentage.html")
+    save_chart_html(fig, "Bitcoin_YTD_Return_By_Year_Percentage")
 
     return fig
 
@@ -1089,132 +1123,9 @@ def create_indexed_yearly_returns(selected_metrics):
     # Add branding elements (watermark, logo, data source)
     add_branding(fig, "Data Source: Bitview")
 
-    # Save the chart
-    os.makedirs("Chart_Images", exist_ok=True)
-    os.makedirs("Charts", exist_ok=True)
-    fig.write_image("Chart_Images/Bitcoin_YTD_Return_By_Year_Indexed.png")
-    fig.write_html("Charts/Bitcoin_YTD_Return_By_Year_Indexed.html")
+    save_chart_html(fig, "Bitcoin_YTD_Return_By_Year_Indexed")
 
     return fig
-
-
-# Save charts as PNG
-def save_chart(fig, chart_template, selected_metrics):
-    filename = chart_template["filename"]
-    image_directory = "Chart_Images"
-    if not os.path.exists(image_directory):
-        os.makedirs(image_directory)
-    image_path = os.path.join(image_directory, f"{filename}.png")
-    width = 3000  # Keep the width to allow more space for annotations
-    height = 1440
-
-    # Get the last non-NaN value and date in the dataset
-    last_date = selected_metrics.index.max()
-
-    # Set up the initial y position and offset for annotations
-    y_offset = 0.05  # Offset for each subsequent annotation
-    initial_y_position = 0.9  # Start near the top of the chart area for annotations
-
-    # Create a copy of the figure for annotations (to modify without affecting the original fig)
-    fig_with_annotations = copy.deepcopy(fig)
-
-    # Temporarily remove interactive elements for the image
-    fig_with_annotations.update_layout(
-        margin=dict(l=100, r=350, b=0, t=100),  # Adjust margins for better layout
-        updatemenus=[],  # Remove interactive buttons for the image
-    )
-    # Remove the 'updatemenus' attribute to eliminate buttons
-    fig_with_annotations.layout.pop("updatemenus", None)
-    # Remove the range selector and slider from the x-axis layout
-    fig_with_annotations.update_xaxes(
-        rangeslider_visible=False,  # Hide the range slider for the image
-        rangeselector=dict(visible=False),  # Hide the range selector for the image
-    )
-
-    # Add a title annotation for the current chart values
-    fig_with_annotations.add_annotation(
-        x=1.03,  # Position annotations slightly outside the plot area
-        y=initial_y_position,
-        text="Current Chart Values",
-        showarrow=False,
-        font=dict(size=20, color="black", family="PT Sans Narrow"),
-        align="left",
-        bordercolor="black",
-        borderwidth=1,
-        borderpad=5,
-        bgcolor="rgba(255, 255, 255, 0.9)",
-        xanchor="left",
-        yanchor="top",
-        xref="paper",
-        yref="paper",
-    )
-
-    # Add logo image to the figure
-    fig_with_annotations.add_layout_image(
-        dict(
-            source="https://secretsatoshis.github.io/Bitcoin-Chart-Library/Secret_Satoshis_Logo.png",
-            x=0.0,  # Top left corner position
-            y=1.07,  # Top left corner position
-            sizex=0.1,
-            sizey=0.1,
-            xanchor="left",
-            yanchor="top",
-            xref="paper",
-            yref="paper",
-            layer="above",  # Ensure the logo is above the plot elements
-        )
-    )
-
-    # Add annotations for the latest non-NaN values for each y-axis item
-    y_position = (
-        initial_y_position - y_offset
-    )  # Start position for the first annotation
-    for y_item in chart_template["y_data"]:
-        non_nan_values = selected_metrics[y_item["data"]].dropna()
-        if not non_nan_values.empty:
-            latest_value = non_nan_values.iloc[-1]
-            latest_date = non_nan_values.index[-1]
-        else:
-            latest_value = np.nan
-            latest_date = last_date
-
-        # Find the corresponding line color from the chart
-        line_color = next(
-            (item.line.color for item in fig.data if item.name == y_item["name"]),
-            "black",
-        )
-
-        annotation_text = f"{y_item['name']}: {latest_value:,.2f}"
-
-        fig_with_annotations.add_annotation(
-            x=1.03,  # Position annotations slightly outside the plot area
-            y=y_position,
-            text=annotation_text,
-            showarrow=False,
-            font=dict(size=16, color=line_color, family="PT Sans Narrow"),
-            align="left",
-            bordercolor=line_color,
-            borderwidth=1,
-            borderpad=4,
-            bgcolor="rgba(255, 255, 255, 0.9)",
-            xanchor="left",
-            yanchor="top",
-            xref="paper",
-            yref="paper",
-        )
-        y_position -= y_offset  # Update y position for the next annotation
-
-    # Save the modified figure as an image
-    fig_with_annotations.write_image(image_path, width=width, height=height)
-
-    # Save the original figure with interactive elements as HTML
-    html_directory = "Charts"
-    if not os.path.exists(html_directory):
-        os.makedirs(html_directory)
-    html_filepath = os.path.join(html_directory, f"{filename}.html")
-    fig.write_html(html_filepath, auto_open=False)
-
-    return image_path, html_filepath
 
 
 # Create Charts Function
@@ -1223,8 +1134,9 @@ def create_charts(selected_metrics, chart_templates):
     for chart_template in chart_templates:
         # Call the function to create the line chart
         fig = create_line_chart(chart_template, selected_metrics)
-        # Save the chart as an image and HTML using the save_chart function
-        image_path, html_filepath = save_chart(fig, chart_template, selected_metrics)
+
+        # Persist the chart to disk as interactive HTML
+        save_chart_html(fig, chart_template["filename"])
 
         # Append the figure to the list of figures
         figures.append(fig)
@@ -2220,6 +2132,7 @@ chart_drawdowns = {
         {"name": "Drawdown Cycle 2", "group": "Drawdown Cycle 2"},
         {"name": "Drawdown Cycle 3", "group": "Drawdown Cycle 3"},
         {"name": "Drawdown Cycle 4", "group": "Drawdown Cycle 4"},
+        {"name": "Drawdown Cycle 5", "group": "Drawdown Cycle 5"},
     ],
     "title": "Bitcoin Drawdowns From ATH",
     "x_label": "Days Since ATH",
@@ -2237,20 +2150,25 @@ chart_cycle_lows = {
     "value_col": "index_value",
     "group_col": "Cycle",
     "y1_type": "log",
+    "price_scale": {
+        "anchor_date": "2026-02-06",
+        "price_col": "price_close",
+    },
     "y_data": [
         {"name": "Market Cycle 1", "group": "Market Cycle 1"},
         {"name": "Market Cycle 2", "group": "Market Cycle 2"},
         {"name": "Market Cycle 3", "group": "Market Cycle 3"},
         {"name": "Market Cycle 4", "group": "Market Cycle 4"},
         {"name": "Market Cycle 5", "group": "Market Cycle 5"},
+        {"name": "Market Cycle 6", "group": "Market Cycle 6"},
     ],
-    "title": "Bitcoin Index Performance Since Cycle Low",
+    "title": "Bitcoin Price Performance Since Cycle Low",
     "x_label": "Days Since Cycle Low",
-    "y1_label": "Cycle Index Value (1.0 = cycle low price)",
+    "y1_label": "Bitcoin Price Indexed to Current Cycle Low ($)",
     "filename": "Bitcoin_Cycle_Low",
     "data_source": "Data Source: Bitview",
-    "hovertemplate": "Index %{y:,.2f}×<extra>%{fullData.name}</extra>",
-    "y_tickformat": "~g",
+    "hovertemplate": "$%{y:,.0f}<extra>%{fullData.name}</extra>",
+    "y_tickformat": "$,.0f",
 }
 
 # Halving Performane Chart

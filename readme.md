@@ -21,7 +21,6 @@ Bitcoin-Chart-Library/
 ├── chart_format.py      # Chart templates and rendering
 ├── chart_definitions.py # Chart-specific configuration (CSV source URL/path)
 ├── dash_app.py          # Web dashboard server
-├── Chart_Images/        # Static PNG output
 ├── Charts/              # Interactive HTML output
 └── requirements.txt     # Python dependencies
 ```
@@ -29,7 +28,7 @@ Bitcoin-Chart-Library/
 | Module | Responsibility |
 |--------|----------------|
 | `main.py` | Reads pre-computed CSVs from Report Library, orchestrates chart generation |
-| `chart_format.py` | Defines chart templates, renders Plotly figures, exports PNG and HTML outputs |
+| `chart_format.py` | Defines chart templates, renders Plotly figures, exports interactive HTML outputs |
 | `chart_definitions.py` | Chart-specific configuration: CSV source (GitHub Pages URL or local path) |
 | `dash_app.py` | Serves interactive web dashboard with all generated charts |
 
@@ -44,9 +43,8 @@ main.py  ──►  Reads CSV files (master_metrics_data.csv.gz + chart CSVs)
     ▼
 chart_format.py  ──►  Generates Plotly charts
     │
-    ├──►  Chart_Images/  (static PNGs)
-    ├──►  Charts/        (interactive HTML)
-    └──►  dash_app.py    (web dashboard)
+    ├──►  Charts/      (interactive HTML)
+    └──►  dash_app.py  (web dashboard)
 ```
 
 ## Prerequisites
@@ -81,8 +79,7 @@ The pipeline:
 2. Generates cycle analysis charts (drawdowns, halvings, cycle lows)
 3. Creates monthly and yearly return charts
 4. Renders all chart templates as interactive Plotly figures
-5. Exports static PNGs to `Chart_Images/`
-6. Exports interactive HTML charts to `Charts/`
+5. Exports interactive HTML charts to `Charts/`
 
 ### Optional: Launch Dashboard
 
@@ -127,9 +124,6 @@ The following files are read from the CSV data source (generated daily by Report
 
 ## Outputs
 
-### Static Images
-PNG files exported to `Chart_Images/` for use in reports, presentations, and social media.
-
 ### Interactive Charts
 HTML files exported to `Charts/` for embedding in web pages or standalone viewing.
 
@@ -143,7 +137,6 @@ pandas>=2.0.0
 numpy>=1.24.0
 plotly>=5.18.0
 dash>=2.14.0
-kaleido>=0.2.1
 ```
 
 **Note:** This project does not require `requests` or `yfinance` — all data fetching is handled by [Bitcoin-Report-Library](https://github.com/SecretSatoshis/Bitcoin-Report-Library).
