@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; frame-src 'self'; connect-src 'self'; base-uri 'self'; object-src 'none'">
+  <title>Bitcoin Chart Library | Secret Satoshis</title>
+  <meta name="description" content="Search and explore the complete Secret Satoshis library of interactive Bitcoin charts.">
+  <meta name="theme-color" content="#08080c">
+  <link rel="canonical" href="https://charts.secretsatoshis.com/">
+  <link rel="icon" href="assets/logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/catalog.css?v=2">
+</head>
+<body id="top">
+  <a class="skip-link" href="#catalog">Skip to chart catalog</a>
+
+  <nav class="site-nav" aria-label="Primary navigation">
+    <a href="#top" class="nav-logo" aria-label="Secret Satoshis home">
+      <span class="accent">//</span> <span class="nav-typewriter">SECRET SATOSHIS</span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks">≡</button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="https://newsletter.secretsatoshis.com/p/start-here" target="_blank" rel="noopener noreferrer">Start Here</a></li>
+      <li><a href="https://chatgpt.com/g/g-BZXtVdU6M-agent-21" target="_blank" rel="noopener noreferrer">Agent 21</a></li>
+      <li><a href="https://charts.secretsatoshis.com/" target="_blank" rel="noopener noreferrer" aria-current="page">Charts</a></li>
+      <li><a href="https://dashboard.secretsatoshis.com/" target="_blank" rel="noopener noreferrer">Dashboard</a></li>
+      <li><a href="https://newsletter.secretsatoshis.com/" target="_blank" rel="noopener noreferrer">Newsletter</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <section class="hero" aria-labelledby="pageTitle">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="accent">//</span> Research Archive</p>
+          <h1 id="pageTitle">Bitcoin Chart Library<span class="accent">.</span></h1>
+          <p class="hero-sub">A searchable archive of interactive Bitcoin market, network, on-chain, and cycle research.</p>
+        </div>
+        <dl class="library-stats" aria-label="Library statistics">
+          <div>
+            <dt>Latest data</dt>
+            <dd><time id="latestDataDate">Loading…</time></dd>
+          </div>
+          <div>
+            <dt>Total charts</dt>
+            <dd id="totalChartCount">—</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="catalog-section section-divider" id="catalog" aria-labelledby="catalogTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow"><span class="accent">//</span> Explore the library</p>
+          <h2 id="catalogTitle" tabindex="-1">Find a chart</h2>
+        </div>
+        <p class="results-count" id="resultsCount" aria-live="polite">Loading catalog…</p>
+      </div>
+
+      <div class="search-wrap">
+        <label for="chartSearch">Search by title, description, or tag</label>
+        <div class="search-control">
+          <span aria-hidden="true">⌕</span>
+          <input id="chartSearch" type="search" placeholder="Search 59 Bitcoin charts…" autocomplete="off" spellcheck="false">
+          <kbd aria-label="Keyboard shortcut: slash">/</kbd>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <span class="filter-label" id="categoryLabel">Category</span>
+        <div class="category-filters" id="categoryFilters" role="group" aria-labelledby="categoryLabel"></div>
+      </div>
+
+      <div class="catalog-status" id="catalogStatus" role="status" aria-live="polite"></div>
+
+      <section class="viewer-section" id="viewer" aria-labelledby="viewerTitle" hidden>
+        <div class="viewer-header">
+          <div class="viewer-copy">
+            <p class="eyebrow" id="viewerCategory"><span class="accent">//</span> Interactive chart</p>
+            <h2 id="viewerTitle">Chart viewer</h2>
+            <p id="viewerDescription"></p>
+          </div>
+          <div class="viewer-actions">
+            <a class="button button-primary" id="standaloneLink" href="#" target="_blank" rel="noopener noreferrer">Open standalone ↗</a>
+            <button class="button button-secondary" id="closeViewer" type="button">Close viewer</button>
+          </div>
+        </div>
+        <p class="viewer-scroll-hint">Swipe or scroll horizontally to explore dense charts.</p>
+        <div class="chart-frame-wrap" id="chartFrameWrap" tabindex="0" aria-label="Scrollable interactive chart viewport">
+          <div class="frame-loading" id="frameLoading">Loading interactive chart…</div>
+          <iframe id="chartFrame" title="Interactive Bitcoin chart" loading="lazy"></iframe>
+        </div>
+      </section>
+
+      <div class="chart-groups" id="chartGroups" aria-busy="true"></div>
+
+      <noscript>
+        <p class="no-results">JavaScript is required to search the catalog and load interactive charts.</p>
+      </noscript>
+    </section>
+
+  </main>
+
+  <footer class="section-divider">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div>
+          <a href="#top" class="footer-brand" aria-label="Back to the top of Secret Satoshis Charts">
+            <span class="accent">//</span> SECRET SATOSHIS
+          </a>
+          <p class="footer-tagline">AI-native Bitcoin market intelligence</p>
+        </div>
+        <div>
+          <h2 class="footer-col-title">Platform</h2>
+          <ul class="footer-links">
+            <li><a href="https://newsletter.secretsatoshis.com/p/start-here" target="_blank" rel="noopener noreferrer">Start Here</a></li>
+            <li><a href="https://chatgpt.com/g/g-BZXtVdU6M-agent-21" target="_blank" rel="noopener noreferrer">Agent 21</a></li>
+            <li><a href="https://newsletter.secretsatoshis.com/" target="_blank" rel="noopener noreferrer">Newsletter</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2 class="footer-col-title">Data</h2>
+          <ul class="footer-links">
+            <li><a href="https://dashboard.secretsatoshis.com/" target="_blank" rel="noopener noreferrer">Market Dashboard</a></li>
+            <li><a href="https://charts.secretsatoshis.com/" target="_blank" rel="noopener noreferrer">Chart Library</a></li>
+            <li><a href="https://github.com/SecretSatoshis" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2 class="footer-col-title">Connect</h2>
+          <ul class="footer-links">
+            <li><a href="https://x.com/SecretSatoshis" target="_blank" rel="noopener noreferrer">𝕏 @SecretSatoshis</a></li>
+            <li><a href="https://www.linkedin.com/company/secretsatoshis/" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+            <li><a href="https://treybrunson.com/" target="_blank" rel="noopener noreferrer">TreyBrunson.com</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 Secret Satoshis · Don't trust. Verify.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/catalog.js?v=1"></script>
+</body>
+</html>

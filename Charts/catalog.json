@@ -1,0 +1,787 @@
+{
+  "title": "Bitcoin Chart Library",
+  "latest_data_date": "2026-08-22",
+  "chart_count": 59,
+  "generated_at": "2026-08-22T14:44:48+00:00",
+  "categories": [
+    "Price Models",
+    "On-chain Valuation",
+    "Asset Comparisons",
+    "Relative Valuation",
+    "Cycle Analysis",
+    "Returns and Performance",
+    "Supply",
+    "Network Activity",
+    "Mining and Security",
+    "Holder Behavior"
+  ],
+  "charts": [
+    {
+      "title": "Bitcoin 101",
+      "filename": "Bitcoin_Promo",
+      "url": "Bitcoin_Promo.html",
+      "category": "Price Models",
+      "description": "Compares Bitcoin Price with 5 related series over time.",
+      "tags": [
+        "price",
+        "hashrate",
+        "thermocap",
+        "realized price"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Electricity Cost by Power Tariff",
+      "filename": "Bitcoin_Electricity_Cost",
+      "url": "Bitcoin_Electricity_Cost.html",
+      "category": "Price Models",
+      "description": "Compares Bitcoin Price with 5 related series over time.",
+      "tags": [
+        "price",
+        "energy"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Metcalfe Model",
+      "filename": "Bitcoin_Metcalfe_Model",
+      "url": "Bitcoin_Metcalfe_Model.html",
+      "category": "Price Models",
+      "description": "Compares Bitcoin Price with 5 related series over time.",
+      "tags": [
+        "price",
+        "Metcalfe"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Power Law Model",
+      "filename": "Bitcoin_Power_Law_Model",
+      "url": "Bitcoin_Power_Law_Model.html",
+      "category": "Price Models",
+      "description": "Tracks Bitcoin Price, Power Law Price, and BTC Price / Power Law Price over time.",
+      "tags": [
+        "price",
+        "power law"
+      ],
+      "featured": true,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Price",
+      "filename": "Bitcoin_Price",
+      "url": "Bitcoin_Price.html",
+      "category": "Price Models",
+      "description": "Tracks Bitcoin Price USD and Bitcoin Marketcap USD over time.",
+      "tags": [
+        "market cap",
+        "price"
+      ],
+      "featured": true,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Price Moving Averages",
+      "filename": "Bitcoin_Price_Chart_MA",
+      "url": "Bitcoin_Price_Chart_MA.html",
+      "category": "Price Models",
+      "description": "Compares Bitcoin Price with 5 related series over time.",
+      "tags": [
+        "price",
+        "moving averages"
+      ],
+      "featured": true,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Production Price",
+      "filename": "Bitcoin_Production_Price",
+      "url": "Bitcoin_Production_Price.html",
+      "category": "Price Models",
+      "description": "Compares Bitcoin Price with 3 related series over time.",
+      "tags": [
+        "price"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Stock To Flow Price",
+      "filename": "Bitcoin_S2F_Price",
+      "url": "Bitcoin_S2F_Price.html",
+      "category": "Price Models",
+      "description": "Tracks Bitcoin Price, Stock-To-Flow Price, and Stock-To-Flow Multiple over time.",
+      "tags": [
+        "price",
+        "stock-to-flow"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Volatility",
+      "filename": "Bitcoin_Volatility",
+      "url": "Bitcoin_Volatility.html",
+      "category": "Price Models",
+      "description": "Tracks Bitcoin Price, 30-Day Volatility, and 180-Day Volatility over time.",
+      "tags": [
+        "price",
+        "volatility"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Satoshis Per Dollar",
+      "filename": "Bitcoin_Sats_Per_Dollar",
+      "url": "Bitcoin_Sats_Per_Dollar.html",
+      "category": "Price Models",
+      "description": "Tracks Satoshis Per Dollar and Bitcoin Price over time.",
+      "tags": [
+        "price",
+        "satoshis"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Delta Cap",
+      "filename": "Bitcoin_Delta_Cap",
+      "url": "Bitcoin_Delta_Cap.html",
+      "category": "On-chain Valuation",
+      "description": "Compares Bitcoin Price with 3 related series over time.",
+      "tags": [
+        "price",
+        "realized price"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin NVT Price",
+      "filename": "Bitcoin_NVT_Price",
+      "url": "Bitcoin_NVT_Price.html",
+      "category": "On-chain Valuation",
+      "description": "Tracks Bitcoin Price, NVT Price 30 Day MA, and NVT Price 365 Day MA over time.",
+      "tags": [
+        "price",
+        "NVT"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Net Unrealized Profit Loss Ratio",
+      "filename": "Bitcoin_NUPL",
+      "url": "Bitcoin_NUPL.html",
+      "category": "On-chain Valuation",
+      "description": "Tracks Bitcoin Price and Net Unrealized Profit Loss over time.",
+      "tags": [
+        "price",
+        "realized price",
+        "profit and loss"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Price On-Chain Value",
+      "filename": "Bitcoin_On_Chain",
+      "url": "Bitcoin_On_Chain.html",
+      "category": "On-chain Valuation",
+      "description": "Compares Bitcoin Price with 6 related series over time.",
+      "tags": [
+        "price",
+        "realized price"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Realized Price",
+      "filename": "Bitcoin_Realized_Price",
+      "url": "Bitcoin_Realized_Price.html",
+      "category": "On-chain Valuation",
+      "description": "Compares Bitcoin Price with 7 related series over time.",
+      "tags": [
+        "price",
+        "realized price"
+      ],
+      "featured": true,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Thermocap Multiple",
+      "filename": "Bitcoin_Thermocap_Multiples",
+      "url": "Bitcoin_Thermocap_Multiples.html",
+      "category": "On-chain Valuation",
+      "description": "Compares Bitcoin Price with 5 related series over time.",
+      "tags": [
+        "price",
+        "thermocap"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Price VS Gold Market Cap",
+      "filename": "Bitcoin_Gold",
+      "url": "Bitcoin_Gold.html",
+      "category": "Asset Comparisons",
+      "description": "Compares Bitcoin Price with 6 related series over time.",
+      "tags": [
+        "market cap",
+        "price",
+        "gold"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Price VS M0 Money Supply",
+      "filename": "Bitcoin_M0",
+      "url": "Bitcoin_M0.html",
+      "category": "Asset Comparisons",
+      "description": "Compares Bitcoin Price with 9 related series over time.",
+      "tags": [
+        "price",
+        "supply",
+        "money supply"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Price vs Mega Equity Market Caps",
+      "filename": "Bitcoin_Equities",
+      "url": "Bitcoin_Equities.html",
+      "category": "Asset Comparisons",
+      "description": "Compares Bitcoin Price with 25 related series over time.",
+      "tags": [
+        "price",
+        "gold",
+        "equities"
+      ],
+      "featured": false,
+      "height": 900
+    },
+    {
+      "title": "Bitcoin Price Relative Valuation",
+      "filename": "Bitcoin_RV",
+      "url": "Bitcoin_RV.html",
+      "category": "Relative Valuation",
+      "description": "Compares Bitcoin with 10 related series over time.",
+      "tags": [
+        "price",
+        "gold",
+        "money supply"
+      ],
+      "featured": true,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Price Relative Valuation - Cross-Sector Leaders",
+      "filename": "Bitcoin_RV_Sector_Leaders",
+      "url": "Bitcoin_RV_Sector_Leaders.html",
+      "category": "Relative Valuation",
+      "description": "Compares Bitcoin Price with 4 related series over time.",
+      "tags": [
+        "price"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Price Relative Valuation - Financials and Payments",
+      "filename": "Bitcoin_RV_Financials",
+      "url": "Bitcoin_RV_Financials.html",
+      "category": "Relative Valuation",
+      "description": "Compares Bitcoin Price with 6 related series over time.",
+      "tags": [
+        "price",
+        "gold"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Price Relative Valuation - M0",
+      "filename": "Bitcoin_RV_M0",
+      "url": "Bitcoin_RV_M0.html",
+      "category": "Relative Valuation",
+      "description": "Compares Bitcoin Price with 5 related series over time.",
+      "tags": [
+        "price",
+        "money supply"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Price Relative Valuation - Metals",
+      "filename": "Bitcoin_RV_metals",
+      "url": "Bitcoin_RV_metals.html",
+      "category": "Relative Valuation",
+      "description": "Compares Bitcoin Price with 4 related series over time.",
+      "tags": [
+        "price",
+        "gold"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Price Relative Valuation - Semiconductors",
+      "filename": "Bitcoin_RV_Semiconductors",
+      "url": "Bitcoin_RV_Semiconductors.html",
+      "category": "Relative Valuation",
+      "description": "Compares Bitcoin Price with 5 related series over time.",
+      "tags": [
+        "price"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Price Relative Valuation - Stocks",
+      "filename": "Bitcoin_RV_stocks",
+      "url": "Bitcoin_RV_stocks.html",
+      "category": "Relative Valuation",
+      "description": "Compares Bitcoin Price with 5 related series over time.",
+      "tags": [
+        "price"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Drawdowns From ATH",
+      "filename": "Bitcoin_ATH_Drawdown",
+      "url": "Bitcoin_ATH_Drawdown.html",
+      "category": "Cycle Analysis",
+      "description": "Compares the depth and duration of Bitcoin drawdowns from successive all-time highs.",
+      "tags": [
+        "drawdowns",
+        "cycles"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Index Performance Since Halving",
+      "filename": "Bitcoin_Halving_Cycle",
+      "url": "Bitcoin_Halving_Cycle.html",
+      "category": "Cycle Analysis",
+      "description": "Compares Bitcoin performance indexed from each halving across completed and current eras.",
+      "tags": [
+        "halving",
+        "cycles"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Price Performance Since Cycle Low",
+      "filename": "Bitcoin_Cycle_Low",
+      "url": "Bitcoin_Cycle_Low.html",
+      "category": "Cycle Analysis",
+      "description": "Compares Bitcoin performance indexed from the low of each configured market cycle.",
+      "tags": [
+        "price",
+        "cycles"
+      ],
+      "featured": true,
+      "height": 700
+    },
+    {
+      "title": "4 Year Compound Annual Growth Rate",
+      "filename": "Bitcoin_CAGR",
+      "url": "Bitcoin_CAGR.html",
+      "category": "Returns and Performance",
+      "description": "Tracks Bitcoin Price and Bitcoin 4 Year CAGR over time.",
+      "tags": [
+        "price",
+        "returns",
+        "CAGR"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "4 Year Compound Annual Growth Rate Comparison",
+      "filename": "Bitcoin_CAGR_Comparison",
+      "url": "Bitcoin_CAGR_Comparison.html",
+      "category": "Returns and Performance",
+      "description": "Compares Bitcoin with 8 related series over time.",
+      "tags": [
+        "miners",
+        "gold",
+        "returns"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin MTD Returns Indexed to Current Month",
+      "filename": "Bitcoin_MTD_Return_By_Month_Indexed",
+      "url": "Bitcoin_MTD_Return_By_Month_Indexed.html",
+      "category": "Returns and Performance",
+      "description": "Compares historical month-to-date Bitcoin paths indexed to the current month.",
+      "tags": [
+        "price",
+        "returns"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin MTD Returns by Year",
+      "filename": "MTD_Return_By_Year_Percentage",
+      "url": "MTD_Return_By_Year_Percentage.html",
+      "category": "Returns and Performance",
+      "description": "Compares daily month-to-date Bitcoin returns across calendar years.",
+      "tags": [
+        "returns"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin YTD Returns Indexed to Current Year",
+      "filename": "Bitcoin_YTD_Return_By_Year_Indexed",
+      "url": "Bitcoin_YTD_Return_By_Year_Indexed.html",
+      "category": "Returns and Performance",
+      "description": "Compares historical year-to-date Bitcoin paths indexed to the current year.",
+      "tags": [
+        "price",
+        "returns"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin YTD Returns by Year",
+      "filename": "Bitcoin_YTD_Return_By_Year_Percentage",
+      "url": "Bitcoin_YTD_Return_By_Year_Percentage.html",
+      "category": "Returns and Performance",
+      "description": "Compares daily year-to-date Bitcoin returns across calendar years.",
+      "tags": [
+        "returns"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Month To Date Return Comparison - August 2026",
+      "filename": "Bitcoin_MTD_Return_Comparison",
+      "url": "Bitcoin_MTD_Return_Comparison.html",
+      "category": "Returns and Performance",
+      "description": "Compares Bitcoin with 8 related series over time.",
+      "tags": [
+        "miners",
+        "gold",
+        "returns"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Year Over Year Return",
+      "filename": "Bitcoin_YOY_Return_Comparison",
+      "url": "Bitcoin_YOY_Return_Comparison.html",
+      "category": "Returns and Performance",
+      "description": "Tracks Bitcoin YOY Return and Bitcoin Price over time.",
+      "tags": [
+        "price",
+        "returns"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Year To Date Return (2026)",
+      "filename": "Bitcoin_YTD_Return_Comparison",
+      "url": "Bitcoin_YTD_Return_Comparison.html",
+      "category": "Returns and Performance",
+      "description": "Compares Bitcoin with 8 related series over time.",
+      "tags": [
+        "miners",
+        "gold",
+        "returns"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Year To Date Return (2026)",
+      "filename": "Bitcoin_YTD_Return_Comparison_full",
+      "url": "Bitcoin_YTD_Return_Comparison_full.html",
+      "category": "Returns and Performance",
+      "description": "Compares BTC with 16 related series over time.",
+      "tags": [
+        "returns"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin 1+ Year Supply",
+      "filename": "Bitcoin_1_Year_Supply",
+      "url": "Bitcoin_1_Year_Supply.html",
+      "category": "Supply",
+      "description": "Tracks Bitcoin Price and 1+ Year Active Supply over time.",
+      "tags": [
+        "price",
+        "supply"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Macro Supply",
+      "filename": "Bitcoin_Macro_Supply",
+      "url": "Bitcoin_Macro_Supply.html",
+      "category": "Supply",
+      "description": "Compares Bitcoin Price with 6 related series over time.",
+      "tags": [
+        "price",
+        "supply"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Supply & Daily Issuance",
+      "filename": "Bitcoin_Supply",
+      "url": "Bitcoin_Supply.html",
+      "category": "Supply",
+      "description": "Tracks Bitcoin Supply, New Coins Issued 30 Day MA, and New Coins Issued 365 Day MA over time.",
+      "tags": [
+        "supply"
+      ],
+      "featured": true,
+      "height": 700
+    },
+    {
+      "title": "Supply Age Distribution",
+      "filename": "Bitcoin_Supply_Age",
+      "url": "Bitcoin_Supply_Age.html",
+      "category": "Supply",
+      "description": "Compares Bitcoin Price with 10 related series over time.",
+      "tags": [
+        "price",
+        "supply"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Address Counts Above BTC Balance Thresholds",
+      "filename": "Bitcoin_Address_Balance",
+      "url": "Bitcoin_Address_Balance.html",
+      "category": "Network Activity",
+      "description": "Compares Bitcoin Price with 13 related series over time.",
+      "tags": [
+        "price",
+        "addresses"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Active Addresses",
+      "filename": "Bitcoin_Active_Addresses",
+      "url": "Bitcoin_Active_Addresses.html",
+      "category": "Network Activity",
+      "description": "Compares Bitcoin Price with 3 related series over time.",
+      "tags": [
+        "price",
+        "addresses"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Fees In USD",
+      "filename": "Bitcoin_Transaction_Fee",
+      "url": "Bitcoin_Transaction_Fee.html",
+      "category": "Network Activity",
+      "description": "Tracks Bitcoin Price and Fees Paid (USD) over time.",
+      "tags": [
+        "price",
+        "fees"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Transaction Volume",
+      "filename": "Bitcoin_Transaction_Value",
+      "url": "Bitcoin_Transaction_Value.html",
+      "category": "Network Activity",
+      "description": "Compares Bitcoin Price with 3 related series over time.",
+      "tags": [
+        "price",
+        "transactions"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Transactions",
+      "filename": "Bitcoin_Transactions",
+      "url": "Bitcoin_Transactions.html",
+      "category": "Network Activity",
+      "description": "Tracks Transaction Count, Tx Count 30 Day MA, and Tx Count 365 Day MA over time.",
+      "tags": [
+        "transactions"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Hash Price",
+      "filename": "Bitcoin_Hash_Price",
+      "url": "Bitcoin_Hash_Price.html",
+      "category": "Mining and Security",
+      "description": "Tracks Bitcoin Price and Hash Price ($/TH/s) over time.",
+      "tags": [
+        "price"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Hash Ribbons",
+      "filename": "Bitcoin_Hash_Ribbons",
+      "url": "Bitcoin_Hash_Ribbons.html",
+      "category": "Mining and Security",
+      "description": "Tracks Bitcoin Price, Hash Rate 30-Day MA, and Hash Rate 60-Day MA over time.",
+      "tags": [
+        "price",
+        "hash ribbons",
+        "hashrate"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Hashrate",
+      "filename": "Bitcoin_Hashrate",
+      "url": "Bitcoin_Hashrate.html",
+      "category": "Mining and Security",
+      "description": "Tracks Hash Rate, Hash Rate 30 Day MA, and Hash Rate 365 Day MA over time.",
+      "tags": [
+        "hashrate"
+      ],
+      "featured": true,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Miner Revenue",
+      "filename": "Bitcoin_Miner_Revenue",
+      "url": "Bitcoin_Miner_Revenue.html",
+      "category": "Mining and Security",
+      "description": "Compares Bitcoin Price with 3 related series over time.",
+      "tags": [
+        "price",
+        "miners"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Network Difficulty",
+      "filename": "Bitcoin_Difficulty",
+      "url": "Bitcoin_Difficulty.html",
+      "category": "Mining and Security",
+      "description": "Tracks Bitcoin Price and Difficulty over time.",
+      "tags": [
+        "price",
+        "difficulty"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Price & Hashrate",
+      "filename": "Bitcoin_Hashrate_Price",
+      "url": "Bitcoin_Hashrate_Price.html",
+      "category": "Mining and Security",
+      "description": "Compares Bitcoin Price with 3 related series over time.",
+      "tags": [
+        "price",
+        "hashrate"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Puell Multiple",
+      "filename": "Bitcoin_Puell_Multiple",
+      "url": "Bitcoin_Puell_Multiple.html",
+      "category": "Mining and Security",
+      "description": "Tracks Bitcoin Price and Puell Multiple over time.",
+      "tags": [
+        "price"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Adjusted Bitcoin Days Destroyed (BDD / Circulating Supply)",
+      "filename": "Bitcoin_Adjusted_BDD",
+      "url": "Bitcoin_Adjusted_BDD.html",
+      "category": "Holder Behavior",
+      "description": "Tracks Bitcoin Price, Adjusted BDD, and Adjusted BDD Mean over time.",
+      "tags": [
+        "price",
+        "supply"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin HODL Bank & Reserve Risk",
+      "filename": "Bitcoin_HODL_Bank",
+      "url": "Bitcoin_HODL_Bank.html",
+      "category": "Holder Behavior",
+      "description": "Compares Bitcoin Price with 4 related series over time.",
+      "tags": [
+        "price"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin SOPR (Spent Output Profit Ratio)",
+      "filename": "Bitcoin_SOPR",
+      "url": "Bitcoin_SOPR.html",
+      "category": "Holder Behavior",
+      "description": "Tracks Bitcoin Price and SOPR over time.",
+      "tags": [
+        "price",
+        "profit and loss"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Supply in Profit vs Loss",
+      "filename": "Bitcoin_Supply_Profit_Loss",
+      "url": "Bitcoin_Supply_Profit_Loss.html",
+      "category": "Holder Behavior",
+      "description": "Tracks Bitcoin Price, Supply in Profit %, and Supply in Loss % over time.",
+      "tags": [
+        "price",
+        "supply",
+        "profit and loss"
+      ],
+      "featured": false,
+      "height": 700
+    }
+  ]
+}
