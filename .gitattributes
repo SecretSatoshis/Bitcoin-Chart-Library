@@ -1,0 +1,12 @@
+# Generated chart output. CI is the sole producer of these files.
+#
+# Each chart is a single-line minified document. Without -diff, any
+# `git diff` / `git log -p` / `git show` touching one dumps the whole file as one
+# unreadable line and burns CPU generating a diff nobody can read.
+Charts/*.html      -diff
+
+# Collapse generated charts in PR review and keep them out of the repo's language stats.
+Charts/*.html      linguist-generated=true
+
+# The shared Plotly bundle is vendored library code, not project source.
+Charts/plotly.min.js  -diff linguist-vendored=true
