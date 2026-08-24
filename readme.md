@@ -190,6 +190,12 @@ uses a longer browser cache. Each successful chart-update workflow commits `Char
 to `main`, which supplies the next production deployment after the repository is linked
 in Vercel.
 
+The scheduled chart workflow starts daily at **01:30 UTC**, after the Report Library's
+00:30 UTC data-refresh workflow has had time to validate and publish its CSV outputs.
+The workflow then runs the chart regression suite, rebuilds the complete chart pack,
+and commits the generated `Charts/` files. Both workflows can also be started manually
+through GitHub Actions.
+
 ## Dependencies
 
 Pinned canonically in `pyproject.toml` and `uv.lock` (and mirrored in
