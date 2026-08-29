@@ -10,14 +10,6 @@ import re
 import warnings
 from pathlib import Path
 
-# Get the first day of the current month
-first_day_of_month = pd.Timestamp.now().replace(day=1).strftime("%Y-%m-%d")
-# Get the current month and year for chart title
-current_month_year = pd.Timestamp.now().strftime("%B %Y")  # Example: "October 2024"
-# Get current year
-current_year = pd.Timestamp.now().year
-
-
 def _logo_data_uri():
     """Return the bundled logo as a self-contained PNG data URI."""
     logo_path = Path(__file__).with_name("Secret_Satoshis_Logo.png")
@@ -40,6 +32,72 @@ def _price_series(selected_metrics):
     if prices.empty:
         raise ValueError("No valid Bitcoin price data is available.")
     return prices
+
+
+# Earliest calendar year included in the return comparisons. Matches
+# INDEXED_RETURNS_MIN_YEAR in Bitcoin-Report-Library/main.py — before 2014 the price
+# history is too thin to compare cleanly.
+MIN_RETURN_YEAR = 2014
+
+
+def _positive_price_series(price_series):
+    """Return sorted, daily, positive prices without changing the source object.
+
+    Ported from Bitcoin-Report-Library/report_tables.py so both repos measure a period
+    return from the same observations.
+    """
+    prices = pd.to_numeric(price_series, errors="coerce").sort_index()
+    prices = prices.dropna().loc[lambda values: values > 0]
+    return prices.groupby(prices.index.normalize()).last()
+
+
+def _last_positive_before(price_series, boundary):
+    """Return the final positive price strictly before a calendar boundary.
+
+    This is the baseline a period return is measured from. Using the period's own first
+    observation instead — which this module used to do — erases the first day's move and
+    puts these charts at odds with the dashboard's published MTD/YTD figures.
+    """
+    prior = price_series.loc[price_series.index < pd.Timestamp(boundary)]
+    return prior.iloc[-1] if not prior.empty else np.nan
+
+
+def _period_baseline(price_series, year, month=None):
+    """Baseline close for a year's MTD (month given) or YTD (month omitted) series."""
+    boundary = pd.Timestamp(year, month, 1) if month else pd.Timestamp(year, 1, 1)
+    baseline = _last_positive_before(price_series, boundary)
+    if not np.isfinite(baseline) or baseline <= 0:
+        return None
+    return float(baseline)
+
+
+def _report_period(price_series):
+    """Derive the reporting year and month from the data, never the local clock.
+
+    The charts describe whatever dataset Report Library published; reading `date.today()`
+    makes a run near a month or year boundary describe a period the data does not cover,
+    and makes a local run differ from CI.
+    """
+    as_of = price_series.index.max()
+    return as_of.year, as_of.month
+
+
+def _resolve_filter_start_date(value, index):
+    """Resolve a static or report-period-relative chart start date.
+
+    Return-comparison charts describe the completed Report Library dataset, not the
+    machine clock. This matters when a refresh is delayed or runs across a UTC month or
+    year boundary.
+    """
+    if value not in {"report_month_start", "report_year_start"}:
+        return pd.to_datetime(value)
+
+    dates = pd.to_datetime(index)
+    if len(dates) == 0 or pd.isna(dates.max()):
+        raise ValueError("Cannot resolve a report-period filter from an empty date index.")
+    as_of = dates.max()
+    month = as_of.month if value == "report_month_start" else 1
+    return pd.Timestamp(as_of.year, month, 1)
 
 
 def _reference_year_dates(year):
@@ -277,7 +335,9 @@ def add_branding(
 def create_line_chart(chart_template, selected_metrics):
     # Extract the start and end dates from the template and filter the data accordingly
     if "filter_start_date" in chart_template:
-        start_date = pd.to_datetime(chart_template["filter_start_date"])
+        start_date = _resolve_filter_start_date(
+            chart_template["filter_start_date"], selected_metrics.index
+        )
 
         # Set end_date to filter_end_date if specified, otherwise use the maximum date available in the data
         end_date = pd.to_datetime(
@@ -636,28 +696,38 @@ def create_monthly_returns(selected_metrics):
     Returns:
     fig (go.Figure): Plotly figure object with the historical performance chart.
     """
-    # Automatically detect the current month and year
-    today = datetime.date.today()
-    current_year = today.year
-    current_month = today.month
+    # The period comes from the data, not the local clock, so the chart always describes
+    # the dataset Report Library actually published.
+    prices = _positive_price_series(_price_series(selected_metrics))
+    current_year, current_month = _report_period(prices)
 
-    prices = _price_series(selected_metrics)
-    prices = prices[prices.index.year >= 2014]
+    # Baselines are looked up against the full history; only the plotted years are
+    # restricted, so 2014's own baseline (2013's final close) is still reachable.
+    plot_years = [
+        year for year in prices.index.year.unique() if year >= MIN_RETURN_YEAR
+    ]
 
     # Dictionary to store daily MTD returns for each year within the current month
     daily_mtd_returns = {}
 
     # Calculate MTD returns up to each day of the current month for each year
-    for year in prices.index.year.unique():
+    for year in plot_years:
         monthly_prices = prices[
             (prices.index.month == current_month) & (prices.index.year == year)
         ]
+        if monthly_prices.empty:
+            continue
 
-        if not monthly_prices.empty:
-            # Calculate daily MTD return for each day of the month
-            daily_returns = (monthly_prices / monthly_prices.iloc[0] - 1) * 100
-            daily_returns.index = monthly_prices.index.day
-            daily_mtd_returns[year] = daily_returns
+        # Measure from the final positive close before the month began, matching
+        # Bitcoin-Report-Library. Indexing off the month's own first observation
+        # would drop the first day's move and disagree with the published figure.
+        baseline = _period_baseline(prices, year, current_month)
+        if baseline is None:
+            continue
+
+        daily_returns = (monthly_prices / baseline - 1) * 100
+        daily_returns.index = monthly_prices.index.day
+        daily_mtd_returns[year] = daily_returns
 
     if not daily_mtd_returns:
         raise ValueError(f"No price data is available for calendar month {current_month}.")
@@ -742,7 +812,7 @@ def create_monthly_returns(selected_metrics):
     month_name = datetime.date(1900, current_month, 1).strftime("%B")
     fig.update_layout(
         title=dict(
-            text=f"Bitcoin {month_name} MTD Returns Comparison Since {prices.index.year.min()}",
+            text=f"Bitcoin {month_name} MTD Returns Comparison Since {min(daily_mtd_returns)}",
             x=0.5,
             xanchor="center",
             y=0.98,
@@ -778,40 +848,43 @@ def create_indexed_monthly_returns(selected_metrics):
     Returns:
     fig (go.Figure): Plotly figure object with the historical performance chart.
     """
-    prices = _price_series(selected_metrics)
-    prices = prices[prices.index.year >= 2014]
+    prices = _positive_price_series(_price_series(selected_metrics))
 
-    # Get the current month and year for plotting and data indexing
-    today = datetime.date.today()
-    current_year = today.year
-    current_month = today.month
+    # Period derived from the data rather than the local clock — see `_report_period`.
+    current_year, current_month = _report_period(prices)
+
+    plot_years = [
+        year for year in prices.index.year.unique() if year >= MIN_RETURN_YEAR
+    ]
 
     # Dictionary to store indexed MTD prices for each year
     indexed_mtd_prices = {}
 
-    # Get the starting price for the current month to index other years
-    current_month_data = prices[
-        (prices.index.year == current_year) & (prices.index.month == current_month)
-    ]
-    if current_month_data.empty:
+    # Index every year to the close the current month began from — the last positive
+    # close before the 1st, not the 1st's own close.
+    current_start_price = _period_baseline(prices, current_year, current_month)
+    if current_start_price is None:
         raise ValueError(
-            f"No price data is available for {current_year}-{current_month:02d}; "
+            f"No positive close exists before {current_year}-{current_month:02d}; "
             "refusing to leave an older indexed MTD chart in place."
         )
 
-    current_start_price = current_month_data.iloc[0]
-
-    # Calculate indexed MTD prices for each year based on the current month's starting price
-    for year in prices.index.year.unique():
+    # Calculate indexed MTD prices for each year based on the current month's baseline
+    for year in plot_years:
         monthly_data = prices[
             (prices.index.year == year) & (prices.index.month == current_month)
         ]
+        if monthly_data.empty:
+            continue
 
-        if not monthly_data.empty:
-            # Scale each year's monthly price series to the current year's monthly starting price
-            indexed_prices = monthly_data / monthly_data.iloc[0] * current_start_price
-            indexed_prices.index = monthly_data.index.day
-            indexed_mtd_prices[year] = indexed_prices
+        baseline = _period_baseline(prices, year, current_month)
+        if baseline is None:
+            continue
+
+        # Scale each year's monthly pattern onto the current month's baseline
+        indexed_prices = monthly_data / baseline * current_start_price
+        indexed_prices.index = monthly_data.index.day
+        indexed_mtd_prices[year] = indexed_prices
 
     days_in_month = calendar.monthrange(current_year, current_month)[1]
     day_numbers = range(1, days_in_month + 1)
@@ -887,7 +960,7 @@ def create_indexed_monthly_returns(selected_metrics):
     )
 
     # Set up layout and axis titles to match the styling template
-    month_name = today.strftime("%B")
+    month_name = datetime.date(1900, current_month, 1).strftime("%B")
     fig.update_layout(
         title=dict(
             text=f"Bitcoin {month_name} MTD Returns Comparison (Indexed to Current Year)",
@@ -922,19 +995,19 @@ def create_yearly_returns(selected_metrics):
     Returns:
     fig (go.Figure): Plotly figure object with the historical performance chart.
     """
-    prices = _price_series(selected_metrics)
-    prices = prices[prices.index.year >= 2014]
-    prices = prices[~((prices.index.month == 2) & (prices.index.day == 29))]
+    all_prices = _positive_price_series(_price_series(selected_metrics))
+    current_year, _ = _report_period(all_prices)
 
-    # Get today's year and define the current year
-    today = datetime.date.today()
-    current_year = today.year
+    prices = all_prices[~((all_prices.index.month == 2) & (all_prices.index.day == 29))]
+    plot_years = [
+        year for year in prices.index.year.unique() if year >= MIN_RETURN_YEAR
+    ]
 
     # Dictionary to store daily YTD returns for each year
     daily_ytd_returns = {}
 
     # Calculate YTD returns up to each day of the year for each year
-    for year in prices.index.year.unique():
+    for year in plot_years:
         yearly_data = prices[prices.index.year == year]
 
         starts_on_january_1 = not yearly_data.empty and (
@@ -945,7 +1018,13 @@ def create_yearly_returns(selected_metrics):
         if year != current_year and not _is_complete_non_leap_year(yearly_data):
             continue
 
-        daily_returns = (yearly_data / yearly_data.iloc[0] - 1) * 100
+        # Measured from the final positive close before January 1, matching the
+        # dashboard. Baselines are looked up on the unfiltered history.
+        baseline = _period_baseline(all_prices, year)
+        if baseline is None:
+            continue
+
+        daily_returns = (yearly_data / baseline - 1) * 100
         daily_ytd_returns[year] = _map_to_reference_year(daily_returns, current_year)
 
     if not daily_ytd_returns:
@@ -1019,7 +1098,7 @@ def create_yearly_returns(selected_metrics):
     # Layout setup
     fig.update_layout(
         title=dict(
-            text=f"Bitcoin YTD Returns Comparison Since {prices.index.year.min()}",
+            text=f"Bitcoin YTD Returns Comparison Since {min(daily_ytd_returns)}",
             x=0.5,
             xanchor="center",
             y=0.98,
@@ -1051,13 +1130,13 @@ def create_indexed_yearly_returns(selected_metrics):
     Returns:
     fig (go.Figure): Plotly figure object with the historical performance chart in dollar terms.
     """
-    prices = _price_series(selected_metrics)
-    prices = prices[prices.index.year >= 2014]
-    prices = prices[~((prices.index.month == 2) & (prices.index.day == 29))]
+    all_prices = _positive_price_series(_price_series(selected_metrics))
+    current_year, _ = _report_period(all_prices)
 
-    # Get today's year and define the current year for the chart
-    today = datetime.date.today()
-    current_year = today.year
+    prices = all_prices[~((all_prices.index.month == 2) & (all_prices.index.day == 29))]
+    plot_years = [
+        year for year in prices.index.year.unique() if year >= MIN_RETURN_YEAR
+    ]
 
     # Dictionary to store indexed YTD prices for each year
     indexed_ytd_prices = {}
@@ -1070,10 +1149,17 @@ def create_indexed_yearly_returns(selected_metrics):
         )
     if (current_year_prices.index[0].month, current_year_prices.index[0].day) != (1, 1):
         raise ValueError(f"Price data for {current_year} does not start on January 1.")
-    current_start_price = current_year_prices.iloc[0]
 
-    # Calculate indexed YTD prices for each year based on the current year's starting price
-    for year in prices.index.year.unique():
+    # Index to the close the year began from — the prior year's final close.
+    current_start_price = _period_baseline(all_prices, current_year)
+    if current_start_price is None:
+        raise ValueError(
+            f"No positive close exists before {current_year}-01-01; refusing to leave "
+            "an older indexed YTD chart in place."
+        )
+
+    # Calculate indexed YTD prices for each year based on the current year's baseline
+    for year in plot_years:
         yearly_data = prices[prices.index.year == year]
 
         # Historical comparisons must contain every non-leap calendar day. The
@@ -1083,8 +1169,12 @@ def create_indexed_yearly_returns(selected_metrics):
         if year != current_year and not _is_complete_non_leap_year(yearly_data):
             continue
 
-        # Scale each year's price series to the current year's starting price
-        indexed_prices = yearly_data / yearly_data.iloc[0] * current_start_price
+        baseline = _period_baseline(all_prices, year)
+        if baseline is None:
+            continue
+
+        # Scale each year's pattern onto the current year's baseline
+        indexed_prices = yearly_data / baseline * current_start_price
         indexed_ytd_prices[year] = _map_to_reference_year(indexed_prices, current_year)
 
     date_range = _reference_year_dates(current_year)
@@ -1382,7 +1472,7 @@ chart_transaction_fee_USD = {
         {"name": "Bitcoin Price", "data": "price_close", "yaxis": "y"},
         {"name": "Fees Paid (USD)", "data": "fees_sum_24h_usd", "yaxis": "y2"},
     ],
-    "title": "Bitcoin Fees In USD",
+    "title": "Bitcoin Transaction Fees",
     "x_label": "Date",
     "y1_label": "Bitcoin Price",
     "y2_label": "Fees In US Dollars",
@@ -1412,7 +1502,7 @@ chart_address_balance = {
         {"name": ">1k BTC", "data": "addrs_over_1k_btc_addr_count", "yaxis": "y2"},
         {"name": ">10k BTC", "data": "addrs_over_10k_btc_addr_count", "yaxis": "y2"},
     ],
-    "title": "Address Counts Above BTC Balance Thresholds",
+    "title": "Bitcoin Address Balance Distribution",
     "x_label": "Date",
     "y1_label": "Bitcoin Price",
     "y2_label": "Address Count",
@@ -1623,7 +1713,7 @@ chart_electricity_cost = {
             "yaxis": "y",
         },
     ],
-    "title": "Bitcoin Electricity Cost by Power Tariff",
+    "title": "Bitcoin Mining Electricity Cost",
     "x_label": "Date",
     "y1_label": "Bitcoin Price and Power Expense per BTC (USD)",
     "y2_label": "",
@@ -1764,7 +1854,7 @@ chart_NUPL = {
         {"name": "Bitcoin Price", "data": "price_close", "yaxis": "y"},
         {"name": "Net Unrealized Profit Loss", "data": "nupl", "yaxis": "y2"},
     ],
-    "title": "Bitcoin Net Unrealized Profit Loss Ratio",
+    "title": "Bitcoin NUPL (Net Unrealized Profit/Loss)",
     "x_label": "Date",
     "y1_label": "Bitcoin Price",
     "y2_label": "NUPL Ratio",
@@ -1805,7 +1895,7 @@ yoy_return = {
         {"name": "Bitcoin YOY Return", "data": "price_close_YOY_change", "yaxis": "y2"},
         {"name": "Bitcoin Price", "data": "price_close", "yaxis": "y"},
     ],
-    "title": "Year Over Year Return",
+    "title": "Bitcoin Year-Over-Year Return",
     "x_label": "Date",
     "y1_label": "Bitcoin Price (USD)",
     "y2_label": "Year Over Year Return (Percentage)",
@@ -1823,7 +1913,7 @@ cagr_overview = {
         {"name": "Bitcoin Price", "data": "price_close", "yaxis": "y"},
         {"name": "Bitcoin 4 Year CAGR", "data": "price_close_4_Year_CAGR", "yaxis": "y2"},
     ],
-    "title": "4 Year Compound Annual Growth Rate",
+    "title": "Bitcoin 4-Year CAGR",
     "x_label": "Date",
     "y1_label": "Bitcoin Price",
     "y2_label": "4 Year CAGR (Percentage)",
@@ -1841,7 +1931,7 @@ chart_sats_per_dollar = {
         {"name": "Satoshis Per Dollar", "data": "sat_per_dollar", "yaxis": "y1"},
         {"name": "Bitcoin Price", "data": "price_close", "yaxis": "y2"},
     ],
-    "title": "Satoshis Per Dollar",
+    "title": "Bitcoin Satoshis Per Dollar",
     "x_label": "Date",
     "y1_label": "Satoshis Per Dollar | Amount Of Bitcoin You Can Purchase Per $1",
     "y2_label": "1 Full Bitcoin Price",
@@ -1867,7 +1957,7 @@ chart_m0 = {
         {"name": "Australia", "data": "Australia_btc_price", "yaxis": "y"},
         {"name": "Russia", "data": "Russia_btc_price", "yaxis": "y"},
     ],
-    "title": "Bitcoin Price VS M0 Money Supply",
+    "title": "Bitcoin vs M0 Money Supply",
     "x_label": "Date",
     "y1_label": "Bitcoin Price (USD)",
     "y2_label": "",
@@ -1929,7 +2019,7 @@ chart_equities = {
         {"name": "Bitcoin Price", "data": "price_close", "yaxis": "y"},
         *_equity_relative_value_traces(*EQUITY_RELATIVE_VALUE_SERIES),
     ],
-    "title": "Bitcoin Price vs Mega Equity Market Caps",
+    "title": "Bitcoin vs Mega-Cap Equities",
     "x_label": "Date",
     "y1_label": "Bitcoin Price (USD)",
     "y2_label": "",
@@ -1979,7 +2069,7 @@ chart_gold = {
             "yaxis": "y",
         },
     ],
-    "title": "Bitcoin Price VS Gold Market Cap",
+    "title": "Bitcoin vs Gold Market Cap",
     "x_label": "Date",
     "y1_label": "Bitcoin Price (USD)",
     "y2_label": "",
@@ -2005,7 +2095,7 @@ chart_promo = {
         {"name": "Hash Rate 30 Day MA", "data": "30_day_ma_hash_rate", "yaxis": "y2"},
         {"name": "Hash Rate 365 Day MA", "data": "365_day_ma_hash_rate", "yaxis": "y2"},
     ],
-    "title": "Bitcoin 101",
+    "title": "Bitcoin Market Overview",
     "x_label": "Date",
     "y1_label": "Bitcoin Price (USD)",
     "y2_label": "hash_rate",
@@ -2034,7 +2124,7 @@ chart_rv_metals = {
         },
         {"name": "Total Gold Market", "data": "gold_marketcap_btc_price", "yaxis": "y"},
     ],
-    "title": "Bitcoin Price Relative Valuation - Metals",
+    "title": "Bitcoin Relative Valuation: Gold and Silver",
     "x_label": "Date",
     "y1_label": "Bitcoin Price (USD)",
     "y2_label": "",
@@ -2052,7 +2142,7 @@ chart_rv_stocks = {
         {"name": "Bitcoin Price", "data": "price_close", "yaxis": "y"},
         *_equity_relative_value_traces("META", "AMZN", "GOOGL", "MSFT", "AAPL"),
     ],
-    "title": "Bitcoin Price Relative Valuation - Stocks",
+    "title": "Bitcoin Relative Valuation: Big Tech",
     "x_label": "Date",
     "y1_label": "Bitcoin Price (USD)",
     "y2_label": "",
@@ -2070,7 +2160,7 @@ chart_rv_semiconductors = {
         {"name": "Bitcoin Price", "data": "price_close", "yaxis": "y"},
         *_equity_relative_value_traces("NVDA", "AVGO", "TSM", "005930.KS", "MU"),
     ],
-    "title": "Bitcoin Price Relative Valuation - Semiconductors",
+    "title": "Bitcoin Relative Valuation: Semiconductors",
     "x_label": "Date",
     "y1_label": "Bitcoin Price (USD)",
     "y2_label": "",
@@ -2088,7 +2178,7 @@ chart_rv_financials = {
         {"name": "Bitcoin Price", "data": "price_close", "yaxis": "y"},
         *_equity_relative_value_traces("BRK-B", "JPM", "GS", "V", "PYPL", "XYZ"),
     ],
-    "title": "Bitcoin Price Relative Valuation - Financials and Payments",
+    "title": "Bitcoin Relative Valuation: Financials",
     "x_label": "Date",
     "y1_label": "Bitcoin Price (USD)",
     "y2_label": "",
@@ -2106,7 +2196,7 @@ chart_rv_sector_leaders = {
         {"name": "Bitcoin Price", "data": "price_close", "yaxis": "y"},
         *_equity_relative_value_traces("TSLA", "LLY", "2222.SR", "SPCX"),
     ],
-    "title": "Bitcoin Price Relative Valuation - Cross-Sector Leaders",
+    "title": "Bitcoin Relative Valuation: Sector Leaders",
     "x_label": "Date",
     "y1_label": "Bitcoin Price (USD)",
     "y2_label": "",
@@ -2128,7 +2218,7 @@ chart_rv_m0 = {
         {"name": "United States", "data": "United_States_btc_price", "yaxis": "y"},
         {"name": "EU", "data": "Eurozone_btc_price", "yaxis": "y"},
     ],
-    "title": "Bitcoin Price Relative Valuation - M0",
+    "title": "Bitcoin Relative Valuation: M0 Money Supply",
     "x_label": "Date",
     "y1_label": "Bitcoin Price (USD)",
     "y2_label": "",
@@ -2202,7 +2292,7 @@ chart_supply_age = {
         {"name": "Supply < 10 Years", "data": "utxos_under_10y_old_supply", "yaxis": "y2"},
         {"name": "Current Supply", "data": "supply", "yaxis": "y2"},
     ],
-    "title": "Supply Age Distribution",
+    "title": "Bitcoin Supply Age Distribution",
     "x_label": "Date",
     "y1_label": "Bitcoin Price",
     "y2_label": "Supply (BTC)",
@@ -2255,7 +2345,7 @@ cagr_comparison = {
             "yaxis": "y",
         },
     ],
-    "title": "4 Year Compound Annual Growth Rate Comparison",
+    "title": "Bitcoin 4-Year CAGR vs Other Assets",
     "x_label": "Date",
     "y1_label": "4 Year CAGR (Percentage)",
     "y2_label": "",
@@ -2308,14 +2398,14 @@ mtd_return = {
             "yaxis": "y",
         },
     ],
-    "title": f"Month To Date Return Comparison - {current_month_year}",
+    "title": "Bitcoin MTD Return vs Other Assets",
     "x_label": "Date",
     "y1_label": "Month To Date Return (Percentage)",
     "y2_label": "",
     "filename": "Bitcoin_MTD_Return_Comparison",
     "chart_type": "line",
     "data_source": "Data Source: Bitview",
-    "filter_start_date": first_day_of_month,  # Start of the current month
+    "filter_start_date": "report_month_start",
 }
 
 # Shortened Year To Date Return Comparison
@@ -2361,14 +2451,14 @@ ytd_return = {
             "yaxis": "y",
         },
     ],
-    "title": f"Year To Date Return ({current_year})",
+    "title": "Bitcoin YTD Return vs Other Assets",
     "x_label": "Date",
     "y1_label": "Year To Date Return (Percentage)",
     "y2_label": "",
     "filename": "Bitcoin_YTD_Return_Comparison",
     "chart_type": "line",
     "data_source": "Data Source: Bitview",
-    "filter_start_date": f"{current_year}-01-01",
+    "filter_start_date": "report_year_start",
     "filter_metric": "time",
 }
 
@@ -2395,14 +2485,14 @@ ytd_return_full = {
         {"name": "COIN", "data": "COIN_close_YTD_change", "yaxis": "y"},
         {"name": "WGMI", "data": "WGMI_close_YTD_change", "yaxis": "y"},
     ],
-    "title": f"Year To Date Return ({current_year})",
+    "title": "Bitcoin YTD Return vs 16 Benchmarks",
     "x_label": "Date",
     "y1_label": "Year To Date Return (Percentage)",
     "y2_label": "",
     "filename": "Bitcoin_YTD_Return_Comparison_full",
     "chart_type": "line",
     "data_source": "Data Source: Bitview",
-    "filter_start_date": f"{current_year}-01-01",
+    "filter_start_date": "report_year_start",
     "filter_metric": "time",
 }
 
@@ -2419,7 +2509,7 @@ chart_drawdowns = {
         {"name": "Drawdown Cycle 4", "group": "Drawdown Cycle 4"},
         {"name": "Drawdown Cycle 5", "group": "Drawdown Cycle 5"},
     ],
-    "title": "Bitcoin Drawdowns From ATH",
+    "title": "Bitcoin Drawdowns From All-Time High",
     "x_label": "Days Since ATH",
     "y1_label": "Drawdown (%)",
     "filename": "Bitcoin_ATH_Drawdown",
@@ -2502,7 +2592,7 @@ chart_rv = {
         {"name": "US M0", "data": "United_States_btc_price", "yaxis": "y"},
         {"name": "Total Gold Market", "data": "gold_marketcap_btc_price", "yaxis": "y"},
     ],
-    "title": "Bitcoin Price Relative Valuation",
+    "title": "Bitcoin Relative Valuation",
     "x_label": "Date",
     "y1_label": "Bitcoin Price (USD)",
     "y2_label": "",
@@ -2523,7 +2613,7 @@ chart_adjusted_bdd = {
         {"name": "Adjusted BDD", "data": "adjusted_bdd", "yaxis": "y2"},
         {"name": "Adjusted BDD Mean", "data": "adjusted_bdd_mean", "yaxis": "y2"},
     ],
-    "title": "Adjusted Bitcoin Days Destroyed (BDD / Circulating Supply)",
+    "title": "Bitcoin Days Destroyed, Supply-Adjusted",
     "x_label": "Date",
     "y1_label": "Bitcoin Price",
     "y2_label": "Adjusted BDD",

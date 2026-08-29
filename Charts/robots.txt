@@ -1,0 +1,6 @@
+# All crawlers welcome, including AI retrieval and training agents.
+# Deliberate: this public, GPL-3.0 chart library permits crawling.
+User-agent: *
+Allow: /
+
+Sitemap: https://charts.secretsatoshis.com/sitemap.xml

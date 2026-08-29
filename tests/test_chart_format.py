@@ -1,5 +1,3 @@
-import datetime
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -9,15 +7,6 @@ import chart_format as charts
 
 def _disable_writes(monkeypatch):
     monkeypatch.setattr(charts, "save_chart_html", lambda fig, filename: None)
-
-
-def _set_today(monkeypatch, year, month, day):
-    class FixedDate(datetime.date):
-        @classmethod
-        def today(cls):
-            return cls(year, month, day)
-
-    monkeypatch.setattr(charts.datetime, "date", FixedDate)
 
 
 def _trace(figure, name):
@@ -41,33 +30,49 @@ def test_macro_supply_preserves_report_library_compatibility_labels():
 
 def test_monthly_returns_preserve_missing_calendar_days(monkeypatch):
     _disable_writes(monkeypatch)
-    today = datetime.date.today()
+    # Fixed dates: the reporting period is derived from the data, not the clock, so the
+    # test no longer needs to know what day it is.
     dates = pd.to_datetime(
         [
-            f"{today.year - 1}-{today.month:02d}-01",
-            f"{today.year - 1}-{today.month:02d}-03",
-            f"{today.year}-{today.month:02d}-01",
-            f"{today.year}-{today.month:02d}-03",
+            "2024-07-31",  # baseline for August 2024
+            "2024-08-01",
+            "2024-08-03",
+            "2025-07-31",  # baseline for August 2025
+            "2025-08-01",
+            "2025-08-03",
         ]
     )
-    data = pd.DataFrame({"price_close": [100, 120, 200, 260]}, index=dates)
+    data = pd.DataFrame(
+        {"price_close": [100, 110, 130, 200, 220, 260]}, index=dates
+    )
 
     figure = charts.create_monthly_returns(data)
-    current_trace = _trace(figure, today.year)
+    current_trace = _trace(figure, 2025)
 
     assert np.isnan(current_trace.y[1])
     assert pd.Timestamp(current_trace.x[2]).day == 3
+    # Measured from the 2025-07-31 close of 200, not August's own first observation.
     assert current_trace.y[2] == pytest.approx(30.0)
+
+
+def test_monthly_returns_measure_from_the_close_before_the_month(monkeypatch):
+    """C1 — the first day's move must survive; indexing off Aug 1 would erase it."""
+    _disable_writes(monkeypatch)
+    dates = pd.to_datetime(["2025-07-31", "2025-08-01", "2025-08-02"])
+    data = pd.DataFrame({"price_close": [100.0, 110.0, 121.0]}, index=dates)
+
+    figure = charts.create_monthly_returns(data)
+    trace = _trace(figure, 2025)
+
+    assert trace.y[0] == pytest.approx(10.0)
+    assert trace.y[1] == pytest.approx(21.0)
 
 
 def test_indexed_monthly_returns_reject_missing_current_month(monkeypatch):
     _disable_writes(monkeypatch)
-    today = datetime.date.today()
     data = pd.DataFrame(
         {"price_close": [100, 110]},
-        index=pd.to_datetime(
-            [f"{today.year - 1}-{today.month:02d}-01", f"{today.year - 1}-{today.month:02d}-02"]
-        ),
+        index=pd.to_datetime(["2025-08-01", "2025-08-02"]),
     )
 
     with pytest.raises(ValueError, match="refusing to leave an older indexed MTD chart"):
@@ -76,53 +81,68 @@ def test_indexed_monthly_returns_reject_missing_current_month(monkeypatch):
 
 def test_yearly_returns_preserve_missing_calendar_days(monkeypatch):
     _disable_writes(monkeypatch)
-    today = datetime.date.today()
     data = pd.DataFrame(
-        {"price_close": [100, 130]},
-        index=pd.to_datetime([f"{today.year}-01-01", f"{today.year}-01-03"]),
+        {"price_close": [100, 100, 130]},
+        index=pd.to_datetime(["2024-12-31", "2025-01-01", "2025-01-03"]),
     )
 
     figure = charts.create_yearly_returns(data)
-    current_trace = _trace(figure, today.year)
+    current_trace = _trace(figure, 2025)
 
     assert np.isnan(current_trace.y[1])
     third_date = pd.Timestamp(current_trace.x[2])
     assert third_date.month == 1 and third_date.day == 3
+    # Measured from the 2024-12-31 close of 100.
     assert current_trace.y[2] == pytest.approx(30.0)
 
 
-def test_indexed_yearly_returns_reject_missing_current_year(monkeypatch):
+def test_yearly_returns_measure_from_the_prior_year_close(monkeypatch):
+    """C1 — January 1's own move is part of YTD, so the baseline is December 31."""
     _disable_writes(monkeypatch)
-    today = datetime.date.today()
     data = pd.DataFrame(
-        {"price_close": [100, 110]},
-        index=pd.to_datetime([f"{today.year - 1}-01-01", f"{today.year - 1}-12-31"]),
+        {"price_close": [100.0, 120.0]},
+        index=pd.to_datetime(["2024-12-31", "2025-01-01"]),
     )
 
-    with pytest.raises(ValueError, match=f"No price data is available for {today.year}"):
+    figure = charts.create_yearly_returns(data)
+    trace = _trace(figure, 2025)
+
+    assert trace.y[0] == pytest.approx(20.0)
+
+
+def test_indexed_yearly_returns_reject_missing_baseline(monkeypatch):
+    """The reporting year now comes from the data, so the reachable failure is a
+    missing baseline: nothing to index the year against."""
+    _disable_writes(monkeypatch)
+    data = pd.DataFrame(
+        {"price_close": [100, 110]},
+        index=pd.to_datetime(["2025-01-01", "2025-01-02"]),
+    )
+
+    with pytest.raises(
+        ValueError, match="refusing to leave an older indexed YTD chart in place"
+    ):
         charts.create_indexed_yearly_returns(data)
 
 
 def test_indexed_yearly_returns_skip_partial_historical_year(monkeypatch):
     _disable_writes(monkeypatch)
-    today = datetime.date.today()
-    prior_dates = pd.date_range(f"{today.year - 1}-01-01", f"{today.year - 1}-01-31")
-    current_dates = pd.to_datetime([f"{today.year}-01-01", f"{today.year}-01-02"])
+    prior_dates = pd.date_range("2024-01-01", "2024-01-31")
+    current_dates = pd.to_datetime(["2025-01-01", "2025-01-02"])
     dates = prior_dates.append(current_dates)
     data = pd.DataFrame({"price_close": np.arange(1, len(dates) + 1)}, index=dates)
 
     figure = charts.create_indexed_yearly_returns(data)
 
-    assert str(today.year - 1) not in {trace.name for trace in figure.data}
-    assert str(today.year) in {trace.name for trace in figure.data}
+    assert "2024" not in {trace.name for trace in figure.data}
+    assert "2025" in {trace.name for trace in figure.data}
 
 
 def test_indexed_yearly_reference_dates_exclude_leap_day(monkeypatch):
     _disable_writes(monkeypatch)
-    _set_today(monkeypatch, 2024, 3, 1)
     data = pd.DataFrame(
-        {"price_close": [100, 120]},
-        index=pd.to_datetime(["2024-01-01", "2024-03-01"]),
+        {"price_close": [90, 100, 120]},
+        index=pd.to_datetime(["2023-12-31", "2024-01-01", "2024-03-01"]),
     )
 
     figure = charts.create_indexed_yearly_returns(data)
@@ -272,3 +292,67 @@ def test_selected_recent_bitcoin_industry_events_are_annotated():
     assert "Bitcoin ETF Options" not in events_by_name
     assert "SAB 121 Rescinded" not in events_by_name
     assert "In-Kind ETF Approval" not in events_by_name
+
+
+def test_report_period_comes_from_the_data_not_the_clock():
+    """M4 — a run near a period boundary must describe the data it was given."""
+    prices = charts._positive_price_series(
+        pd.Series(
+            [100.0, 110.0],
+            index=pd.to_datetime(["2019-03-30", "2019-03-31"]),
+        )
+    )
+    assert charts._report_period(prices) == (2019, 3)
+
+
+@pytest.mark.parametrize(
+    ("token", "expected"),
+    [
+        ("report_month_start", pd.Timestamp("2019-03-01")),
+        ("report_year_start", pd.Timestamp("2019-01-01")),
+    ],
+)
+def test_relative_filter_dates_come_from_the_dataset(token, expected):
+    dates = pd.to_datetime(["2019-03-30", "2019-03-31"])
+    assert charts._resolve_filter_start_date(token, dates) == expected
+
+
+def test_return_comparison_templates_use_report_period_filters():
+    assert charts.mtd_return["filter_start_date"] == "report_month_start"
+    assert charts.ytd_return["filter_start_date"] == "report_year_start"
+    assert charts.ytd_return_full["filter_start_date"] == "report_year_start"
+
+
+def test_earliest_plotted_year_can_still_reach_its_baseline(monkeypatch):
+    """The min-year filter restricts what is plotted, not what baselines are visible.
+
+    2014 is the first plotted year, so its baseline necessarily comes from 2013 — below
+    the cutoff. Filtering the price series before the lookup would silently drop it.
+    """
+    _disable_writes(monkeypatch)
+    dates = pd.to_datetime(
+        ["2013-07-31", "2014-08-01", "2014-08-02", "2015-07-31", "2015-08-01"]
+    )
+    data = pd.DataFrame(
+        {"price_close": [100.0, 150.0, 160.0, 200.0, 220.0]}, index=dates
+    )
+
+    figure = charts.create_monthly_returns(data)
+    names = {trace.name for trace in figure.data}
+
+    # 2014 is plotted, measured from the 2013-07-31 close of 100 — a 50% day one.
+    assert "2014" in names
+    assert _trace(figure, 2014).y[0] == pytest.approx(50.0)
+    # And the current period still measures from its own prior close of 200.
+    assert _trace(figure, 2015).y[0] == pytest.approx(10.0)
+
+
+def test_period_baseline_rejects_nonpositive_and_missing_closes():
+    prices = charts._positive_price_series(
+        pd.Series(
+            [100.0, 120.0], index=pd.to_datetime(["2025-08-01", "2025-08-02"])
+        )
+    )
+    # Nothing exists before August 2025, so there is no baseline to index against.
+    assert charts._period_baseline(prices, 2025, 8) is None
+    assert charts._period_baseline(prices, 2025) is None

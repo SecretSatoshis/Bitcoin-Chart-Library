@@ -2,7 +2,7 @@
   "title": "Bitcoin Chart Library",
   "latest_data_date": "2026-08-28",
   "chart_count": 59,
-  "generated_at": "2026-08-29T08:03:02+00:00",
+  "generated_at": "2026-08-29T12:46:55+00:00",
   "categories": [
     "Price Models",
     "On-chain Valuation",
@@ -17,11 +17,11 @@
   ],
   "charts": [
     {
-      "title": "Bitcoin 101",
+      "title": "Bitcoin Market Overview",
       "filename": "Bitcoin_Promo",
       "url": "Bitcoin_Promo.html",
       "category": "Price Models",
-      "description": "Compares Bitcoin Price with 5 related series over time.",
+      "description": "An orientation chart pairing Bitcoin's price with realized price, the 200-week moving average, hashrate and the 32x thermocap band.",
       "tags": [
         "price",
         "hashrate",
@@ -32,27 +32,27 @@
       "height": 700
     },
     {
-      "title": "Bitcoin Electricity Cost by Power Tariff",
-      "filename": "Bitcoin_Electricity_Cost",
-      "url": "Bitcoin_Electricity_Cost.html",
+      "title": "Bitcoin Metcalfe Model",
+      "filename": "Bitcoin_Metcalfe_Model",
+      "url": "Bitcoin_Metcalfe_Model.html",
       "category": "Price Models",
-      "description": "Compares Bitcoin Price with 5 related series over time.",
+      "description": "The Metcalfe model values a network in proportion to the square of its users, estimated here from address counts above four balance thresholds.",
       "tags": [
         "price",
-        "energy"
+        "Metcalfe"
       ],
       "featured": false,
       "height": 700
     },
     {
-      "title": "Bitcoin Metcalfe Model",
-      "filename": "Bitcoin_Metcalfe_Model",
-      "url": "Bitcoin_Metcalfe_Model.html",
+      "title": "Bitcoin Mining Electricity Cost",
+      "filename": "Bitcoin_Electricity_Cost",
+      "url": "Bitcoin_Electricity_Cost.html",
       "category": "Price Models",
-      "description": "Compares Bitcoin Price with 5 related series over time.",
+      "description": "Bitcoin's electricity cost of production, the power expense of mining one coin, modelled across tariffs from $0.03 to $0.07 per kWh.",
       "tags": [
         "price",
-        "Metcalfe"
+        "energy"
       ],
       "featured": false,
       "height": 700
@@ -62,7 +62,7 @@
       "filename": "Bitcoin_Power_Law_Model",
       "url": "Bitcoin_Power_Law_Model.html",
       "category": "Price Models",
-      "description": "Tracks Bitcoin Price, Power Law Price, and BTC Price / Power Law Price over time.",
+      "description": "The power law model fits Bitcoin's price to a straight line on a log-log scale against time, treating growth as a function of network age.",
       "tags": [
         "price",
         "power law"
@@ -75,7 +75,7 @@
       "filename": "Bitcoin_Price",
       "url": "Bitcoin_Price.html",
       "category": "Price Models",
-      "description": "Tracks Bitcoin Price USD and Bitcoin Marketcap USD over time.",
+      "description": "Bitcoin's price and market capitalisation in US dollars, from the earliest exchange data through the most recent daily close.",
       "tags": [
         "market cap",
         "price"
@@ -88,7 +88,7 @@
       "filename": "Bitcoin_Price_Chart_MA",
       "url": "Bitcoin_Price_Chart_MA.html",
       "category": "Price Models",
-      "description": "Compares Bitcoin Price with 5 related series over time.",
+      "description": "Bitcoin's price against its 7, 50 and 200-day and 200-week moving averages, with the multiple of price to the 200-day average.",
       "tags": [
         "price",
         "moving averages"
@@ -101,9 +101,22 @@
       "filename": "Bitcoin_Production_Price",
       "url": "Bitcoin_Production_Price.html",
       "category": "Price Models",
-      "description": "Compares Bitcoin Price with 3 related series over time.",
+      "description": "Bitcoin's cost of production, combining the power expense of mining a coin with the Hayes cost-of-production network price.",
       "tags": [
         "price"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Satoshis Per Dollar",
+      "filename": "Bitcoin_Sats_Per_Dollar",
+      "url": "Bitcoin_Sats_Per_Dollar.html",
+      "category": "Price Models",
+      "description": "Satoshis per dollar expresses Bitcoin's price inverted: how many of the smallest units, one hundred-millionth of a coin, one dollar buys.",
+      "tags": [
+        "price",
+        "satoshis"
       ],
       "featured": false,
       "height": 700
@@ -113,7 +126,7 @@
       "filename": "Bitcoin_S2F_Price",
       "url": "Bitcoin_S2F_Price.html",
       "category": "Price Models",
-      "description": "Tracks Bitcoin Price, Stock-To-Flow Price, and Stock-To-Flow Multiple over time.",
+      "description": "Stock-to-flow values Bitcoin by the ratio of existing supply to annual new issuance, a scarcity measure that steps up at each halving.",
       "tags": [
         "price",
         "stock-to-flow"
@@ -126,23 +139,10 @@
       "filename": "Bitcoin_Volatility",
       "url": "Bitcoin_Volatility.html",
       "category": "Price Models",
-      "description": "Tracks Bitcoin Price, 30-Day Volatility, and 180-Day Volatility over time.",
+      "description": "Bitcoin's realised volatility, the annualised standard deviation of daily returns, measured over rolling 30-day and 180-day windows.",
       "tags": [
         "price",
         "volatility"
-      ],
-      "featured": false,
-      "height": 700
-    },
-    {
-      "title": "Satoshis Per Dollar",
-      "filename": "Bitcoin_Sats_Per_Dollar",
-      "url": "Bitcoin_Sats_Per_Dollar.html",
-      "category": "Price Models",
-      "description": "Tracks Satoshis Per Dollar and Bitcoin Price over time.",
-      "tags": [
-        "price",
-        "satoshis"
       ],
       "featured": false,
       "height": 700
@@ -152,10 +152,25 @@
       "filename": "Bitcoin_Delta_Cap",
       "url": "Bitcoin_Delta_Cap.html",
       "category": "On-chain Valuation",
-      "description": "Compares Bitcoin Price with 3 related series over time.",
+      "description": "Delta cap is realized cap minus average cap, a long-term valuation floor derived from the difference between on-chain and lifetime average pricing.",
       "tags": [
         "price",
         "realized price"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin NUPL (Net Unrealized Profit/Loss)",
+      "filename": "Bitcoin_NUPL",
+      "url": "Bitcoin_NUPL.html",
+      "category": "On-chain Valuation",
+      "description": "Net Unrealized Profit/Loss is the total paper gain or loss held across all circulating supply, expressed as a share of market capitalisation.",
+      "tags": [
+        "price",
+        "realized price",
+        "NUPL",
+        "profit and loss"
       ],
       "featured": false,
       "height": 700
@@ -165,24 +180,10 @@
       "filename": "Bitcoin_NVT_Price",
       "url": "Bitcoin_NVT_Price.html",
       "category": "On-chain Valuation",
-      "description": "Tracks Bitcoin Price, NVT Price 30 Day MA, and NVT Price 365 Day MA over time.",
+      "description": "NVT price values Bitcoin from the value settled on-chain, applying the network-value-to-transactions ratio in reverse to imply a fair price.",
       "tags": [
         "price",
         "NVT"
-      ],
-      "featured": false,
-      "height": 700
-    },
-    {
-      "title": "Bitcoin Net Unrealized Profit Loss Ratio",
-      "filename": "Bitcoin_NUPL",
-      "url": "Bitcoin_NUPL.html",
-      "category": "On-chain Valuation",
-      "description": "Tracks Bitcoin Price and Net Unrealized Profit Loss over time.",
-      "tags": [
-        "price",
-        "realized price",
-        "profit and loss"
       ],
       "featured": false,
       "height": 700
@@ -192,7 +193,7 @@
       "filename": "Bitcoin_On_Chain",
       "url": "Bitcoin_On_Chain.html",
       "category": "On-chain Valuation",
-      "description": "Compares Bitcoin Price with 6 related series over time.",
+      "description": "A composite of Bitcoin's on-chain valuation models: realized price and its cohorts, the Hayes network price, and the 200-week moving average.",
       "tags": [
         "price",
         "realized price"
@@ -205,7 +206,7 @@
       "filename": "Bitcoin_Realized_Price",
       "url": "Bitcoin_Realized_Price.html",
       "category": "On-chain Valuation",
-      "description": "Compares Bitcoin Price with 7 related series over time.",
+      "description": "Realized price is the average on-chain acquisition cost of all circulating coins, valuing each at the price it last moved rather than today's.",
       "tags": [
         "price",
         "realized price"
@@ -218,7 +219,7 @@
       "filename": "Bitcoin_Thermocap_Multiples",
       "url": "Bitcoin_Thermocap_Multiples.html",
       "category": "On-chain Valuation",
-      "description": "Compares Bitcoin Price with 5 related series over time.",
+      "description": "Thermocap is the cumulative value paid to miners since genesis; thermocap price divides it by supply to give a security-spend valuation floor.",
       "tags": [
         "price",
         "thermocap"
@@ -227,11 +228,11 @@
       "height": 700
     },
     {
-      "title": "Bitcoin Price VS Gold Market Cap",
+      "title": "Bitcoin vs Gold Market Cap",
       "filename": "Bitcoin_Gold",
       "url": "Bitcoin_Gold.html",
       "category": "Asset Comparisons",
-      "description": "Compares Bitcoin Price with 6 related series over time.",
+      "description": "Bitcoin's market capitalisation set against gold and silver, with gold broken into jewellery, private investment, official holdings and industrial use.",
       "tags": [
         "market cap",
         "price",
@@ -241,11 +242,11 @@
       "height": 700
     },
     {
-      "title": "Bitcoin Price VS M0 Money Supply",
+      "title": "Bitcoin vs M0 Money Supply",
       "filename": "Bitcoin_M0",
       "url": "Bitcoin_M0.html",
       "category": "Asset Comparisons",
-      "description": "Compares Bitcoin Price with 9 related series over time.",
+      "description": "Bitcoin's market capitalisation set against the M0 base money supply of nine major economies, from the United States and China to Australia.",
       "tags": [
         "price",
         "supply",
@@ -255,27 +256,25 @@
       "height": 700
     },
     {
-      "title": "Bitcoin Price vs Mega Equity Market Caps",
+      "title": "Bitcoin vs Mega-Cap Equities",
       "filename": "Bitcoin_Equities",
       "url": "Bitcoin_Equities.html",
       "category": "Asset Comparisons",
-      "description": "Compares Bitcoin Price with 25 related series over time.",
+      "description": "Bitcoin's market capitalisation set against the world's largest listed companies, spanning technology, energy, finance and Bitcoin-linked equities.",
       "tags": [
         "price",
-        "gold",
-        "equities"
+        "gold"
       ],
       "featured": false,
       "height": 900
     },
     {
-      "title": "Bitcoin Price Relative Valuation",
+      "title": "Bitcoin Relative Valuation",
       "filename": "Bitcoin_RV",
       "url": "Bitcoin_RV.html",
       "category": "Relative Valuation",
-      "description": "Compares Bitcoin with 10 related series over time.",
+      "description": "Bitcoin's price if its market capitalisation matched each of ten reference assets, from silver and gold to Apple, NVIDIA and US base money.",
       "tags": [
-        "price",
         "gold",
         "money supply"
       ],
@@ -283,11 +282,11 @@
       "height": 700
     },
     {
-      "title": "Bitcoin Price Relative Valuation - Cross-Sector Leaders",
-      "filename": "Bitcoin_RV_Sector_Leaders",
-      "url": "Bitcoin_RV_Sector_Leaders.html",
+      "title": "Bitcoin Relative Valuation: Big Tech",
+      "filename": "Bitcoin_RV_stocks",
+      "url": "Bitcoin_RV_stocks.html",
       "category": "Relative Valuation",
-      "description": "Compares Bitcoin Price with 4 related series over time.",
+      "description": "Bitcoin's price if its market capitalisation matched a mega-cap technology company: Meta, Amazon, Alphabet, Microsoft or Apple.",
       "tags": [
         "price"
       ],
@@ -295,11 +294,11 @@
       "height": 700
     },
     {
-      "title": "Bitcoin Price Relative Valuation - Financials and Payments",
+      "title": "Bitcoin Relative Valuation: Financials",
       "filename": "Bitcoin_RV_Financials",
       "url": "Bitcoin_RV_Financials.html",
       "category": "Relative Valuation",
-      "description": "Compares Bitcoin Price with 6 related series over time.",
+      "description": "Bitcoin's price if its market capitalisation matched a major financial or payments firm: Berkshire Hathaway, JPMorgan, Visa, PayPal or Block.",
       "tags": [
         "price",
         "gold"
@@ -308,37 +307,50 @@
       "height": 700
     },
     {
-      "title": "Bitcoin Price Relative Valuation - M0",
+      "title": "Bitcoin Relative Valuation: Gold and Silver",
+      "filename": "Bitcoin_RV_metals",
+      "url": "Bitcoin_RV_metals.html",
+      "category": "Relative Valuation",
+      "description": "Bitcoin's price if its market capitalisation matched silver or gold, with gold split into private investment, official holdings and the total market.",
+      "tags": [
+        "price",
+        "gold"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Relative Valuation: M0 Money Supply",
       "filename": "Bitcoin_RV_M0",
       "url": "Bitcoin_RV_M0.html",
       "category": "Relative Valuation",
-      "description": "Compares Bitcoin Price with 5 related series over time.",
+      "description": "Bitcoin's price if its market capitalisation matched the M0 base money supply of the United Kingdom, Japan, China, the United States or the EU.",
       "tags": [
         "price",
+        "supply",
         "money supply"
       ],
       "featured": false,
       "height": 700
     },
     {
-      "title": "Bitcoin Price Relative Valuation - Metals",
-      "filename": "Bitcoin_RV_metals",
-      "url": "Bitcoin_RV_metals.html",
+      "title": "Bitcoin Relative Valuation: Sector Leaders",
+      "filename": "Bitcoin_RV_Sector_Leaders",
+      "url": "Bitcoin_RV_Sector_Leaders.html",
       "category": "Relative Valuation",
-      "description": "Compares Bitcoin Price with 4 related series over time.",
+      "description": "Bitcoin's price if its market capitalisation matched a cross-sector leader: Tesla, Eli Lilly, Saudi Aramco or SpaceX.",
       "tags": [
-        "price",
-        "gold"
+        "price"
       ],
       "featured": false,
       "height": 700
     },
     {
-      "title": "Bitcoin Price Relative Valuation - Semiconductors",
+      "title": "Bitcoin Relative Valuation: Semiconductors",
       "filename": "Bitcoin_RV_Semiconductors",
       "url": "Bitcoin_RV_Semiconductors.html",
       "category": "Relative Valuation",
-      "description": "Compares Bitcoin Price with 5 related series over time.",
+      "description": "Bitcoin's price if its market capitalisation matched a leading semiconductor firm: NVIDIA, Broadcom, TSMC, Samsung Electronics or Micron.",
       "tags": [
         "price"
       ],
@@ -346,23 +358,11 @@
       "height": 700
     },
     {
-      "title": "Bitcoin Price Relative Valuation - Stocks",
-      "filename": "Bitcoin_RV_stocks",
-      "url": "Bitcoin_RV_stocks.html",
-      "category": "Relative Valuation",
-      "description": "Compares Bitcoin Price with 5 related series over time.",
-      "tags": [
-        "price"
-      ],
-      "featured": false,
-      "height": 700
-    },
-    {
-      "title": "Bitcoin Drawdowns From ATH",
+      "title": "Bitcoin Drawdowns From All-Time High",
       "filename": "Bitcoin_ATH_Drawdown",
       "url": "Bitcoin_ATH_Drawdown.html",
       "category": "Cycle Analysis",
-      "description": "Compares the depth and duration of Bitcoin drawdowns from successive all-time highs.",
+      "description": "Bitcoin's drawdowns from each all-time high, aligned at the peak so the depth and duration of all five cycles can be compared directly.",
       "tags": [
         "drawdowns",
         "cycles"
@@ -375,7 +375,7 @@
       "filename": "Bitcoin_Halving_Cycle",
       "url": "Bitcoin_Halving_Cycle.html",
       "category": "Cycle Analysis",
-      "description": "Compares Bitcoin performance indexed from each halving across completed and current eras.",
+      "description": "Bitcoin's price performance indexed from each halving, aligning the 2012, 2016, 2020 and 2024 eras from the day issuance last halved.",
       "tags": [
         "halving",
         "cycles"
@@ -388,7 +388,7 @@
       "filename": "Bitcoin_Cycle_Low",
       "url": "Bitcoin_Cycle_Low.html",
       "category": "Cycle Analysis",
-      "description": "Compares Bitcoin performance indexed from the low of each configured market cycle.",
+      "description": "Bitcoin's price performance indexed from each cycle low, aligning six market cycles from the day the bear market bottomed.",
       "tags": [
         "price",
         "cycles"
@@ -397,11 +397,11 @@
       "height": 700
     },
     {
-      "title": "4 Year Compound Annual Growth Rate",
+      "title": "Bitcoin 4-Year CAGR",
       "filename": "Bitcoin_CAGR",
       "url": "Bitcoin_CAGR.html",
       "category": "Returns and Performance",
-      "description": "Tracks Bitcoin Price and Bitcoin 4 Year CAGR over time.",
+      "description": "Bitcoin's four-year compound annual growth rate, the annualised return an investor would have earned over any rolling four-year holding period.",
       "tags": [
         "price",
         "returns",
@@ -411,27 +411,29 @@
       "height": 700
     },
     {
-      "title": "4 Year Compound Annual Growth Rate Comparison",
+      "title": "Bitcoin 4-Year CAGR vs Other Assets",
       "filename": "Bitcoin_CAGR_Comparison",
       "url": "Bitcoin_CAGR_Comparison.html",
       "category": "Returns and Performance",
-      "description": "Compares Bitcoin with 8 related series over time.",
+      "description": "Four-year compound annual growth rates for Bitcoin and eight benchmarks, covering equities, technology, financials, gold, bonds, the dollar and miners.",
       "tags": [
         "miners",
         "gold",
-        "returns"
+        "returns",
+        "CAGR"
       ],
       "featured": false,
       "height": 700
     },
     {
-      "title": "Bitcoin MTD Returns Indexed to Current Month",
-      "filename": "Bitcoin_MTD_Return_By_Month_Indexed",
-      "url": "Bitcoin_MTD_Return_By_Month_Indexed.html",
+      "title": "Bitcoin MTD Return vs Other Assets",
+      "filename": "Bitcoin_MTD_Return_Comparison",
+      "url": "Bitcoin_MTD_Return_Comparison.html",
       "category": "Returns and Performance",
-      "description": "Compares historical month-to-date Bitcoin paths indexed to the current month.",
+      "description": "Month-to-date returns for Bitcoin and eight benchmarks, covering equities, technology, financials, gold, bonds, the dollar and Bitcoin miners.",
       "tags": [
-        "price",
+        "miners",
+        "gold",
         "returns"
       ],
       "featured": false,
@@ -442,7 +444,7 @@
       "filename": "MTD_Return_By_Year_Percentage",
       "url": "MTD_Return_By_Year_Percentage.html",
       "category": "Returns and Performance",
-      "description": "Compares daily month-to-date Bitcoin returns across calendar years.",
+      "description": "Bitcoin's month-to-date return for every calendar year since 2014, shown as a daily percentage alongside the median and average across years.",
       "tags": [
         "returns"
       ],
@@ -450,13 +452,39 @@
       "height": 700
     },
     {
-      "title": "Bitcoin YTD Returns Indexed to Current Year",
-      "filename": "Bitcoin_YTD_Return_By_Year_Indexed",
-      "url": "Bitcoin_YTD_Return_By_Year_Indexed.html",
+      "title": "Bitcoin MTD Returns, Indexed",
+      "filename": "Bitcoin_MTD_Return_By_Month_Indexed",
+      "url": "Bitcoin_MTD_Return_By_Month_Indexed.html",
       "category": "Returns and Performance",
-      "description": "Compares historical year-to-date Bitcoin paths indexed to the current year.",
+      "description": "Bitcoin's month-to-date return path for every year since 2014, indexed to the current month so each year's shape can be compared day by day.",
       "tags": [
         "price",
+        "returns"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin YTD Return vs 16 Benchmarks",
+      "filename": "Bitcoin_YTD_Return_Comparison_full",
+      "url": "Bitcoin_YTD_Return_Comparison_full.html",
+      "category": "Returns and Performance",
+      "description": "Year-to-date returns for Bitcoin and sixteen benchmarks: US and international equities, sector funds, commodities, bonds and Bitcoin-linked stocks.",
+      "tags": [
+        "returns"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin YTD Return vs Other Assets",
+      "filename": "Bitcoin_YTD_Return_Comparison",
+      "url": "Bitcoin_YTD_Return_Comparison.html",
+      "category": "Returns and Performance",
+      "description": "Year-to-date returns for Bitcoin and eight benchmarks, covering equities, technology, financials, gold, bonds, the dollar and Bitcoin miners.",
+      "tags": [
+        "miners",
+        "gold",
         "returns"
       ],
       "featured": false,
@@ -467,7 +495,7 @@
       "filename": "Bitcoin_YTD_Return_By_Year_Percentage",
       "url": "Bitcoin_YTD_Return_By_Year_Percentage.html",
       "category": "Returns and Performance",
-      "description": "Compares daily year-to-date Bitcoin returns across calendar years.",
+      "description": "Bitcoin's year-to-date return for every calendar year since 2014, shown as a daily percentage alongside the median and average across years.",
       "tags": [
         "returns"
       ],
@@ -475,25 +503,11 @@
       "height": 700
     },
     {
-      "title": "Month To Date Return Comparison - August 2026",
-      "filename": "Bitcoin_MTD_Return_Comparison",
-      "url": "Bitcoin_MTD_Return_Comparison.html",
+      "title": "Bitcoin YTD Returns, Indexed",
+      "filename": "Bitcoin_YTD_Return_By_Year_Indexed",
+      "url": "Bitcoin_YTD_Return_By_Year_Indexed.html",
       "category": "Returns and Performance",
-      "description": "Compares Bitcoin with 8 related series over time.",
-      "tags": [
-        "miners",
-        "gold",
-        "returns"
-      ],
-      "featured": false,
-      "height": 700
-    },
-    {
-      "title": "Year Over Year Return",
-      "filename": "Bitcoin_YOY_Return_Comparison",
-      "url": "Bitcoin_YOY_Return_Comparison.html",
-      "category": "Returns and Performance",
-      "description": "Tracks Bitcoin YOY Return and Bitcoin Price over time.",
+      "description": "Bitcoin's year-to-date return path for every year since 2014, indexed to the current year so each year's shape can be compared day by day.",
       "tags": [
         "price",
         "returns"
@@ -502,26 +516,13 @@
       "height": 700
     },
     {
-      "title": "Year To Date Return (2026)",
-      "filename": "Bitcoin_YTD_Return_Comparison",
-      "url": "Bitcoin_YTD_Return_Comparison.html",
+      "title": "Bitcoin Year-Over-Year Return",
+      "filename": "Bitcoin_YOY_Return_Comparison",
+      "url": "Bitcoin_YOY_Return_Comparison.html",
       "category": "Returns and Performance",
-      "description": "Compares Bitcoin with 8 related series over time.",
+      "description": "Bitcoin's year-over-year return, the percentage change in price against the same date twelve months earlier, plotted against price itself.",
       "tags": [
-        "miners",
-        "gold",
-        "returns"
-      ],
-      "featured": false,
-      "height": 700
-    },
-    {
-      "title": "Year To Date Return (2026)",
-      "filename": "Bitcoin_YTD_Return_Comparison_full",
-      "url": "Bitcoin_YTD_Return_Comparison_full.html",
-      "category": "Returns and Performance",
-      "description": "Compares BTC with 16 related series over time.",
-      "tags": [
+        "price",
         "returns"
       ],
       "featured": false,
@@ -532,7 +533,7 @@
       "filename": "Bitcoin_1_Year_Supply",
       "url": "Bitcoin_1_Year_Supply.html",
       "category": "Supply",
-      "description": "Tracks Bitcoin Price and 1+ Year Active Supply over time.",
+      "description": "One-year active supply is the share of circulating Bitcoin that has moved at least once in the past year, the mirror of long-dormant coins.",
       "tags": [
         "price",
         "supply"
@@ -545,7 +546,7 @@
       "filename": "Bitcoin_Macro_Supply",
       "url": "Bitcoin_Macro_Supply.html",
       "category": "Supply",
-      "description": "Compares Bitcoin Price with 6 related series over time.",
+      "description": "Bitcoin's supply split by liquidity and holding period, separating liquid from illiquid coins and short-term from long-term holder balances.",
       "tags": [
         "price",
         "supply"
@@ -558,7 +559,7 @@
       "filename": "Bitcoin_Supply",
       "url": "Bitcoin_Supply.html",
       "category": "Supply",
-      "description": "Tracks Bitcoin Supply, New Coins Issued 30 Day MA, and New Coins Issued 365 Day MA over time.",
+      "description": "Bitcoin's circulating supply against daily new issuance, the coins created by each block subsidy, smoothed over 30-day and 365-day windows.",
       "tags": [
         "supply"
       ],
@@ -566,27 +567,14 @@
       "height": 700
     },
     {
-      "title": "Supply Age Distribution",
+      "title": "Bitcoin Supply Age Distribution",
       "filename": "Bitcoin_Supply_Age",
       "url": "Bitcoin_Supply_Age.html",
       "category": "Supply",
-      "description": "Compares Bitcoin Price with 10 related series over time.",
+      "description": "Bitcoin's supply grouped by how recently each coin last moved, from under one month to over ten years, showing the distribution of holding periods.",
       "tags": [
         "price",
         "supply"
-      ],
-      "featured": false,
-      "height": 700
-    },
-    {
-      "title": "Address Counts Above BTC Balance Thresholds",
-      "filename": "Bitcoin_Address_Balance",
-      "url": "Bitcoin_Address_Balance.html",
-      "category": "Network Activity",
-      "description": "Compares Bitcoin Price with 13 related series over time.",
-      "tags": [
-        "price",
-        "addresses"
       ],
       "featured": false,
       "height": 700
@@ -596,7 +584,7 @@
       "filename": "Bitcoin_Active_Addresses",
       "url": "Bitcoin_Active_Addresses.html",
       "category": "Network Activity",
-      "description": "Compares Bitcoin Price with 3 related series over time.",
+      "description": "Active addresses count the distinct Bitcoin addresses sending or receiving in a day, a measure of network use smoothed over 30 and 365 days.",
       "tags": [
         "price",
         "addresses"
@@ -605,13 +593,27 @@
       "height": 700
     },
     {
-      "title": "Bitcoin Fees In USD",
+      "title": "Bitcoin Address Balance Distribution",
+      "filename": "Bitcoin_Address_Balance",
+      "url": "Bitcoin_Address_Balance.html",
+      "category": "Network Activity",
+      "description": "The number of Bitcoin addresses holding at least a given balance, across thirteen thresholds from a single satoshi to ten thousand coins.",
+      "tags": [
+        "price",
+        "addresses"
+      ],
+      "featured": false,
+      "height": 700
+    },
+    {
+      "title": "Bitcoin Transaction Fees",
       "filename": "Bitcoin_Transaction_Fee",
       "url": "Bitcoin_Transaction_Fee.html",
       "category": "Network Activity",
-      "description": "Tracks Bitcoin Price and Fees Paid (USD) over time.",
+      "description": "Total Bitcoin transaction fees paid to miners each day in US dollars, the portion of miner revenue that does not come from the block subsidy.",
       "tags": [
         "price",
+        "transactions",
         "fees"
       ],
       "featured": false,
@@ -622,7 +624,7 @@
       "filename": "Bitcoin_Transaction_Value",
       "url": "Bitcoin_Transaction_Value.html",
       "category": "Network Activity",
-      "description": "Compares Bitcoin Price with 3 related series over time.",
+      "description": "Bitcoin transaction volume is the total value settled on-chain each day, smoothed over 30-day and 365-day windows to show the underlying trend.",
       "tags": [
         "price",
         "transactions"
@@ -635,7 +637,7 @@
       "filename": "Bitcoin_Transactions",
       "url": "Bitcoin_Transactions.html",
       "category": "Network Activity",
-      "description": "Tracks Transaction Count, Tx Count 30 Day MA, and Tx Count 365 Day MA over time.",
+      "description": "The number of Bitcoin transactions confirmed each day, with 30-day and 365-day moving averages to separate short-term noise from the trend.",
       "tags": [
         "transactions"
       ],
@@ -647,7 +649,7 @@
       "filename": "Bitcoin_Hash_Price",
       "url": "Bitcoin_Hash_Price.html",
       "category": "Mining and Security",
-      "description": "Tracks Bitcoin Price and Hash Price ($/TH/s) over time.",
+      "description": "Hash price is miner revenue per terahash per second per day, the dollar income a unit of mining hardware earns and the core measure of mining economics.",
       "tags": [
         "price"
       ],
@@ -659,7 +661,7 @@
       "filename": "Bitcoin_Hash_Ribbons",
       "url": "Bitcoin_Hash_Ribbons.html",
       "category": "Mining and Security",
-      "description": "Tracks Bitcoin Price, Hash Rate 30-Day MA, and Hash Rate 60-Day MA over time.",
+      "description": "Hash ribbons compare Bitcoin's 30-day and 60-day hashrate averages; their crossover marks miner capitulation and the recovery that follows.",
       "tags": [
         "price",
         "hash ribbons",
@@ -673,7 +675,7 @@
       "filename": "Bitcoin_Hashrate",
       "url": "Bitcoin_Hashrate.html",
       "category": "Mining and Security",
-      "description": "Tracks Hash Rate, Hash Rate 30 Day MA, and Hash Rate 365 Day MA over time.",
+      "description": "Hashrate is the total computing power securing the Bitcoin network, smoothed over 30-day and 365-day windows to see through short-term variance.",
       "tags": [
         "hashrate"
       ],
@@ -685,7 +687,7 @@
       "filename": "Bitcoin_Miner_Revenue",
       "url": "Bitcoin_Miner_Revenue.html",
       "category": "Mining and Security",
-      "description": "Compares Bitcoin Price with 3 related series over time.",
+      "description": "Total daily miner revenue in US dollars, the block subsidy plus transaction fees, smoothed over 30-day and 365-day windows.",
       "tags": [
         "price",
         "miners"
@@ -698,7 +700,7 @@
       "filename": "Bitcoin_Difficulty",
       "url": "Bitcoin_Difficulty.html",
       "category": "Mining and Security",
-      "description": "Tracks Bitcoin Price and Difficulty over time.",
+      "description": "Mining difficulty is the target the network adjusts roughly every two weeks to hold block times near ten minutes as hashrate changes.",
       "tags": [
         "price",
         "difficulty"
@@ -711,7 +713,7 @@
       "filename": "Bitcoin_Hashrate_Price",
       "url": "Bitcoin_Hashrate_Price.html",
       "category": "Mining and Security",
-      "description": "Compares Bitcoin Price with 3 related series over time.",
+      "description": "Bitcoin's price against the total hashrate securing the network, with 30-day and 365-day averages of the computing power committed to mining.",
       "tags": [
         "price",
         "hashrate"
@@ -724,7 +726,7 @@
       "filename": "Bitcoin_Puell_Multiple",
       "url": "Bitcoin_Puell_Multiple.html",
       "category": "Mining and Security",
-      "description": "Tracks Bitcoin Price and Puell Multiple over time.",
+      "description": "The Puell Multiple divides the daily dollar value of newly issued coins by its own 365-day average, measuring miner revenue against its norm.",
       "tags": [
         "price"
       ],
@@ -732,11 +734,11 @@
       "height": 700
     },
     {
-      "title": "Adjusted Bitcoin Days Destroyed (BDD / Circulating Supply)",
+      "title": "Bitcoin Days Destroyed, Supply-Adjusted",
       "filename": "Bitcoin_Adjusted_BDD",
       "url": "Bitcoin_Adjusted_BDD.html",
       "category": "Holder Behavior",
-      "description": "Tracks Bitcoin Price, Adjusted BDD, and Adjusted BDD Mean over time.",
+      "description": "Bitcoin Days Destroyed weights each coin moved by how long it sat still; adjusting for circulating supply makes the measure comparable across eras.",
       "tags": [
         "price",
         "supply"
@@ -749,7 +751,7 @@
       "filename": "Bitcoin_HODL_Bank",
       "url": "Bitcoin_HODL_Bank.html",
       "category": "Holder Behavior",
-      "description": "Compares Bitcoin Price with 4 related series over time.",
+      "description": "HODL Bank accumulates the opportunity cost borne by long-term holders; reserve risk divides price by it to gauge conviction against price.",
       "tags": [
         "price"
       ],
@@ -761,7 +763,7 @@
       "filename": "Bitcoin_SOPR",
       "url": "Bitcoin_SOPR.html",
       "category": "Holder Behavior",
-      "description": "Tracks Bitcoin Price and SOPR over time.",
+      "description": "Spent Output Profit Ratio compares the value of coins when spent to their value when acquired, with 1.0 marking the aggregate break-even line.",
       "tags": [
         "price",
         "profit and loss"
@@ -774,7 +776,7 @@
       "filename": "Bitcoin_Supply_Profit_Loss",
       "url": "Bitcoin_Supply_Profit_Loss.html",
       "category": "Holder Behavior",
-      "description": "Tracks Bitcoin Price, Supply in Profit %, and Supply in Loss % over time.",
+      "description": "The share of circulating Bitcoin last moved below and above the current price, splitting total supply into coins held in profit and in loss.",
       "tags": [
         "price",
         "supply",
