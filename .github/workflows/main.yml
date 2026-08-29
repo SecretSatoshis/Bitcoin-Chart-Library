@@ -41,7 +41,12 @@ jobs:
 
       - name: Generate charts
         if: github.event_name != 'pull_request'
-        run: uv run --no-sync python main.py
+        run: |
+          uv run --no-sync python main.py
+          # Validate the files produced by this run. The full suite above
+          # checks the committed output, which is intentionally one release
+          # behind during a scheduled refresh.
+          uv run --no-sync pytest -q tests/test_seo_metadata.py
 
       - name: Upload generated charts
         if: github.event_name != 'pull_request'

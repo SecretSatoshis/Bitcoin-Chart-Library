@@ -20,7 +20,7 @@ Bitcoin visualization and charting platform powering the Secret Satoshis analyti
 Bitcoin-Chart-Library/
 ├── main.py              # Pipeline orchestrator (reads CSVs, generates charts)
 ├── chart_format.py      # Chart templates and rendering
-├── chart_catalog.py     # Catalog metadata, validation, and JSON generation
+├── chart_catalog.py     # Catalog, SEO metadata, sitemap, and robots generation
 ├── chart_definitions.py # Chart-specific configuration (CSV source URL/path)
 ├── dash_app.py          # Web dashboard server
 ├── Charts/              # Static catalog, standalone HTML charts, and shared assets
@@ -35,7 +35,7 @@ Bitcoin-Chart-Library/
 |--------|----------------|
 | `main.py` | Reads pre-computed CSVs from Report Library, orchestrates chart generation |
 | `chart_format.py` | Defines chart templates, renders Plotly figures, exports interactive HTML outputs |
-| `chart_catalog.py` | Categorizes all 59 outputs, validates complete coverage, and generates `catalog.json` |
+| `chart_catalog.py` | Categorizes all 59 outputs, validates complete coverage, and generates catalog, search, social, structured-data, sitemap, and robots metadata |
 | `chart_definitions.py` | Chart-specific configuration: CSV source (GitHub Pages URL or local path) |
 | `dash_app.py` | Serves the template-driven Plotly figures on one scrollable page |
 
@@ -103,7 +103,7 @@ viewer; **Open standalone** preserves direct access to each existing chart URL.
 To place the template-driven charts on one scrollable page, set `SERVE_DASH=1`:
 
 ```bash
-SERVE_DASH=1 python main.py
+SERVE_DASH=1 uv run --no-sync python main.py
 ```
 
 Then visit `http://localhost:8080` in your browser. The current dashboard contains
@@ -128,7 +128,7 @@ https://secretsatoshis.github.io/Bitcoin-Report-Library/csv/
 To use a local Report Library instead (for development), set the `REPORT_CSV_DIR` environment variable:
 
 ```bash
-REPORT_CSV_DIR=../Bitcoin-Report-Library/csv python main.py
+REPORT_CSV_DIR=../Bitcoin-Report-Library/csv uv run --no-sync python main.py
 ```
 
 This is configured in `chart_definitions.py`.
@@ -204,8 +204,8 @@ Pinned canonically in `pyproject.toml` and `uv.lock` (and mirrored in
 ```
 pandas==3.0.5
 numpy==2.5.2
-plotly==6.6.0
-dash==4.0.0
+plotly==6.9.0
+dash==4.4.1
 ```
 
 **Note:** This project does not depend directly on `requests` or `yfinance`. Pandas
@@ -222,7 +222,9 @@ uv run --no-sync pytest -q
 ```
 
 The suite verifies that all 59 generated charts are cataloged, every catalog URL exists,
-no legacy output remains listed, and each standalone document has a meaningful title.
+no legacy output remains listed, and each standalone document has unique search and
+social metadata, accurate structured data, visible explanatory copy, and a canonical URL.
+It also validates the generated catalog, sitemap, and robots file.
 
 ## License
 
