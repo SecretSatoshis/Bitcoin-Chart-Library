@@ -365,9 +365,9 @@ DESCRIPTION_OVERRIDES = {
 
     # --- Supply ---
     "Bitcoin_1_Year_Supply": (
-        "One-year active supply is the share of circulating Bitcoin that "
-        "has moved at least once in the past year, the mirror of "
-        "long-dormant coins."
+        "The share of circulating Bitcoin last moved more than one year "
+        "ago, measuring dormant supply rather than coins active during "
+        "the past year."
     ),
     "Bitcoin_Macro_Supply": (
         "Bitcoin's supply split by liquidity and holding period, separating "

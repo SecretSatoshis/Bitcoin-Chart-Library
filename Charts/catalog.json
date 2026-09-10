@@ -1,8 +1,8 @@
 {
   "title": "Bitcoin Chart Library",
-  "latest_data_date": "2026-09-09",
+  "latest_data_date": "2026-09-08",
   "chart_count": 59,
-  "generated_at": "2026-09-10T06:17:37+00:00",
+  "generated_at": "2026-09-09T23:39:27+00:00",
   "categories": [
     "Price Models",
     "On-chain Valuation",
@@ -533,7 +533,7 @@
       "filename": "Bitcoin_1_Year_Supply",
       "url": "Bitcoin_1_Year_Supply.html",
       "category": "Supply",
-      "description": "One-year active supply is the share of circulating Bitcoin that has moved at least once in the past year, the mirror of long-dormant coins.",
+      "description": "The share of circulating Bitcoin last moved more than one year ago, measuring dormant supply rather than coins active during the past year.",
       "tags": [
         "price",
         "supply"
