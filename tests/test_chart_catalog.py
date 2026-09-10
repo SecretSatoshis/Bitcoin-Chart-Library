@@ -1,4 +1,5 @@
 import html
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -53,6 +54,7 @@ def test_every_catalog_entry_has_valid_metadata_and_standalone_output():
     assert list(CATEGORY_FILES) == catalog["categories"]
     assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", catalog["latest_data_date"])
 
+    runtime_digest = hashlib.sha256((CHARTS_DIR / "plotly.min.js").read_bytes()).hexdigest()[:16]
     for entry in catalog["charts"]:
         expected_url = f'{entry["filename"]}.html'
         chart_path = CHARTS_DIR / expected_url
@@ -71,7 +73,7 @@ def test_every_catalog_entry_has_valid_metadata_and_standalone_output():
             f'<title>{html.escape(entry["title"])} | Secret Satoshis</title>'
         )
         assert expected_title in chart_document
-        assert 'src="plotly.min.js"' in chart_document
+        assert f'src="plotly.min.js?v={runtime_digest}"' in chart_document
 
 
 def test_source_metadata_covers_every_registered_chart():
@@ -115,14 +117,14 @@ def test_vercel_config_serves_the_static_directory_with_safe_cache_boundaries():
     assert "/plotly.min.js" in headers
     assert "/catalog.json" in headers
     assert "/:chart.html" in headers
-    assert "max-age=604800" in headers["/plotly.min.js"][0]["value"]
+    assert "max-age=0" in headers["/plotly.min.js"][0]["value"]
     assert "max-age=0" in headers["/catalog.json"][0]["value"]
     assert "max-age=0" in headers["/:chart.html"][0]["value"]
 
 
 def test_chart_export_adds_a_meaningful_document_title(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    figure = go.Figure()
+    figure = go.Figure(go.Scatter(x=[1, 2], y=[1, 2]))
     figure.update_layout(title="Bitcoin Test Metric")
 
     charts.save_chart_html(figure, "Bitcoin_Test_Metric")
@@ -131,4 +133,4 @@ def test_chart_export_adds_a_meaningful_document_title(tmp_path, monkeypatch):
         encoding="utf-8"
     )
     assert "<title>Bitcoin Test Metric | Secret Satoshis</title>" in document
-    assert 'src="plotly.min.js"' in document
+    assert 'src="plotly.min.js?v=' in document

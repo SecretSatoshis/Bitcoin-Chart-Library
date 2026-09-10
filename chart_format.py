@@ -9,6 +9,9 @@ import html as html_module
 import re
 import warnings
 from pathlib import Path
+from functools import lru_cache
+import hashlib
+from plotly.offline import get_plotlyjs
 
 def _logo_data_uri():
     """Return the bundled logo as a self-contained PNG data URI."""
@@ -124,24 +127,39 @@ def _is_complete_non_leap_year(series):
     return (first.month, first.day) == (1, 1) and (last.month, last.day) == (12, 31)
 
 
+@lru_cache(maxsize=1)
+def _plotly_runtime():
+    runtime = get_plotlyjs()
+    return runtime, hashlib.sha256(runtime.encode("utf-8")).hexdigest()[:16]
+
+
+_prepared_runtime_paths = set()
+
+
+def _prepare_plotly_runtime(directory):
+    path = (Path(directory) / "plotly.min.js").resolve()
+    runtime, digest = _plotly_runtime()
+    if path not in _prepared_runtime_paths or not path.is_file():
+        path.write_text(runtime, encoding="utf-8")
+        _prepared_runtime_paths.add(path)
+    return f"plotly.min.js?v={digest}"
+
+
 def save_chart_html(fig, filename):
     """
     Persist an interactive chart as HTML.
 
-    `include_plotlyjs="directory"` writes a single shared Charts/plotly.min.js and has
-    every chart reference it relatively. Plotly's default (True) inlines a complete
-    ~4.6 MB copy of plotly.js into each file — across 50+ charts that is ~257 MB of
-    byte-identical duplication, and a reader who opens three charts downloads the same
-    bundle three times because each is a separate document.
-
-    "directory" is preferred over "cdn" here: it keeps the library self-hosted, so
-    there is no third-party request from readers' browsers and no external dependency,
-    and the charts still work offline as long as the folder is intact. All charts are
-    already served together from GitHub Pages, so the shared-directory assumption holds.
+    Refresh the locked package's shared runtime once per process/output directory.
+    Every chart references it with a content-version query string. This retains a
+    self-hosted bundle without embedding a multi-megabyte copy in each chart or
+    accidentally preserving a previous package version after dependency upgrades.
     """
     html_directory = "Charts"
     os.makedirs(html_directory, exist_ok=True)
     html_filepath = os.path.join(html_directory, f"{filename}.html")
+    if not fig.data or not any(np.isfinite(pd.to_numeric(pd.Series(trace.y), errors="coerce")).any() for trace in fig.data):
+        raise ValueError(f"Chart {filename!r} has no finite plotted observations")
+    runtime_url = _prepare_plotly_runtime(html_directory)
     fig.write_html(html_filepath, auto_open=False, include_plotlyjs="directory")
 
     raw_title = getattr(getattr(fig.layout, "title", None), "text", None)
@@ -152,6 +170,7 @@ def save_chart_html(fig, filename):
         f"<title>{html_module.escape(document_title)} | Secret Satoshis</title>"
     )
     chart_html = Path(html_filepath).read_text(encoding="utf-8")
+    chart_html = chart_html.replace('src="plotly.min.js"', f'src="{runtime_url}"', 1)
     chart_html = chart_html.replace("</head>", f"{title_markup}</head>", 1)
     Path(html_filepath).write_text(chart_html, encoding="utf-8")
     return html_filepath
@@ -365,17 +384,21 @@ def create_line_chart(chart_template, selected_metrics):
     plottable_y_data = []
     for y_item in y_data:
         metric = y_item["data"]
-        if metric in selected_metrics.columns:
+        if metric in selected_metrics.columns and np.isfinite(
+            pd.to_numeric(selected_metrics[metric], errors="coerce")
+        ).any():
             plottable_y_data.append(y_item)
         elif y_item.get("optional", False):
             warnings.warn(
-                f"Skipping optional metric {metric!r} in chart {filename!r}; "
-                "the selected data source does not provide it.",
-                RuntimeWarning,
-                stacklevel=2,
+                f"Skipping optional metric {metric!r} in chart {filename!r}; no usable observations.",
+                RuntimeWarning, stacklevel=2,
             )
-        else:
+        elif metric not in selected_metrics.columns:
             raise KeyError(f"Chart {filename!r} requires missing metric {metric!r}.")
+        else:
+            raise ValueError(f"Chart {filename!r} requires finite observations for {metric!r}.")
+    if not plottable_y_data:
+        raise ValueError(f"Chart {filename!r} has no usable series")
 
     has_y2 = any(
         y_item.get("yaxis", "y") == "y2" for y_item in plottable_y_data
@@ -560,6 +583,10 @@ def create_line_chart(chart_template, selected_metrics):
                     textangle=90,  # Rotate annotation by 90 degrees
                 )
 
+    unavailable = [item.get("name", item["data"]) for item in y_data if item not in plottable_y_data]
+    if unavailable:
+        fig.add_annotation(text="Unavailable: " + ", ".join(unavailable), x=0, y=1.05,
+                           xref="paper", yref="paper", showarrow=False)
     # Add branding elements (watermark, logo, data source)
     add_branding(
         fig,
@@ -590,22 +617,37 @@ def create_days_since_chart(
     x_col = chart_template["x_data"]
     y_col = chart_template.get("value_col", "index_value")
     g_col = chart_template.get("group_col", "Era")
-    price_scale = chart_template.get("price_scale")
-    y_multiplier = 1.0
-    if price_scale:
-        y_multiplier = get_price_on_or_after(
-            selected_metrics,
-            price_scale["anchor_date"],
-            price_scale.get("price_col", "price_close"),
-        )
-
     required = {x_col, y_col, g_col}
     missing = required - set(df.columns)
     if missing:
-        raise KeyError(
-            f"Missing columns in df: {missing}. "
-            f"Expected columns include {required}. Got columns: {list(df.columns)}"
-        )
+        raise KeyError(f"Missing columns in df: {missing}")
+    expected_groups = {item["group"] for item in chart_template["y_data"]}
+    if df.empty or expected_groups != set(df[g_col]):
+        raise ValueError(f"Chart {chart_template['filename']} has missing required cycle groups or unregistered groups")
+    for group in expected_groups:
+        rows = df.loc[df[g_col] == group]
+        numeric = rows[[x_col, y_col]].apply(pd.to_numeric, errors="coerce")
+        if not np.isfinite(numeric).all().all() or numeric[x_col].duplicated().any():
+            raise ValueError(f"Invalid cycle observations for {group}")
+
+    y_multiplier = 1.0
+    if chart_template.get("price_scale"):
+        if selected_metrics is None:
+            raise ValueError("Master prices are required to scale cycle lows")
+        current_group = chart_template["y_data"][-1]["group"]
+        current = df.loc[df[g_col] == current_group].sort_values(x_col)
+        latest_price = float(selected_metrics["price_close"].iloc[-1])
+        final_index = float(current[y_col].iloc[-1])
+        if not np.isfinite(latest_price) or latest_price <= 0 or final_index <= 0:
+            raise ValueError("Current cycle price/index must be positive")
+        # The manifest binds this terminal index to the master cutoff. Recover its
+        # actual low price instead of assuming the cycle boundary was the low.
+        y_multiplier = latest_price / final_index
+        dates = selected_metrics.index[-1] - pd.to_timedelta(
+            current[x_col].iloc[-1] - current[x_col], unit="D")
+        actual = selected_metrics["price_close"].reindex(pd.DatetimeIndex(dates)).to_numpy()
+        if not np.allclose(current[y_col].to_numpy() * y_multiplier, actual, rtol=1e-9):
+            raise ValueError("Current cycle path disagrees with the master prices")
 
     fig = go.Figure()
 
@@ -1519,7 +1561,7 @@ chart_1_year_supply = {
     "y_data": [
         {"name": "Bitcoin Price", "data": "price_close", "yaxis": "y"},
         {
-            "name": "1+ Year Active Supply",
+            "name": "Supply Last Moved Over 1 Year Ago",
             "data": "supply_pct_1_year_plus",
             "yaxis": "y2",
         },
@@ -1545,7 +1587,6 @@ macro_supply = {
         {"name": "LTH Supply", "data": "lth_supply", "yaxis": "y2"},
        #{"name": "Miner Supply", "data": "SplyMiner0HopAllNtv", "yaxis": "y2"},
         #{"name": "1 Hop Miner Supply", "data": "SplyMiner1HopAllNtv", "yaxis": "y2"},
-        {"name": "Daily Tx Amount", "data": "tx_count_sum_24h", "yaxis": "y2"},
         {"name": "Current Supply", "data": "supply", "yaxis": "y2"},
     ],
     "title": "Bitcoin Macro Supply",
@@ -2525,10 +2566,7 @@ chart_cycle_lows = {
     "value_col": "index_value",
     "group_col": "Cycle",
     "y1_type": "log",
-    "price_scale": {
-        "anchor_date": "2026-02-06",
-        "price_col": "price_close",
-    },
+    "price_scale": "current_cycle_low",
     "y_data": [
         {"name": "Market Cycle 1", "group": "Market Cycle 1"},
         {"name": "Market Cycle 2", "group": "Market Cycle 2"},
@@ -2855,3 +2893,13 @@ chart_templates = [
     ytd_return_full,
     chart_promo,
 ]
+
+# Quoted market assets may be unavailable without invalidating Bitcoin data.
+for _template in chart_templates:
+    for _series in _template["y_data"]:
+        _metric = _series["data"]
+        if not _metric.startswith("price_close") and (
+            ("_close" in _metric and not _metric.split("_close", 1)[0].endswith("price"))
+            or _metric.endswith("_mc_btc_price")
+        ):
+            _series["optional"] = True

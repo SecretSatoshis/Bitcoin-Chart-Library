@@ -143,8 +143,16 @@ The following files are read from the CSV data source (generated daily by Report
 | `drawdown_data.csv` | ATH drawdown cycles for cycle analysis charts |
 | `cycle_low_data.csv` | Market cycle performance from cycle lows |
 | `halving_data.csv` | Performance indexed from each Bitcoin halving |
+| `report_ohlc_summary.csv` | Completed report date and daily closing price |
+| `chart_input_manifest.json` | SHA-256 hashes binding the five CSV inputs to one report date |
 
-Required chart metrics raise an error when absent. A metric explicitly marked
+Report Library writes the manifest after generating its chart inputs. Chart Library
+requires all hashes to match, a complete daily master calendar, matching master/summary
+prices and dates, and a report cutoff one or two completed UTC days old. A partially
+published or inconsistent release fails before chart rendering. Publish the Report
+Library manifest support before deploying this Chart Library update.
+
+Required chart metrics raise an error when absent or entirely non-finite. A metric explicitly marked
 `optional` in a chart template emits a warning and is skipped without stopping the
 rest of the chart pack.
 
@@ -186,7 +194,7 @@ The static catalog is designed for a Vercel project connected to this repository
 
 `Charts/vercel.json` records the no-build static output and cache policy. Standalone
 chart HTML and `catalog.json` revalidate immediately, while the shared Plotly runtime
-uses a longer browser cache. Each successful chart-update workflow commits `Charts/`
+revalidates immediately and its chart references carry a content-version query string. Each successful chart-update workflow commits `Charts/`
 to `main`, which supplies the next production deployment after the repository is linked
 in Vercel.
 
