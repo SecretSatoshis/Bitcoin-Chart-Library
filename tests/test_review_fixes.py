@@ -21,9 +21,20 @@ def _release(tmp_path):
         pd.DataFrame({'test': [1]}).to_csv(tmp_path / name, index=False)
     summary = pd.DataFrame({'Report Date': ['2026-09-08'], 'Daily Close': [120.]})
     summary.to_csv(tmp_path / INPUT_FILES[-1], index=False)
-    manifest = {'version': 1, 'report_date': '2026-09-08',
-                'files': {name: hashlib.sha256((tmp_path/name).read_bytes()).hexdigest() for name in INPUT_FILES}}
-    (tmp_path/'chart_input_manifest.json').write_text(json.dumps(manifest))
+    manifest = {
+        'schema_version': 1,
+        'release_id': '2026-09-08',
+        'report_date': '2026-09-08',
+        'generated_at': '2026-09-09T00:00:00+00:00',
+        'files': {
+            name: {
+                'sha256': hashlib.sha256((tmp_path / name).read_bytes()).hexdigest(),
+                'size_bytes': (tmp_path / name).stat().st_size,
+            }
+            for name in INPUT_FILES
+        },
+    }
+    (tmp_path/'release_manifest.json').write_text(json.dumps(manifest))
     return master, summary
 
 
@@ -34,21 +45,12 @@ def test_manifest_loads_matching_release(tmp_path):
     assert frames[INPUT_FILES[0]].price_close.iloc[-1] == 120
 
 
-def test_release_manifest_is_preferred_when_published(tmp_path):
-    master, summary = _release(tmp_path)
-    manifest = {
-        'schema_version': 1,
-        'release_id': '2026-09-08',
-        'report_date': '2026-09-08',
-        'generated_at': '2026-09-09T00:00:00+00:00',
-        'files': {
-            name: {'sha256': hashlib.sha256((tmp_path / name).read_bytes()).hexdigest(), 'size_bytes': (tmp_path / name).stat().st_size}
-            for name in INPUT_FILES
-        },
-    }
-    (tmp_path / 'release_manifest.json').write_text(json.dumps(manifest))
-    frames = load_chart_inputs(lambda name: tmp_path / name, now='2026-09-09')
-    assert frames[INPUT_FILES[0]].price_close.iloc[-1] == 120
+def test_legacy_manifest_is_not_accepted(tmp_path):
+    _release(tmp_path)
+    (tmp_path / 'release_manifest.json').unlink()
+    (tmp_path / 'chart_input_manifest.json').write_text('{}')
+    with pytest.raises(FileNotFoundError):
+        load_chart_inputs(lambda name: tmp_path / name, now='2026-09-09')
 
 
 @pytest.mark.parametrize('filename', INPUT_FILES)

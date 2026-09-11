@@ -145,14 +145,11 @@ The following files are read from the CSV data source (generated daily by Report
 | `halving_data.csv` | Performance indexed from each Bitcoin halving |
 | `report_ohlc_summary.csv` | Completed report date and daily closing price |
 | `release_manifest.json` | Shared release ID, report date, and SHA-256/size records for every published CSV |
-| `chart_input_manifest.json` | Backward-compatible chart-only manifest for older releases |
 
 Report Library writes the shared release manifest after generating its CSVs. Chart Library
-prefers that manifest and temporarily accepts the older chart-only manifest while releases
-transition. It requires all hashes to match, a complete daily master calendar, matching master/summary
-prices and dates, and a report cutoff one or two completed UTC days old. A partially
-published or inconsistent release fails before chart rendering. Publish the Report
-Library manifest support before deploying this Chart Library update.
+requires that manifest and verifies all hashes, a complete daily master calendar, matching
+master/summary prices and dates, and a report cutoff one or two completed UTC days old. A
+partially published or inconsistent release fails before chart rendering.
 
 Required chart metrics raise an error when absent or entirely non-finite. A metric explicitly marked
 `optional` in a chart template emits a warning and is skipped without stopping the

@@ -47,18 +47,10 @@ def validate_report_dates(master, summary, report_date, now=None, max_age_days=2
 
 
 def load_chart_inputs(csv_path, now=None):
-    try:
-        manifest = json.loads(_read_bytes(csv_path(RELEASE_MANIFEST_NAME)))
-    except (FileNotFoundError, OSError):
-        # Keep existing local checkouts usable while Report Library publishes the
-        # new platform manifest for the first time.
-        manifest = json.loads(_read_bytes(csv_path('chart_input_manifest.json')))
-        if manifest.get('version') != 1:
-            raise ValueError('Missing or unsupported chart input manifest')
-    else:
-        if (manifest.get('schema_version') != 1
-                or manifest.get('release_id') != manifest.get('report_date')):
-            raise ValueError('Missing or unsupported release manifest')
+    manifest = json.loads(_read_bytes(csv_path(RELEASE_MANIFEST_NAME)))
+    if (manifest.get('schema_version') != 1
+            or manifest.get('release_id') != manifest.get('report_date')):
+        raise ValueError('Missing or unsupported release manifest')
 
     records = manifest.get('files', {})
     if not isinstance(records, dict):
