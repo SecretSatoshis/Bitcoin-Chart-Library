@@ -34,6 +34,23 @@ def test_manifest_loads_matching_release(tmp_path):
     assert frames[INPUT_FILES[0]].price_close.iloc[-1] == 120
 
 
+def test_release_manifest_is_preferred_when_published(tmp_path):
+    master, summary = _release(tmp_path)
+    manifest = {
+        'schema_version': 1,
+        'release_id': '2026-09-08',
+        'report_date': '2026-09-08',
+        'generated_at': '2026-09-09T00:00:00+00:00',
+        'files': {
+            name: {'sha256': hashlib.sha256((tmp_path / name).read_bytes()).hexdigest(), 'size_bytes': (tmp_path / name).stat().st_size}
+            for name in INPUT_FILES
+        },
+    }
+    (tmp_path / 'release_manifest.json').write_text(json.dumps(manifest))
+    frames = load_chart_inputs(lambda name: tmp_path / name, now='2026-09-09')
+    assert frames[INPUT_FILES[0]].price_close.iloc[-1] == 120
+
+
 @pytest.mark.parametrize('filename', INPUT_FILES)
 def test_manifest_rejects_one_changed_input(tmp_path, filename):
     _release(tmp_path)
