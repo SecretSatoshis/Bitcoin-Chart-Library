@@ -170,7 +170,7 @@ DESCRIPTION_OVERRIDES = {
     ),
     "Bitcoin_Electricity_Cost": (
         "Bitcoin's electricity cost of production, the power expense of "
-        "mining one coin, modelled across tariffs from $0.03 to $0.07 per "
+        "mining one coin, modeled across tariffs from $0.03 to $0.07 per "
         "kWh."
     ),
     "Bitcoin_Metcalfe_Model": (
@@ -184,7 +184,7 @@ DESCRIPTION_OVERRIDES = {
         "network age."
     ),
     "Bitcoin_Price": (
-        "Bitcoin's price and market capitalisation in US dollars, from the "
+        "Bitcoin's price and market capitalization in US dollars, from the "
         "earliest exchange data through the most recent daily close."
     ),
     "Bitcoin_Price_Chart_MA": (
@@ -201,7 +201,7 @@ DESCRIPTION_OVERRIDES = {
         "halving."
     ),
     "Bitcoin_Volatility": (
-        "Bitcoin's realised volatility, the annualised standard deviation "
+        "Bitcoin's realized volatility, the annualized standard deviation "
         "of daily returns, measured over rolling 30-day and 180-day "
         "windows."
     ),
@@ -225,7 +225,7 @@ DESCRIPTION_OVERRIDES = {
     "Bitcoin_NUPL": (
         "Net Unrealized Profit/Loss is the total paper gain or loss held "
         "across all circulating supply, expressed as a share of market "
-        "capitalisation."
+        "capitalization."
     ),
     "Bitcoin_On_Chain": (
         "A composite of Bitcoin's on-chain valuation models: realized price "
@@ -245,53 +245,53 @@ DESCRIPTION_OVERRIDES = {
 
     # --- Asset Comparisons ---
     "Bitcoin_Gold": (
-        "Bitcoin's market capitalisation set against gold and silver, with "
-        "gold broken into jewellery, private investment, official holdings "
+        "Bitcoin's market capitalization set against gold and silver, with "
+        "gold broken into jewelry, private investment, official holdings "
         "and industrial use."
     ),
     "Bitcoin_M0": (
-        "Bitcoin's market capitalisation set against the M0 base money "
+        "Bitcoin's market capitalization set against the M0 base money "
         "supply of nine major economies, from the United States and China "
         "to Australia."
     ),
     "Bitcoin_Equities": (
-        "Bitcoin's market capitalisation set against the world's largest "
+        "Bitcoin's market capitalization set against the world's largest "
         "listed companies, spanning technology, energy, finance and "
         "Bitcoin-linked equities."
     ),
 
     # --- Relative Valuation ---
     "Bitcoin_RV": (
-        "Bitcoin's price if its market capitalisation matched each of ten "
+        "Bitcoin's price if its market capitalization matched each of ten "
         "reference assets, from silver and gold to Apple, NVIDIA and US "
         "base money."
     ),
     "Bitcoin_RV_Sector_Leaders": (
-        "Bitcoin's price if its market capitalisation matched a "
+        "Bitcoin's price if its market capitalization matched a "
         "cross-sector leader: Tesla, Eli Lilly, Saudi Aramco or SpaceX."
     ),
     "Bitcoin_RV_Financials": (
-        "Bitcoin's price if its market capitalisation matched a major "
+        "Bitcoin's price if its market capitalization matched a major "
         "financial or payments firm: Berkshire Hathaway, JPMorgan, Visa, "
         "PayPal or Block."
     ),
     "Bitcoin_RV_M0": (
-        "Bitcoin's price if its market capitalisation matched the M0 base "
+        "Bitcoin's price if its market capitalization matched the M0 base "
         "money supply of the United Kingdom, Japan, China, the United "
         "States or the EU."
     ),
     "Bitcoin_RV_metals": (
-        "Bitcoin's price if its market capitalisation matched silver or "
+        "Bitcoin's price if its market capitalization matched silver or "
         "gold, with gold split into private investment, official holdings "
         "and the total market."
     ),
     "Bitcoin_RV_Semiconductors": (
-        "Bitcoin's price if its market capitalisation matched a leading "
+        "Bitcoin's price if its market capitalization matched a leading "
         "semiconductor firm: NVIDIA, Broadcom, TSMC, Samsung Electronics or "
         "Micron."
     ),
     "Bitcoin_RV_stocks": (
-        "Bitcoin's price if its market capitalisation matched a mega-cap "
+        "Bitcoin's price if its market capitalization matched a mega-cap "
         "technology company: Meta, Amazon, Alphabet, Microsoft or Apple."
     ),
 
@@ -313,7 +313,7 @@ DESCRIPTION_OVERRIDES = {
 
     # --- Returns and Performance ---
     "Bitcoin_CAGR": (
-        "Bitcoin's four-year compound annual growth rate, the annualised "
+        "Bitcoin's four-year compound annual growth rate, the annualized "
         "return an investor would have earned over any rolling four-year "
         "holding period."
     ),
