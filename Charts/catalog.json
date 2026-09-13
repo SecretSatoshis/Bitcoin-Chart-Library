@@ -49,7 +49,7 @@
       "filename": "Bitcoin_Electricity_Cost",
       "url": "Bitcoin_Electricity_Cost.html",
       "category": "Price Models",
-      "description": "Bitcoin's electricity cost of production, the power expense of mining one coin, modelled across tariffs from $0.03 to $0.07 per kWh.",
+      "description": "Bitcoin's electricity cost of production, the power expense of mining one coin, modeled across tariffs from $0.03 to $0.07 per kWh.",
       "tags": [
         "price",
         "energy"
@@ -75,7 +75,7 @@
       "filename": "Bitcoin_Price",
       "url": "Bitcoin_Price.html",
       "category": "Price Models",
-      "description": "Bitcoin's price and market capitalisation in US dollars, from the earliest exchange data through the most recent daily close.",
+      "description": "Bitcoin's price and market capitalization in US dollars, from the earliest exchange data through the most recent daily close.",
       "tags": [
         "market cap",
         "price"
@@ -139,7 +139,7 @@
       "filename": "Bitcoin_Volatility",
       "url": "Bitcoin_Volatility.html",
       "category": "Price Models",
-      "description": "Bitcoin's realised volatility, the annualised standard deviation of daily returns, measured over rolling 30-day and 180-day windows.",
+      "description": "Bitcoin's realized volatility, the annualized standard deviation of daily returns, measured over rolling 30-day and 180-day windows.",
       "tags": [
         "price",
         "volatility"
@@ -165,7 +165,7 @@
       "filename": "Bitcoin_NUPL",
       "url": "Bitcoin_NUPL.html",
       "category": "On-chain Valuation",
-      "description": "Net Unrealized Profit/Loss is the total paper gain or loss held across all circulating supply, expressed as a share of market capitalisation.",
+      "description": "Net Unrealized Profit/Loss is the total paper gain or loss held across all circulating supply, expressed as a share of market capitalization.",
       "tags": [
         "price",
         "realized price",
@@ -232,7 +232,7 @@
       "filename": "Bitcoin_Gold",
       "url": "Bitcoin_Gold.html",
       "category": "Asset Comparisons",
-      "description": "Bitcoin's market capitalisation set against gold and silver, with gold broken into jewellery, private investment, official holdings and industrial use.",
+      "description": "Bitcoin's market capitalization set against gold and silver, with gold broken into jewelry, private investment, official holdings and industrial use.",
       "tags": [
         "market cap",
         "price",
@@ -246,7 +246,7 @@
       "filename": "Bitcoin_M0",
       "url": "Bitcoin_M0.html",
       "category": "Asset Comparisons",
-      "description": "Bitcoin's market capitalisation set against the M0 base money supply of nine major economies, from the United States and China to Australia.",
+      "description": "Bitcoin's market capitalization set against the M0 base money supply of nine major economies, from the United States and China to Australia.",
       "tags": [
         "price",
         "supply",
@@ -260,7 +260,7 @@
       "filename": "Bitcoin_Equities",
       "url": "Bitcoin_Equities.html",
       "category": "Asset Comparisons",
-      "description": "Bitcoin's market capitalisation set against the world's largest listed companies, spanning technology, energy, finance and Bitcoin-linked equities.",
+      "description": "Bitcoin's market capitalization set against the world's largest listed companies, spanning technology, energy, finance and Bitcoin-linked equities.",
       "tags": [
         "price",
         "gold"
@@ -273,7 +273,7 @@
       "filename": "Bitcoin_RV",
       "url": "Bitcoin_RV.html",
       "category": "Relative Valuation",
-      "description": "Bitcoin's price if its market capitalisation matched each of ten reference assets, from silver and gold to Apple, NVIDIA and US base money.",
+      "description": "Bitcoin's price if its market capitalization matched each of ten reference assets, from silver and gold to Apple, NVIDIA and US base money.",
       "tags": [
         "gold",
         "money supply"
@@ -286,7 +286,7 @@
       "filename": "Bitcoin_RV_stocks",
       "url": "Bitcoin_RV_stocks.html",
       "category": "Relative Valuation",
-      "description": "Bitcoin's price if its market capitalisation matched a mega-cap technology company: Meta, Amazon, Alphabet, Microsoft or Apple.",
+      "description": "Bitcoin's price if its market capitalization matched a mega-cap technology company: Meta, Amazon, Alphabet, Microsoft or Apple.",
       "tags": [
         "price"
       ],
@@ -298,7 +298,7 @@
       "filename": "Bitcoin_RV_Financials",
       "url": "Bitcoin_RV_Financials.html",
       "category": "Relative Valuation",
-      "description": "Bitcoin's price if its market capitalisation matched a major financial or payments firm: Berkshire Hathaway, JPMorgan, Visa, PayPal or Block.",
+      "description": "Bitcoin's price if its market capitalization matched a major financial or payments firm: Berkshire Hathaway, JPMorgan, Visa, PayPal or Block.",
       "tags": [
         "price",
         "gold"
@@ -311,7 +311,7 @@
       "filename": "Bitcoin_RV_metals",
       "url": "Bitcoin_RV_metals.html",
       "category": "Relative Valuation",
-      "description": "Bitcoin's price if its market capitalisation matched silver or gold, with gold split into private investment, official holdings and the total market.",
+      "description": "Bitcoin's price if its market capitalization matched silver or gold, with gold split into private investment, official holdings and the total market.",
       "tags": [
         "price",
         "gold"
@@ -324,7 +324,7 @@
       "filename": "Bitcoin_RV_M0",
       "url": "Bitcoin_RV_M0.html",
       "category": "Relative Valuation",
-      "description": "Bitcoin's price if its market capitalisation matched the M0 base money supply of the United Kingdom, Japan, China, the United States or the EU.",
+      "description": "Bitcoin's price if its market capitalization matched the M0 base money supply of the United Kingdom, Japan, China, the United States or the EU.",
       "tags": [
         "price",
         "supply",
@@ -338,7 +338,7 @@
       "filename": "Bitcoin_RV_Sector_Leaders",
       "url": "Bitcoin_RV_Sector_Leaders.html",
       "category": "Relative Valuation",
-      "description": "Bitcoin's price if its market capitalisation matched a cross-sector leader: Tesla, Eli Lilly, Saudi Aramco or SpaceX.",
+      "description": "Bitcoin's price if its market capitalization matched a cross-sector leader: Tesla, Eli Lilly, Saudi Aramco or SpaceX.",
       "tags": [
         "price"
       ],
@@ -350,7 +350,7 @@
       "filename": "Bitcoin_RV_Semiconductors",
       "url": "Bitcoin_RV_Semiconductors.html",
       "category": "Relative Valuation",
-      "description": "Bitcoin's price if its market capitalisation matched a leading semiconductor firm: NVIDIA, Broadcom, TSMC, Samsung Electronics or Micron.",
+      "description": "Bitcoin's price if its market capitalization matched a leading semiconductor firm: NVIDIA, Broadcom, TSMC, Samsung Electronics or Micron.",
       "tags": [
         "price"
       ],
@@ -401,7 +401,7 @@
       "filename": "Bitcoin_CAGR",
       "url": "Bitcoin_CAGR.html",
       "category": "Returns and Performance",
-      "description": "Bitcoin's four-year compound annual growth rate, the annualised return an investor would have earned over any rolling four-year holding period.",
+      "description": "Bitcoin's four-year compound annual growth rate, the annualized return an investor would have earned over any rolling four-year holding period.",
       "tags": [
         "price",
         "returns",

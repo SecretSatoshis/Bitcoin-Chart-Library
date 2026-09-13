@@ -91,7 +91,7 @@ function createCard(chart) {
   viewButton.type = 'button';
   viewButton.addEventListener('click', () => openChart(chart, true, viewButton));
 
-  const standalone = makeElement('a', 'button button-secondary', 'Open standalone ↗');
+  const standalone = makeElement('a', 'button button-secondary', 'Open chart in a new tab ↗');
   standalone.href = chart.url;
   standalone.target = '_blank';
   standalone.rel = 'noopener noreferrer';
