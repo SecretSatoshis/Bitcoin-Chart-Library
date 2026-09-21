@@ -223,7 +223,8 @@ h4 {
 h1 {
   max-width: none;
   white-space: nowrap;
-  font-size: clamp(42px, 5vw, 64px);
+  font-size: clamp(42px, 3.7vw, 53px);
+  font-weight: 700;
   letter-spacing: -0.04em;
 }
 
@@ -237,6 +238,21 @@ h2 {
   margin-top: 22px;
   color: var(--text-dim);
   font-size: clamp(14px, 1.6vw, 17px);
+  line-height: 1.7;
+}
+
+.hero-source {
+  max-width: 62ch;
+  margin: 14px 0 0;
+  color: var(--text-mute);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.hero-source a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .library-stats {
@@ -682,10 +698,6 @@ footer {
     max-width: 520px;
   }
 
-  h1 {
-    font-size: clamp(42px, 7vw, 64px);
-  }
-
   .chart-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -732,7 +744,7 @@ footer {
   }
 
   .hero {
-    min-height: 480px;
+    min-height: 520px;
     padding-top: calc(var(--nav-height) + 54px);
     padding-bottom: 54px;
   }
