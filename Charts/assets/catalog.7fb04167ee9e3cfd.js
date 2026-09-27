@@ -149,8 +149,9 @@ function openChart(chart, updateHistory, trigger = null) {
   elements.frame.style.height = `${Math.max(520, chart.height)}px`;
   elements.frameWrap.classList.remove('loaded');
 
-  if (elements.frame.getAttribute('src') !== chart.url) {
-    elements.frame.src = chart.url;
+  const embeddedUrl=chart.url+'?embed=1';
+  if (elements.frame.getAttribute('src') !== embeddedUrl) {
+    elements.frame.src = embeddedUrl;
   } else {
     elements.frameWrap.classList.add('loaded');
   }
@@ -199,9 +200,7 @@ function syncViewerFromUrl() {
 
 async function loadCatalog() {
   try {
-    const response = await fetch('catalog.json', { cache: 'no-cache' });
-    if (!response.ok) throw new Error(`Catalog request failed with status ${response.status}`);
-    state.catalog = await response.json();
+    state.catalog = JSON.parse(document.getElementById('catalog-data').textContent);
 
     elements.latestDataDate.dateTime = state.catalog.latest_data_date;
     elements.latestDataDate.textContent = formatDate(state.catalog.latest_data_date);
@@ -275,3 +274,11 @@ document.addEventListener('keydown', event => {
 });
 
 loadCatalog();
+
+window.addEventListener('message', event => {
+  if(event.source !== elements.frame.contentWindow) return;
+  if(location.protocol === 'file:' ? event.origin !== 'null' : event.origin !== location.origin) return;
+  const message=event.data,chart=chartFromUrl();
+  if(message?.type !== 'ss-chart-size' || !chart || message.id !== chart.filename || !Number.isFinite(message.height)) return;
+  elements.frame.style.height = `${Math.max(400,Math.min(3000,message.height))}px`;
+});

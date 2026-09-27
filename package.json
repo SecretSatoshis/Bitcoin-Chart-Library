@@ -1,0 +1,12 @@
+{
+  "name": "secret-satoshis-chart-library",
+  "private": true,
+  "scripts": {
+    "test:browser": "node scripts/browser-tests.cjs",
+    "export:png": "node scripts/export-chart.cjs",
+    "test:candles": "node scripts/check-candles.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

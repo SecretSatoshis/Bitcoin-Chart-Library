@@ -1,0 +1,361 @@
+{
+  "schema_version": 1,
+  "renderer": "Lightweight Charts 5.2.1",
+  "report_date": "2026-09-26",
+  "charts": {
+    "Bitcoin_ATH_Drawdown": {
+      "payload_sha256": "4913f8baae8b8676b9f7a3ae1fc15943d8b61f8d1faf145516a06e96f6111576",
+      "html_sha256": "70b4e1f3a522d793038e61abc3b7a37523f5fd69bfa13f65e219e90aa49fa34f",
+      "series_count": 5,
+      "coverage": null
+    },
+    "Bitcoin_Cycle_Low": {
+      "payload_sha256": "44c3caeab4e76cc5820a7034da69936501c3a766ee0106f38a12704440595432",
+      "html_sha256": "c640fbf7ee38a820c21a2b03083abf5eb5b8a9ae86519ca70b88ac0cc9894451",
+      "series_count": 6,
+      "coverage": null
+    },
+    "Bitcoin_Halving_Cycle": {
+      "payload_sha256": "56af4c9a1731b9166f3ebf55023685c3b7b38a93694d6f6b15524b5640ce85a0",
+      "html_sha256": "2465d4b688e0ad165b401902a9882afe846f12d94b08683ff9182b66c0d59888",
+      "series_count": 4,
+      "coverage": null
+    },
+    "MTD_Return_By_Year_Percentage": {
+      "payload_sha256": "78cde3782a986afda903b46c6fba5e70ab095fdefc285f7a6ec20499977c4ab5",
+      "html_sha256": "64722cdab1791dddf5e22c7387669fc73a6046ddf37044738b80b07f1427364b",
+      "series_count": 15,
+      "coverage": "2014-01-01/2026-09-26"
+    },
+    "Bitcoin_MTD_Return_By_Month_Indexed": {
+      "payload_sha256": "2ff33895528ba536f92f45cab4bd59d969629771feb3b56fb4fb7cc4d780bb50",
+      "html_sha256": "a28b8190424b814c3a051560c1679ec97f069290620c4ce9b8f817e170d283e5",
+      "series_count": 15,
+      "coverage": "2014-01-01/2026-09-26"
+    },
+    "Bitcoin_YTD_Return_By_Year_Percentage": {
+      "payload_sha256": "3fd55cf22c682c20c6fa39b977c7f460a4dde1a03f02a436681ca399ec84a872",
+      "html_sha256": "34ddba7de0f51f1a7b807ba9ba9cb16779c1853c7356c3de1afe78ab6803e69c",
+      "series_count": 15,
+      "coverage": "2014-01-01/2026-09-26"
+    },
+    "Bitcoin_YTD_Return_By_Year_Indexed": {
+      "payload_sha256": "4945ae7b5d24a3ed4171186c7e3b2e9c65cfaf659a09f827cbeda4761949e4a3",
+      "html_sha256": "c719a00b6149b59fa5055d27933169b78f02b2e0b2274d94d461f07800428b19",
+      "series_count": 15,
+      "coverage": "2014-01-01/2026-09-26"
+    },
+    "Bitcoin_Price": {
+      "payload_sha256": "aca4950dd53270aad338824c10567662b6d60eb48f9909ee7d3549dc1623ece3",
+      "html_sha256": "a213ad3232a6f4e78e3cd42ada4e14634665adc2273ce2e3cc8f531b8e7fe9f8",
+      "series_count": 2,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_Price_Chart_MA": {
+      "payload_sha256": "6f9b188a07898af0d340686d72f3cf40a1b0adf9d05c840b393e474589e5f4cd",
+      "html_sha256": "ea23324315699e18dcf86bb3a147a555358ba709e87adaa11918e6250ae844c3",
+      "series_count": 6,
+      "coverage": "2011-01-01/2026-09-26"
+    },
+    "Bitcoin_Sats_Per_Dollar": {
+      "payload_sha256": "44f5fb1d31d0ac241f9a0bf172d3f6458baf4931436bc50c898f8015bab2c356",
+      "html_sha256": "5bf737a3305c2323b08f2154d61891842cb3bc868446843f1ec6b50f21a0df82",
+      "series_count": 2,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_Volatility": {
+      "payload_sha256": "8a2dd86c2b7cd7c2a570bfc336f9096fd2eb7d6bef9af32b1521913f76559ad0",
+      "html_sha256": "f7f278a227cb6ea772905fbe55003182f58fe6ccad65a34a9d519db115a42f6d",
+      "series_count": 3,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_Supply": {
+      "payload_sha256": "a6bb068c92140937dfe082c740818c659cd3c51caecac97ccbadf509fc83b180",
+      "html_sha256": "4c45f5437c57ede8249a7ef7582f6e30bbf4b72eeea0c50af9c7ec6f7ec48878",
+      "series_count": 3,
+      "coverage": "2010-01-01/2026-09-26"
+    },
+    "Bitcoin_Macro_Supply": {
+      "payload_sha256": "db7e627792c850fb79768c1beb80bfff2ac029905f6f0d7d94470f849d32062a",
+      "html_sha256": "d64ec2b4d0c48eadc9f72f3f49cb8e9e5728c24c1b2e2fee6945423a6f6a920a",
+      "series_count": 6,
+      "coverage": "2010-01-01/2026-09-26"
+    },
+    "Bitcoin_1_Year_Supply": {
+      "payload_sha256": "5699d5880c7660ae9d847bc06e116e2e4baa5c170090bd333879c0774e7d2f8c",
+      "html_sha256": "25096b4d7e72433659fd8e8c0e6453a9f915adea02b3057b51b1a1d74a38da4f",
+      "series_count": 2,
+      "coverage": "2010-01-01/2026-09-26"
+    },
+    "Bitcoin_Supply_Age": {
+      "payload_sha256": "5024bba3affdd295d21b55ac2f2c5615ccb6ec2183a52192d9af3cefd68d8846",
+      "html_sha256": "85a39d845077e0ebf1b4bc5d43d92292c10ef51d3820f7751c083312ba558bd8",
+      "series_count": 11,
+      "coverage": "2010-01-01/2026-09-26"
+    },
+    "Bitcoin_Transactions": {
+      "payload_sha256": "476e4f9697733632e4885aa09d3a62a868e29eb8f83b6b69e1495f7ec91fcb69",
+      "html_sha256": "a06331e4df8357ca2877e51b5d5757d6b31799bd1c8e87faa4fd01563439b69b",
+      "series_count": 3,
+      "coverage": "2010-01-01/2026-09-26"
+    },
+    "Bitcoin_Transaction_Fee": {
+      "payload_sha256": "995da5f342e5c0fd2aed5e4728e7370bbddd3bcac495857d97a0affec6660885",
+      "html_sha256": "dce8ec6a5123dc5b3f2928f6671227165b0264c27061210f47acf517435963c0",
+      "series_count": 2,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_Transaction_Value": {
+      "payload_sha256": "5f0f38babff5268b7fdd7b4cfabc6d4ec19e0c411bfc204b8f7465ebc31f83db",
+      "html_sha256": "b804ca2820036856a59f40913a7272382b2d27f5e0cd3ac3277854d6aceb2185",
+      "series_count": 4,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_Active_Addresses": {
+      "payload_sha256": "c27febe90afbdb4bb0d86bf2a65ffe17b1f0feb25947551907a121462cf195ff",
+      "html_sha256": "78eb59575ad7b8714aa4ed8c176ed7d2e3f2f94a59d2bbbb16c919724ef01f85",
+      "series_count": 4,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_Address_Balance": {
+      "payload_sha256": "b8690992f51800ab86245b57f122e5ebbfcea2bf3fb05e89e0ef3819e04be001",
+      "html_sha256": "d99b0a459c119b4cd494af5164babe08fb214de60272f7f5584f1f5307f49f10",
+      "series_count": 14,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_Hashrate": {
+      "payload_sha256": "83a02634a800b5f927ca4b04b3148026279fa4360d892dfc68d7945cf4283750",
+      "html_sha256": "320a11160b5f453604b19f5cad176404eaac230f2534a8c885c9d0a792d5f646",
+      "series_count": 3,
+      "coverage": "2010-01-01/2026-09-26"
+    },
+    "Bitcoin_Hashrate_Price": {
+      "payload_sha256": "0e0cee5d1a4269856d41f978b8079972f594d60d0a184ded07fbdc3ba9e50c0f",
+      "html_sha256": "2a20b1d19433304b383304c6251bfc302424346c52499e41ecb3324ddabedda6",
+      "series_count": 4,
+      "coverage": "2010-01-01/2026-09-26"
+    },
+    "Bitcoin_Hash_Ribbons": {
+      "payload_sha256": "b1c20af1536b0549650028fd2c4d698f74ed29f7ed2bd0db84b4cb9090e8011f",
+      "html_sha256": "fbcb4e103516d965e82fe6af73bbb17cee175c47505de6055bd1929796ba9bb3",
+      "series_count": 3,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_Difficulty": {
+      "payload_sha256": "1f8d1cc26dad06c2234ab025a1ef32e1ac57fb624a0b999aa0edba4da5f5b0e8",
+      "html_sha256": "e18efcf599b7a41a589271c618a6b5221771811b1ced512b41ce97ed9d8144a1",
+      "series_count": 2,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_Hash_Price": {
+      "payload_sha256": "cf5b270057d022a92ff0d827c9b617f9ca5fc1d1e748f3acf1e45ca0e6ea3ef5",
+      "html_sha256": "00f0e8a63ae17efbf31687b78437f53275f40caff8616223246706a95005d46d",
+      "series_count": 2,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_Miner_Revenue": {
+      "payload_sha256": "741c60d41f8ec5878ee5f564ddcd1ccfa6afb21b94f35384f4d92fa9a7e1c837",
+      "html_sha256": "41c54b9162a278f611eb91aa38307ac8eb9567db24e30a8c062f6ca9748beb0e",
+      "series_count": 4,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_Puell_Multiple": {
+      "payload_sha256": "1dae66380491fa87dc72d3ade6f4deb625adc56cb84be417bfaf849c04e4d3b6",
+      "html_sha256": "1fb01134b2b9a7a61b4243990e6690dc8ebc6d3357fd1dd674400e656c64ced4",
+      "series_count": 2,
+      "coverage": "2011-01-01/2026-09-26"
+    },
+    "Bitcoin_Thermocap_Multiples": {
+      "payload_sha256": "2569b467d728ec53940569961b306370551d0f0dd16bf2e7136058ec01640d6d",
+      "html_sha256": "334ad08c2a8396a8ac59658778194d1fc2834ae02d676cbbb36537eea700d2be",
+      "series_count": 6,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_Realized_Price": {
+      "payload_sha256": "b8f92a883434e56f8b60a82f8e936013d319214f3743de3de2dca1fbfcbbf497",
+      "html_sha256": "ec0fda0eb40768358f173c74b91b0657ac339de7671f0f660dc19c7ae700e820",
+      "series_count": 8,
+      "coverage": "2011-01-01/2026-09-26"
+    },
+    "Bitcoin_Delta_Cap": {
+      "payload_sha256": "d92beed1e04df0fb5a643663071ec7c2bafa70d2a1c913c12c108fdee13820c4",
+      "html_sha256": "0c94c2892ee9a9d1cca1b1de32cee44768c577977d36d55bdefd8e0d4b7292d6",
+      "series_count": 4,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_NVT_Price": {
+      "payload_sha256": "eac2878424868dc5e3d8aa8f684571efa4f4fbbcbb371b2971cdd2f8ba1cef6c",
+      "html_sha256": "17652b664d8aa7a55185a1fd743e2b71dc3ba7955d1b6cfa2ac9183a95998377",
+      "series_count": 3,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_NUPL": {
+      "payload_sha256": "125542feb109b1784535888cdc9b72cb0d1b4274e90dd272f3783e3ce7b9b979",
+      "html_sha256": "320cb9bc6bc7c3fb6a7fb2e4829d197532c7b14e6fec2b04ae8fcfa230cafa0b",
+      "series_count": 2,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_Adjusted_BDD": {
+      "payload_sha256": "9e7e14bd63440363daa49099b4f52da502f6101a7b03827ee6c4aabf33785932",
+      "html_sha256": "594a542c86248f37e1baa50c4a0fbe1e8a2bea549cb1fe939b0e42ad784e8720",
+      "series_count": 3,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_HODL_Bank": {
+      "payload_sha256": "130a588b021083a181fd8426f8b2f3ee446486a5214b26d097b9c8958f33bb55",
+      "html_sha256": "4639214fd2576df4b150137a76f9f970470b84f82dd28fd605b18adc9d7c9137",
+      "series_count": 5,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_SOPR": {
+      "payload_sha256": "dc1b499f0e47d7173e3d3225d98adcd039e20f87bd6984de9b848c3f41148afe",
+      "html_sha256": "7daeefd87d740b9667a74cbab7348d505ee9a501f7316c41bce53ae603eba7ca",
+      "series_count": 2,
+      "coverage": "2012-01-01/2026-09-26"
+    },
+    "Bitcoin_Supply_Profit_Loss": {
+      "payload_sha256": "a11d053d606c0e4e9100f513f03c694fd0321b52679c32a8ed48aa7d27473c30",
+      "html_sha256": "40a6f4ad700f297b8c99ba70bd024c6297de5061a8acb9212e6d6f6688e83fda",
+      "series_count": 3,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_Production_Price": {
+      "payload_sha256": "62f87e7d58f18919ead2ac3a14305864f1d5e53155c850cd4dd7317f5ae433c9",
+      "html_sha256": "9808f45262aaeb0f4c7e14b5e3811eac08c11ab28103a5a5f42b76701c2d5d68",
+      "series_count": 4,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_Electricity_Cost": {
+      "payload_sha256": "6c40c81aa1f4993100defea71fe81b26c6e06ea29ee0e9fb47cf6a8be48df442",
+      "html_sha256": "d713f8da99beecec5621f57aa4a22f4621cff06a7df418e543bbd1d0647aadba",
+      "series_count": 6,
+      "coverage": "2011-03-01/2026-09-26"
+    },
+    "Bitcoin_Power_Law_Model": {
+      "payload_sha256": "51e7dfe7770540794ec41cfe5b9da8928453247f931301d262ab3f68fd204edd",
+      "html_sha256": "42f0d94b89598b4cc6f837454380dab4218948983921f0c6c651def80d2e77a2",
+      "series_count": 3,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_Metcalfe_Model": {
+      "payload_sha256": "268244373c07f01f040bdb07bf51ddf51a14209348b2581d840af15272c2865f",
+      "html_sha256": "ffa596b52eef356e540ecd939d3c892b2988f2b3f06f5ac7e164626b3c05d434",
+      "series_count": 6,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_S2F_Price": {
+      "payload_sha256": "8a968c8bbcff4a868d4126fb8dff4faef1599a18381c0934999e90b63ec5d5a2",
+      "html_sha256": "62059d3dce7ecd7b13898e4e4c40e796163722763e6f67f94e823d0f451f66b8",
+      "series_count": 3,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_Gold": {
+      "payload_sha256": "39ccf4c209f5f44c696d6111054f324ff3eb286f7def4388b1df66cf6d6f1909",
+      "html_sha256": "9ad3c04c0ff61d5b1d2f0bb249771c539075bb52bb80b985d6f9efc585854c2c",
+      "series_count": 7,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_RV_metals": {
+      "payload_sha256": "a9ced5781122251f90bf5a521715f19668de85793c3efca19da12bb30f2cf0ce",
+      "html_sha256": "0e060c0669713dbc1415eddd6192e91b667ac607259bfcc6e49e799c3ffd1e9a",
+      "series_count": 5,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_Equities": {
+      "payload_sha256": "4df6c79980da18e4d7fd1656f81759112a03fc0ace9360d21e0a42c5e889d7c2",
+      "html_sha256": "a839ae623c33a11fb40a17e8d6a2519ff94ec3ffc6a3162129c1535810d2b2ec",
+      "series_count": 26,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_RV_stocks": {
+      "payload_sha256": "426400386fd1f6703ed11e3fd7b5745940d3f94374f4b49a6caf9b1a43cb3cc0",
+      "html_sha256": "b1e0f3f00267bdebe08cb500992b9d049074edabf539dfd00463095f2281a5e3",
+      "series_count": 6,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_RV_Semiconductors": {
+      "payload_sha256": "e4f3abf590e01872d7089aab73b05f7710af50e743d6cf526d00be0f9e12d2db",
+      "html_sha256": "4bdd304e8e66b468ea40af966a60c02b85c6b2517a72e4319751416cf43a0dad",
+      "series_count": 6,
+      "coverage": "2015-01-01/2026-09-26"
+    },
+    "Bitcoin_RV_Financials": {
+      "payload_sha256": "ae640f5bb81fe13028c8cff9c661e442350c8eea772dedf433a70a05d8760990",
+      "html_sha256": "bd0c08382bb649e2f0b81913e121bc0021b8769cb62ced13cd2e9583700f7d24",
+      "series_count": 7,
+      "coverage": "2015-01-01/2026-09-26"
+    },
+    "Bitcoin_RV_Sector_Leaders": {
+      "payload_sha256": "55e89911bf715daa299b01be4cfe7e7846c92d3d53b076beab69d11527eba1df",
+      "html_sha256": "b72f53d4b5c8a9b48b15b0d098af6f5ed38e9573c6042686c3b8af81befc8b6f",
+      "series_count": 5,
+      "coverage": "2015-01-01/2026-09-26"
+    },
+    "Bitcoin_M0": {
+      "payload_sha256": "3b38b722c05edc4d6d63d1f7d08a4b681c5f564317e40eadb7f87688e635e065",
+      "html_sha256": "3b946236a70d47ab6d714a9063b1918766c91cd34b7f55742ed4e9fea285d4cc",
+      "series_count": 10,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_RV_M0": {
+      "payload_sha256": "47e31db35712de7136307289afbb4422be87b4710cf34b89bc5ec7c0d297a7e5",
+      "html_sha256": "23d0482418656c49b1ec11689c9cb8a276cc2f2aa69c9ac0374e8c70040077d9",
+      "series_count": 6,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_On_Chain": {
+      "payload_sha256": "d8e6f80350b0b6117051e630cedee33cab54690b1630107249d40cdd17c2f87f",
+      "html_sha256": "f481ab05b0c4905926482f4b785691f91d5ae78a67b9dfa3e96354d8f8dde33e",
+      "series_count": 7,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_RV": {
+      "payload_sha256": "806674418e7d0879449dafbea2dbd9866b12bc94f71e2778bbabc1ca6d4fcd1d",
+      "html_sha256": "85f75ee92542de75096532bd1b2ec394956824cc1ec2f0214dcdcc6ada015e0a",
+      "series_count": 11,
+      "coverage": "2010-07-01/2026-09-26"
+    },
+    "Bitcoin_YOY_Return_Comparison": {
+      "payload_sha256": "0bfa352e93cac86bdfc3c0629d9571fd61a3c1ef0d80dbd21aba1d5df29f4065",
+      "html_sha256": "c8e7b38c06e150d28207ea46fbe0ba20ff5ecb47eeb5b55987af2d875ef83b9e",
+      "series_count": 2,
+      "coverage": "2015-01-01/2026-09-26"
+    },
+    "Bitcoin_CAGR": {
+      "payload_sha256": "63668eda75e745a337dd2a19a541fa89b0a0683bc49f8f671540d6dbf05f5844",
+      "html_sha256": "fa2a3c790f4a6a25af79060f9c6cb1975fc58672627f09c0602e3754d1ab88bd",
+      "series_count": 2,
+      "coverage": "2015-01-01/2026-09-26"
+    },
+    "Bitcoin_CAGR_Comparison": {
+      "payload_sha256": "e0351e08597555b2215e559312a7ae6e8329099aad46d2a156ca8153baf7aa4e",
+      "html_sha256": "d8d26c5d47b459d58bc7f0e50536d0abb9e43124e5717a68ecd0c9a3a7512f08",
+      "series_count": 9,
+      "coverage": "2015-05-01/2026-09-26"
+    },
+    "Bitcoin_MTD_Return_Comparison": {
+      "payload_sha256": "bae8ec603ec72644c9ce3741b380bbca41eb3701963a89fb842526b959d6aa8f",
+      "html_sha256": "6a10efa6419f330fdaf07fc6378775de481f4df04a58bd30ac5abee15288ef98",
+      "series_count": 9,
+      "coverage": "2026-09-01/2026-09-26"
+    },
+    "Bitcoin_YTD_Return_Comparison": {
+      "payload_sha256": "ddfd62d09f81726411eeee66413ecb6b04c08e753b9743bf032f19102b3e6370",
+      "html_sha256": "f5359c449c477101d40814b5ae986ffb603cc3e54e40ed4845ed78b175438226",
+      "series_count": 9,
+      "coverage": "2026-01-01/2026-09-26"
+    },
+    "Bitcoin_YTD_Return_Comparison_full": {
+      "payload_sha256": "59e6650ca1f1af0bc4770ecfcdcacd71374cab8696e6d888206a851305440a1e",
+      "html_sha256": "23b66820516add213aca10818c5f4f96128a42a9c7385f26b45c7ce95a513a55",
+      "series_count": 17,
+      "coverage": "2026-01-01/2026-09-26"
+    },
+    "Bitcoin_Promo": {
+      "payload_sha256": "ad71a7b9ccaf53de417808eb125233a9067ce69c88daa254c9e12580a3381cde",
+      "html_sha256": "b09ee7618507433d3e0038e4a0876053f45384716b25f762b555db00aaf3dc09",
+      "series_count": 6,
+      "coverage": "2010-07-01/2026-09-26"
+    }
+  }
+}

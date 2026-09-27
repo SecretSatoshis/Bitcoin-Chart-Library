@@ -863,3 +863,10 @@ footer {
     transition-duration: 0.01ms !important;
   }
 }
+
+#chartFrame{width:100%;min-width:0;display:block}.chart-frame-wrap{overflow:hidden}.viewer-scroll-hint{display:none}
+
+/* Let the viewer break out of the catalog grid to the standalone chart width. */
+.viewer-section{position:relative;left:50%;transform:translateX(-50%);width:var(--chart-content-width);max-width:none;padding:0;border:0;border-radius:0;background:transparent}
+.viewer-header{flex-wrap:wrap;gap:24px}.viewer-copy{flex:1;min-width:240px}
+.chart-frame-wrap{border:0;border-radius:0;background:var(--bg)}

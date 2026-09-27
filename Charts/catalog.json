@@ -2,7 +2,6 @@
   "title": "Bitcoin Chart Library",
   "latest_data_date": "2026-09-26",
   "chart_count": 59,
-  "generated_at": "2026-09-27T06:49:41+00:00",
   "categories": [
     "Price Models",
     "On-chain Valuation",
@@ -29,7 +28,8 @@
         "realized price"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Metcalfe Model",
@@ -42,7 +42,8 @@
         "Metcalfe"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Mining Electricity Cost",
@@ -55,7 +56,8 @@
         "energy"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2011-03-01/2026-09-26"
     },
     {
       "title": "Bitcoin Power Law Model",
@@ -68,7 +70,8 @@
         "power law"
       ],
       "featured": true,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Price",
@@ -81,7 +84,8 @@
         "price"
       ],
       "featured": true,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Price Moving Averages",
@@ -94,7 +98,8 @@
         "moving averages"
       ],
       "featured": true,
-      "height": 700
+      "height": 760,
+      "coverage": "2011-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin Production Price",
@@ -106,7 +111,8 @@
         "price"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Satoshis Per Dollar",
@@ -119,7 +125,8 @@
         "satoshis"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Stock To Flow Price",
@@ -132,7 +139,8 @@
         "stock-to-flow"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Volatility",
@@ -145,7 +153,8 @@
         "volatility"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Delta Cap",
@@ -158,7 +167,8 @@
         "realized price"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin NUPL (Net Unrealized Profit/Loss)",
@@ -173,7 +183,8 @@
         "profit and loss"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin NVT Price",
@@ -186,7 +197,8 @@
         "NVT"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Price On-Chain Value",
@@ -199,7 +211,8 @@
         "realized price"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Realized Price",
@@ -212,7 +225,8 @@
         "realized price"
       ],
       "featured": true,
-      "height": 700
+      "height": 760,
+      "coverage": "2011-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin Thermocap Multiple",
@@ -225,7 +239,8 @@
         "thermocap"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin vs Gold Market Cap",
@@ -239,7 +254,8 @@
         "gold"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin vs M0 Money Supply",
@@ -253,7 +269,8 @@
         "money supply"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin vs Mega-Cap Equities",
@@ -266,7 +283,8 @@
         "gold"
       ],
       "featured": false,
-      "height": 900
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Relative Valuation",
@@ -279,7 +297,8 @@
         "money supply"
       ],
       "featured": true,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Relative Valuation: Big Tech",
@@ -291,7 +310,8 @@
         "price"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Relative Valuation: Financials",
@@ -304,7 +324,8 @@
         "gold"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2015-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin Relative Valuation: Gold and Silver",
@@ -317,7 +338,8 @@
         "gold"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Relative Valuation: M0 Money Supply",
@@ -331,7 +353,8 @@
         "money supply"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Relative Valuation: Sector Leaders",
@@ -343,7 +366,8 @@
         "price"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2015-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin Relative Valuation: Semiconductors",
@@ -355,7 +379,8 @@
         "price"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2015-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin Drawdowns From All-Time High",
@@ -368,7 +393,8 @@
         "cycles"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": null
     },
     {
       "title": "Bitcoin Index Performance Since Halving",
@@ -381,7 +407,8 @@
         "cycles"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": null
     },
     {
       "title": "Bitcoin Price Performance Since Cycle Low",
@@ -394,7 +421,8 @@
         "cycles"
       ],
       "featured": true,
-      "height": 700
+      "height": 760,
+      "coverage": null
     },
     {
       "title": "Bitcoin 4-Year CAGR",
@@ -408,7 +436,8 @@
         "CAGR"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2015-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin 4-Year CAGR vs Other Assets",
@@ -423,7 +452,8 @@
         "CAGR"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2015-05-01/2026-09-26"
     },
     {
       "title": "Bitcoin MTD Return vs Other Assets",
@@ -437,7 +467,8 @@
         "returns"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2026-09-01/2026-09-26"
     },
     {
       "title": "Bitcoin MTD Returns by Year",
@@ -449,7 +480,8 @@
         "returns"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2014-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin MTD Returns, Indexed",
@@ -458,11 +490,11 @@
       "category": "Returns and Performance",
       "description": "Bitcoin's month-to-date return path for every year since 2014, indexed to the current month so each year's shape can be compared day by day.",
       "tags": [
-        "price",
         "returns"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2014-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin YTD Return vs 16 Benchmarks",
@@ -474,7 +506,8 @@
         "returns"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2026-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin YTD Return vs Other Assets",
@@ -488,7 +521,8 @@
         "returns"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2026-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin YTD Returns by Year",
@@ -500,7 +534,8 @@
         "returns"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2014-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin YTD Returns, Indexed",
@@ -509,11 +544,11 @@
       "category": "Returns and Performance",
       "description": "Bitcoin's year-to-date return path for every year since 2014, indexed to the current year so each year's shape can be compared day by day.",
       "tags": [
-        "price",
         "returns"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2014-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin Year-Over-Year Return",
@@ -526,7 +561,8 @@
         "returns"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2015-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin 1+ Year Supply",
@@ -539,7 +575,8 @@
         "supply"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin Macro Supply",
@@ -552,7 +589,8 @@
         "supply"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin Supply & Daily Issuance",
@@ -564,7 +602,8 @@
         "supply"
       ],
       "featured": true,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin Supply Age Distribution",
@@ -577,7 +616,8 @@
         "supply"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin Active Addresses",
@@ -590,7 +630,8 @@
         "addresses"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Address Balance Distribution",
@@ -603,7 +644,8 @@
         "addresses"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Transaction Fees",
@@ -617,7 +659,8 @@
         "fees"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Transaction Volume",
@@ -630,7 +673,8 @@
         "transactions"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Transactions",
@@ -642,7 +686,8 @@
         "transactions"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin Hash Price",
@@ -654,7 +699,8 @@
         "price"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Hash Ribbons",
@@ -668,7 +714,8 @@
         "hashrate"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Hashrate",
@@ -680,7 +727,8 @@
         "hashrate"
       ],
       "featured": true,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin Miner Revenue",
@@ -693,7 +741,8 @@
         "miners"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Network Difficulty",
@@ -706,7 +755,8 @@
         "difficulty"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin Price & Hashrate",
@@ -719,7 +769,8 @@
         "hashrate"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin Puell Multiple",
@@ -731,7 +782,8 @@
         "price"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2011-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin Days Destroyed, Supply-Adjusted",
@@ -744,7 +796,8 @@
         "supply"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin HODL Bank & Reserve Risk",
@@ -756,7 +809,8 @@
         "price"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     },
     {
       "title": "Bitcoin SOPR (Spent Output Profit Ratio)",
@@ -769,7 +823,8 @@
         "profit and loss"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2012-01-01/2026-09-26"
     },
     {
       "title": "Bitcoin Supply in Profit vs Loss",
@@ -783,7 +838,8 @@
         "profit and loss"
       ],
       "featured": false,
-      "height": 700
+      "height": 760,
+      "coverage": "2010-07-01/2026-09-26"
     }
   ]
 }

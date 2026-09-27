@@ -1,0 +1,139 @@
+/* Standard Secret Satoshis site chrome and shared chart width. */
+:root{--chart-content-width:calc(min(100vw, 1680px) - 7.6vw);--nav-height:64px;--max-width:1120px;--gutter:clamp(20px,5vw,60px);--white:#fff;--text-dim:#9090a8;--text-mute:#82829c;--accent:#f7931a;--mono:'JetBrains Mono',monospace}
+.accent{color:var(--accent)}
+.site-nav {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  height: var(--nav-height);
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--gutter);
+  border-bottom: 1px solid var(--border);
+  background: rgba(8, 8, 12, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.nav-logo,
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.nav-links {
+  display: flex;
+  gap: clamp(12px, 2vw, 28px);
+  list-style: none;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.nav-links a {
+  color: var(--text-dim);
+  transition: color 0.2s;
+}
+
+.nav-links a:hover {
+  color: var(--white);
+}
+
+.nav-toggle {
+  display: none;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  margin-right: -10px;
+  cursor: pointer;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.site-footer {
+  padding: 80px var(--gutter) 40px;
+}
+
+.footer-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+.footer-top {
+  display: grid;
+  grid-template-columns: minmax(240px, 1.5fr) repeat(3, minmax(130px, 1fr));
+  gap: 40px;
+  margin-bottom: 60px;
+}
+
+.footer-brand {
+  color: var(--white);
+}
+
+.footer-tagline {
+  margin-top: 8px;
+  color: var(--text-dim);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.footer-col-title {
+  margin-bottom: 16px;
+  color: var(--text-mute);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+}
+
+.footer-links a {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.footer-links a:hover {
+  color: var(--white);
+}
+
+.footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  color: var(--text-mute);
+  font-size: 11px;
+}
+
+
+.site-nav ul,.site-footer ul{margin:0;padding:0;list-style:none}
+.site-footer{display:block;margin:0;border-top:1px solid var(--border);font-size:14px;line-height:1.7;letter-spacing:normal}
+.site-footer>div{text-align:left}.site-footer h2,.site-footer p{margin-top:0}
+.site-footer .footer-tagline{margin-top:8px}.site-footer .footer-bottom{flex-wrap:wrap;gap:20px}
+.chart-attribution{font-size:11px}.chart-attribution details{max-width:650px;text-align:left}
+@media(max-width:680px){
+.site-nav{gap:16px}.nav-links{position:absolute;top:100%;right:0;left:0;display:none!important;padding:16px 0!important;border-bottom:1px solid var(--border);background:var(--bg)}
+.nav-links.open{display:flex!important;flex-direction:column}.nav-links li{padding:12px var(--gutter)}.nav-links a{display:block;padding:8px 0;font-size:16px}.nav-toggle{display:flex}
+.site-footer{padding:48px var(--gutter) 32px}.footer-top{grid-template-columns:1fr;gap:32px}.footer-bottom{flex-direction:column;gap:12px;text-align:center}
+}

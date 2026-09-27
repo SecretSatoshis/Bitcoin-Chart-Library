@@ -1,238 +1,191 @@
-# Bitcoin Chart Library
+# Secret Satoshis Bitcoin Chart Library
 
-Bitcoin visualization and charting platform powering the Secret Satoshis analytics stack. The system delivers interactive dashboards and publication-ready charts for on-chain metrics, valuation models, and cross-asset analysis. The generated charts are viewable at [charts.secretsatoshis.com](https://charts.secretsatoshis.com/).
+A static, searchable library of 59 Bitcoin charts, rendered with **TradingView
+Lightweight Charts 5.2.1**. Python prepares verified data and HTML; one shared browser
+renderer supplies the Secret Satoshis theme, interactions and PNG exports.
 
-**This is a visualization layer.** [Bitcoin-Report-Library](https://github.com/SecretSatoshis/Bitcoin-Report-Library) handles source-data collection and base metric calculation. This project reads its pre-computed CSV files, performs chart-specific filtering and return/index transformations, and generates the visual outputs. It does not call market-data APIs directly.
+Existing public filenames and `?chart=` catalog links are preserved. No Python
+server is required in production, and there are no CDN or Google Fonts dependencies.
 
-## Features
+## Install and build
 
-- **On-Chain Analytics**: Hash rate, difficulty, transaction metrics, UTXO age bands, address activity, miner revenue, and supply dynamics
-- **Valuation Models**: Stock-to-Flow, Thermocap, NVT, Realized Price, power-law, Metcalfe, electricity-tariff, and relative-value models
-- **Cycle Analysis**: Drawdown tracking from ATH, halving epoch comparisons, market cycle low indexing
-- **Cross-Asset Comparisons**: Bitcoin comparisons with equities, sector leaders, metals, major market ETFs, and fiat money supply
-- **Performance Tracking**: MTD, YTD, and YoY comparisons plus CAGR charts
-- **Searchable Static Catalog**: Lightweight filters and search across all 59 charts, with one on-demand chart viewer
-- **Interactive Dashboard**: Scrollable web-based Dash view for the template-driven chart set
-
-## Architecture
-
-```
-Bitcoin-Chart-Library/
-├── main.py              # Pipeline orchestrator (reads CSVs, generates charts)
-├── chart_format.py      # Chart templates and rendering
-├── chart_catalog.py     # Catalog, SEO metadata, sitemap, and robots generation
-├── chart_definitions.py # Chart-specific configuration (CSV source URL/path)
-├── dash_app.py          # Web dashboard server
-├── Charts/              # Static catalog, standalone HTML charts, and shared assets
-├── tests/               # Regression tests
-├── pyproject.toml       # Python 3.12 dependency contract
-├── uv.lock              # Exact reproducible dependency graph
-├── requirements.txt     # Legacy runtime-install mirror
-└── requirements-dev.txt # Legacy runtime and test mirror
-```
-
-| Module | Responsibility |
-|--------|----------------|
-| `main.py` | Reads pre-computed CSVs from Report Library, orchestrates chart generation |
-| `chart_format.py` | Defines chart templates, renders Plotly figures, exports interactive HTML outputs |
-| `chart_catalog.py` | Categorizes all 59 outputs, validates complete coverage, and generates catalog, search, social, structured-data, sitemap, and robots metadata |
-| `chart_definitions.py` | Chart-specific configuration: CSV source (GitHub Pages URL or local path) |
-| `dash_app.py` | Serves the template-driven Plotly figures on one scrollable page |
-
-### Data Flow
-
-```
-Report Library CSVs (GitHub Pages or REPORT_CSV_DIR)
-    │
-    ▼
-main.py  ──►  Reads master, drawdown, cycle-low, and halving CSVs
-    │
-    ▼
-chart_format.py  ──►  Generates titled Plotly HTML figures
-    │
-    ├──►  chart_catalog.py  ──►  searchable catalog and validated metadata
-    ├──►  Charts/           (catalog, standalone HTML pack, and shared assets)
-    └──►  dash_app.py  (optional template-chart dashboard)
-```
-
-## Prerequisites
-
-- Python 3.12
-- [uv](https://docs.astral.sh/uv/)
-
-## Installation
-
-```bash
-git clone https://github.com/SecretSatoshis/Bitcoin-Chart-Library.git
-cd Bitcoin-Chart-Library
-
-# Create the Python 3.12 environment from the reviewed lockfile
+```sh
 uv sync --locked
-```
-
-## Usage
-
-```bash
 uv run --no-sync python main.py
 ```
 
-By default, Chart Library fetches CSV data directly from the Report Library's GitHub Pages site — no need to clone or run Report Library locally.
+The default source is Bitcoin Report Library's published CSV release. For local data:
 
-The pipeline:
-1. Reads pre-computed data from GitHub Pages or a local directory
-2. Generates three cycle-analysis charts
-3. Generates four monthly and yearly return-comparison charts
-4. Renders 52 configured chart templates as Plotly figures
-5. Exports the complete 59-chart HTML pack to `Charts/`
-6. Validates every chart against the category registry and generates `Charts/catalog.json`
-
-### Preview the Complete HTML Pack
-
-After generating the charts, serve the repository from a second terminal:
-
-```bash
-uv run --no-sync python -m http.server 8765
+```sh
+uv run --no-sync python main.py --csv-dir ../Bitcoin-Report-Library/csv --serve
 ```
 
-Open `http://localhost:8765/Charts/` to access every generated chart. This is a
-lightweight searchable catalog. Selecting a card loads only that chart in the embedded
-viewer; **Open standalone** preserves direct access to each existing chart URL.
+Open http://127.0.0.1:8767/. The optional server binds only to localhost. Use
+`--output outputs/review` to build a separate review pack and `--port` to choose a port.
+You can also double-click `Charts/index.html` or any chart HTML. Keep its `assets/`
+folder alongside it. Embedded data and local fonts work without HTTP access.
 
-### Optional: Launch Dashboard
+The Report Library manifest binds all inputs by SHA-256. Daily builds require a
+completed release within the existing two-day freshness window, a complete master
+calendar, and reconciled report-date prices. Builds are staged and validated before
+replacing the output pack; errors retain the previous pack. Do not edit generated
+`Charts/` files directly.
 
-To place the template-driven charts on one scrollable page, set `SERVE_DASH=1`:
+## Architecture
 
-```bash
-SERVE_DASH=1 uv run --no-sync python main.py
+```text
+Report Library release
+  → chart_inputs.py: verify one coherent release
+  → chart_templates/: discover definitions and website metadata
+  → chart_data.py: shared, renderer-independent transformations
+  → chart_build.py: compact embedded payloads + content-versioned shared assets
+  → Charts/: catalog, standalone HTML, SEO, manifest, runtime and theme
 ```
 
-Then visit `http://localhost:8080` in your browser. The current dashboard contains
-the 52 figures produced from `chart_templates`; the seven special cycle and return
-charts remain available as individual HTML files in `Charts/`. Add `DASH_DEBUG=1`
-to enable Dash's debug mode while developing.
+Template families are `timeseries` (52 charts), `cycle` (3) and `seasonal` (4).
+Monthly/yearly baselines, cycle scaling, mean/median exclusion and leap-day policies
+retain the previous calculations. The migration was checked against the old output
+for every series, date, finite value and missing observation in all 59 charts.
 
-The server binds to `127.0.0.1` and is opt-in by environment variable rather than by
-editing `main.py`, because a committed `app.run()` call blocks forever and prevents CI
-from ever reaching its commit step.
+`web/chart.html`, `web/chart.css` and `web/renderer.js` own the common presentation.
+`web/catalog/` holds the catalog source. The pinned runtime and font licenses live
+under `web/vendor/` and `web/fonts/`. The builder verifies the vendored checksums.
 
-## Configuration
+## Add a chart
 
-### CSV Data Source
+Add a dictionary to a module's `CHARTS` list under `chart_templates/`. New modules
+are discovered automatically; there is no separate catalog list or hardcoded count.
+For example, a new module can contain:
 
-By default, the Chart Library reads CSVs from the Report Library's GitHub Pages site:
-
-```
-https://secretsatoshis.github.io/Bitcoin-Report-Library/csv/
-```
-
-To use a local Report Library instead (for development), set the `REPORT_CSV_DIR` environment variable:
-
-```bash
-REPORT_CSV_DIR=../Bitcoin-Report-Library/csv uv run --no-sync python main.py
-```
-
-This is configured in `chart_definitions.py`.
-
-### Required CSV Files
-
-The following files are read from the CSV data source (generated daily by Report Library):
-
-| File | Description |
-|------|-------------|
-| `master_metrics_data.csv.gz` | Complete dataset with all calculated metrics and change calculations (gzipped) |
-| `drawdown_data.csv` | ATH drawdown cycles for cycle analysis charts |
-| `cycle_low_data.csv` | Market cycle performance from cycle lows |
-| `halving_data.csv` | Performance indexed from each Bitcoin halving |
-| `report_ohlc_summary.csv` | Completed report date and daily closing price |
-| `release_manifest.json` | Shared release ID, report date, and SHA-256/size records for every published CSV |
-
-Report Library writes the shared release manifest after generating its CSVs. Chart Library
-requires that manifest and verifies all hashes, a complete daily master calendar, matching
-master/summary prices and dates, and a report cutoff one or two completed UTC days old. A
-partially published or inconsistent release fails before chart rendering.
-
-Required chart metrics raise an error when absent or entirely non-finite. A metric explicitly marked
-`optional` in a chart template emits a warning and is skipped without stopping the
-rest of the chart pack.
-
-## Outputs
-
-### Interactive Charts
-
-HTML files exported to `Charts/` for embedding in web pages or standalone viewing. The
-standalone chart documents use the bundled `Charts/plotly.min.js`, and branding images
-are embedded directly in each document, so viewing them does not require third-party
-network requests.
-
-### Static Catalog
-
-`Charts/index.html` reads the generated `Charts/catalog.json` and provides accessible
-search, category filters, and deep links such as
-`http://localhost:8765/Charts/?chart=Bitcoin_Price` during local preview and
-`https://charts.secretsatoshis.com/?chart=Bitcoin_Price` when deployed. The landing page
-contains one initially unloaded iframe, so it never downloads all 59 chart documents at
-once. Catalog metadata is generated from the chart definitions and the seven special
-cycle and return chart registrations rather than a separate hand-written page. On narrow
-screens, the catalog keeps dense charts readable in a horizontally scrollable viewer.
-
-### Web Dashboard
-
-Optional Dash application at `http://localhost:8080` with the 52 template-driven
-charts displayed on one scrollable page.
-
-## Deployment
-
-The static catalog is designed for a Vercel project connected to this repository with:
-
-- **Production branch:** `main`
-- **Framework preset:** Other
-- **Root directory:** `Charts`
-- **Build command:** None
-- **Output directory:** `.`
-- **Custom domain:** `charts.secretsatoshis.com`
-
-`Charts/vercel.json` records the no-build static output and cache policy. Standalone
-chart HTML and `catalog.json` revalidate immediately, while the shared Plotly runtime
-revalidates immediately and its chart references carry a content-version query string. Each successful chart-update workflow commits `Charts/`
-to `main`, which supplies the next production deployment after the repository is linked
-in Vercel.
-
-The scheduled chart workflow starts daily at **01:30 UTC**, after the Report Library's
-00:30 UTC data-refresh workflow has had time to validate and publish its CSV outputs.
-The workflow then runs the chart regression suite, rebuilds the complete chart pack,
-and commits the generated `Charts/` files. Both workflows can also be started manually
-through GitHub Actions.
-
-## Dependencies
-
-Pinned canonically in `pyproject.toml` and `uv.lock` (and mirrored in
-`requirements.txt` for legacy installers):
-
-```
-pandas==3.0.5
-numpy==2.5.2
-plotly==6.9.0
-dash==4.4.1
+```python
+CHARTS = [{
+    'filename': 'Bitcoin_New_Comparison',
+    'title': 'Bitcoin New Comparison',
+    'description': 'A clear description of the comparison, its underlying data, and what a reader can learn.',
+    'category': 'Price Models',
+    'featured': False,
+    'family': 'timeseries',
+    'data_source': 'Data Source: Bitview',
+    'filter_start_date': '2010-07-01',
+    'default_range': '4Y',
+    'axes': {'right': {'label': 'Bitcoin Price (USD)', 'unit': 'USD', 'mode': 'log'}},
+    'y_data': [{'name': 'Bitcoin Price', 'data': 'price_close', 'axis': 'right'}],
+}]
 ```
 
-**Note:** This project does not depend directly on `requests` or `yfinance`. Pandas
-reads pre-computed Report Library CSVs from either the configured local directory or
-the default GitHub Pages URL.
+The filename is a public URL identifier and must be unique. Use an existing report
+metric; new economic calculations belong upstream. Add a `left` axis for a second
+unit/scale, and assign series accordingly. Optional metrics use `optional: True` and
+are visibly disclosed when unavailable. A required metric cannot be silently omitted.
 
-## Testing
+Supported units: `USD`, `percent` (already percentage points), `ratio`, `BTC`,
+`BTC/day`, `BTC-days`, `count`, `hashrate` (source H/s), `sats/USD`, `USD/TH/s/day`.
+Metadata stays in the template; spacing, colors, formatting and export layout stay
+in the shared theme. Colors derive from stable metric identities, with Bitcoin and
+current-period emphasis in orange. Use the shared events list when appropriate.
 
-Install the development dependencies and run the regression suite:
+New chart families require a shared transformation and renderer capability; ordinary
+new metric combinations do not. Run the build and tests before submitting a template.
 
-```bash
-uv sync --locked
+## Interaction and export
+
+Ordinary time-series charts start at four years. MTD/YTD comparisons start at the
+report period; seasonal views retain the whole normalized month/year. Cycle charts
+use actual integer days, not dates disguised as elapsed time.
+
+Desktop dual-axis charts overlay both scales. At 760px and below they use synchronized
+panels. Range, visibility and axis settings survive layout changes. The legend supports
+show/hide, Only, Show all, and Remove all (which retains Bitcoin price). Axis controls
+are labeled Right and Left. Range buttons include YTD / 1Y / 4Y / 10Y / All;
+reset restores defaults. Source values remain precise in the payload.
+Null observations split lines; nonpositive values are omitted on logarithmic axes and
+remain available in linear mode. Readouts do not forward-fill gaps.
+
+Every chart has an **Export PNG** button. For a scripted 2400×1350 export:
+
+```sh
+npm ci
+npx playwright install chromium
+node scripts/export-chart.cjs Charts/Bitcoin_YTD_Return_Comparison_full.html outputs/ytd.png
+```
+
+The script calls the same compositor as the button, retaining the current range and
+visibility and including title, date, legend, source and attribution. PNGs are generated
+on demand, not for every chart each day. SVG export is not included.
+
+The stable capture interface is `await window.SecretSatoshisChart.ready`; call
+`exportImage(false)` on the resolved object to obtain a PNG data URL. The payload's
+`schemaVersion` is 2. Its shared `x` calendar and series `start`/`values` arrays avoid
+repeating timestamps per point. `coverage` describes source history independently of
+seasonal display dates. `build-manifest.json` records each chart's payload and HTML hash.
+
+## Quarterly newsletter integration
+
+The Newsletter Pipeline's quarterly YTD scripts now use `chart_build.build_single`
+and the shared browser export interface. They retain the public source URL and PNG
+filename. A frozen export requires an explicit `frozen_report_date`, matching the
+manifest and source cutoff; all hashes and price/calendar checks still apply. Only
+current-release freshness is replaced by validation against that historical cutoff.
+
+A single export writes its HTML plus required shared assets beside it. The pipeline's
+existing Dashboard Playwright runtime can capture it with network requests blocked.
+Coordinate the Chart Library and Newsletter Pipeline updates in the same approved
+cutover: the new caller needs the new producer API.
+
+## Validation and publication
+
+```sh
 uv run --no-sync pytest -q
+npm ci
+npx playwright install chromium
+npm run test:browser
 ```
 
-The suite verifies that all 59 generated charts are cataloged, every catalog URL exists,
-no legacy output remains listed, and each standalone document has unique search and
-social metadata, accurate structured data, visible explanatory copy, and a canonical URL.
-It also validates the generated catalog, sitemap, and robots file.
+Browser tests start their own temporary local server and also open files directly.
+They compare plotted data to payloads across the full inventory, exercise representative
+mobile charts, catalog embeds, axes and PNG exports, and save inspection artifacts
+under ignored `outputs/browser-checks/`. Linux CI installs Chromium with `--with-deps`.
 
-## License
+The daily GitHub workflow keeps its 01:30 UTC schedule. It validates the release,
+builds the complete pack, runs Python and browser checks, and only then uploads the
+artifact for publication. Pull requests check the committed pack. Browser dependencies
+are pinned in `package-lock.json`; they are not needed to generate HTML locally.
 
-GPLv3
+The original URL inventory is retained in `tests/fixtures/original-chart-inventory.json`
+as a migration regression check. Additional templates may increase the count.
+
+Everything is static and retains the current Vercel/GitHub output structure. Hashed
+runtime/style filenames are immutable; HTML and catalog data revalidate. Git history
+retains the previous implementation and generated release for rollback. Production
+changes must be pushed only after review and explicit authorization.
+
+### Optional Bitcoin candles
+
+Charts with an actual `price_close` USD series offer **Bitcoin: Line / Candles** and
+**Daily / Weekly / Monthly** intervals. Line remains the default. Rising candles use muted green and falling candles muted
+red, with orange retained for the Bitcoin price line. Weekly/monthly
+views use the producer's exact period-end metric observations, not recalculated
+indicators. Their unfinished final period is labeled and capped at the report date.
+
+The Report Library publishes `bitcoin_candles.csv.gz`, `weekly_metrics_data.csv.gz`,
+and `monthly_metrics_data.csv.gz` in its checksum manifest. This repository only
+validates/selects those prepared observations and renders them; it never fetches BRK
+or aggregates OHLC. Legacy releases without the entire optional bundle remain
+line-only; a partially supplied or inconsistent bundle fails validation.
+
+`SecretSatoshisChart.setPresentation('candles', 'monthly')` selects the presentation
+for both the browser and common PNG compositor. `exportChart` also accepts
+`{presentation: 'candles', interval: 'monthly'}`. Run the focused optional-feature
+check with `node scripts/check-candles.cjs`. Publish the Report Library producer
+before enabling these controls in a new Chart Library release.
+
+## Shared dashboard presentation
+
+The Report Library dashboard vendors this same renderer using
+`scripts/sync-dashboard.py ../Bitcoin-Report-Library/dashboard/static/shared-chart`.
+Run it after shared presentation changes; it records source checksums and removes
+obsolete hashed renderer/style versions. Commit the generated dashboard assets in
+the Report Library as part of the same release. The dashboard defaults to weekly
+candles, a linear scale and no gridlines, with scenario cards above the plot and PNG.
+Standalone chart pages retain their own template defaults and site navigation/footer;
+the catalog embeds the same chart in a matching-width viewer.

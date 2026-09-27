@@ -1,136 +1,65 @@
-import html
-import hashlib
 import json
 import re
 from pathlib import Path
+import pytest
+from chart_templates import load_templates, validate_templates
+from chart_build import safe_json
 
-import plotly.graph_objects as go
-
-import chart_format as charts
-from chart_catalog import CATEGORY_FILES, EXPECTED_CHART_COUNT, SPECIAL_CHARTS
-
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-CHARTS_DIR = PROJECT_ROOT / "Charts"
+ROOT=Path(__file__).resolve().parents[1]
+CHARTS=ROOT/'Charts'
+CATALOG=json.loads((CHARTS/'catalog.json').read_text())
 
 
-def _catalog():
-    return json.loads((CHARTS_DIR / "catalog.json").read_text(encoding="utf-8"))
+def test_catalog_matches_templates_and_retains_every_original_chart():
+    entries=CATALOG['charts'];registered={t['filename'] for t in load_templates()}
+    assert CATALOG['chart_count']==len(entries)==len(registered)
+    assert {e['filename'] for e in entries}==registered=={p.stem for p in CHARTS.glob('*.html') if p.name!='index.html'}
+    original=json.loads((ROOT/'tests/fixtures/original-chart-inventory.json').read_text())
+    assert set(original)<=registered
 
 
-def test_catalog_has_exactly_the_complete_generated_chart_pack():
-    catalog = _catalog()
-    entries = catalog["charts"]
-    cataloged = {entry["filename"] for entry in entries}
-    generated = {
-        path.stem for path in CHARTS_DIR.glob("*.html") if path.name != "index.html"
-    }
-    registered = {
-        filename for filenames in CATEGORY_FILES.values() for filename in filenames
-    }
-
-    assert catalog["chart_count"] == EXPECTED_CHART_COUNT
-    assert len(entries) == EXPECTED_CHART_COUNT
-    assert len(cataloged) == EXPECTED_CHART_COUNT
-    assert cataloged == generated == registered
+@pytest.mark.parametrize('entry',CATALOG['charts'],ids=lambda e:e['filename'])
+def test_every_chart_has_complete_payload_and_local_assets(entry):
+    document=(CHARTS/entry['url']).read_text()
+    assert entry['category'] in CATALOG['categories'] and entry['tags']
+    assert entry['description'] and entry['height']>=520
+    assert 'plotly' not in document.lower() and 'noindex' not in document
+    p=json.loads(re.search(r'<script id="chart-data" type="application/json">(.*?)</script>',document,re.S).group(1))
+    assert p['id']==entry['filename'] and p['reportDate']==CATALOG['latest_data_date']
+    assert p['series'] and p['x']
+    for s in p['series']:
+        assert s['axis'] in p['axes']
+        assert s['start']+len(s['values'])<=len(p['x'])
+    for asset in re.findall(r'(?:src|href)="(assets/[^"?#]+)',document):assert (CHARTS/asset).is_file()
 
 
-def test_every_catalog_entry_has_valid_metadata_and_standalone_output():
-    catalog = _catalog()
-    categories = set(catalog["categories"])
-
-    assert catalog["categories"] == [
-        "Price Models",
-        "On-chain Valuation",
-        "Asset Comparisons",
-        "Relative Valuation",
-        "Cycle Analysis",
-        "Returns and Performance",
-        "Supply",
-        "Network Activity",
-        "Mining and Security",
-        "Holder Behavior",
-    ]
-    assert list(CATEGORY_FILES) == catalog["categories"]
-    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", catalog["latest_data_date"])
-
-    runtime_digest = hashlib.sha256((CHARTS_DIR / "plotly.min.js").read_bytes()).hexdigest()[:16]
-    for entry in catalog["charts"]:
-        expected_url = f'{entry["filename"]}.html'
-        chart_path = CHARTS_DIR / expected_url
-
-        assert entry["title"].strip()
-        assert entry["description"].strip()
-        assert entry["category"] in categories
-        assert entry["tags"]
-        assert isinstance(entry["featured"], bool)
-        assert entry["height"] >= 520
-        assert entry["url"] == expected_url
-        assert chart_path.is_file()
-
-        chart_document = chart_path.read_text(encoding="utf-8")
-        expected_title = (
-            f'<title>{html.escape(entry["title"])} | Secret Satoshis</title>'
-        )
-        assert expected_title in chart_document
-        assert f'src="plotly.min.js?v={runtime_digest}"' in chart_document
+def test_catalog_is_offline_capable_and_uses_one_lazy_iframe():
+    document=(CHARTS/'index.html').read_text()
+    frames=re.findall(r'<iframe\b[^>]*>',document)
+    assert len(frames)==1 and not re.search(r'\bsrc\s*=',frames[0])
+    inline=json.loads(re.search(r'<script id="catalog-data" type="application/json">(.*?)</script>',document,re.S).group(1))
+    assert inline==CATALOG
+    assert 'fetch(' not in (ROOT/'web/catalog/assets/catalog.js').read_text()
 
 
-def test_source_metadata_covers_every_registered_chart():
-    source_filenames = {template["filename"] for template in charts.chart_templates}
-    source_filenames.update(
-        template["filename"]
-        for template in [charts.chart_drawdowns, charts.chart_cycle_lows, charts.chart_halvings]
-    )
-    source_filenames.update(SPECIAL_CHARTS)
-    registered = {
-        filename for filenames in CATEGORY_FILES.values() for filename in filenames
-    }
-
-    assert source_filenames == registered
+def test_safe_embedded_json_cannot_close_script():
+    value={'text':'</script><script>alert(1)</script>'}
+    assert '</script>' not in safe_json(value)
+    assert json.loads(safe_json(value))==value
 
 
-def test_catalog_page_contains_only_one_unloaded_iframe():
-    document = (CHARTS_DIR / "index.html").read_text(encoding="utf-8")
-    iframe_tags = re.findall(r"<iframe\b[^>]*>", document, flags=re.IGNORECASE)
-
-    assert len(iframe_tags) == 1
-    assert not re.search(r"\bsrc\s*=", iframe_tags[0], flags=re.IGNORECASE)
-    assert (
-        document.index('id="categoryFilters"')
-        < document.index('id="viewer"')
-        < document.index('id="chartGroups"')
-    )
-    assert 'id="chartFrameWrap" tabindex="0"' in document
-    assert "Swipe or scroll horizontally" in document
-    assert 'fetch(\'catalog.json\'' in (CHARTS_DIR / "assets/catalog.js").read_text(
-        encoding="utf-8"
-    )
+def test_registry_rejects_duplicates_and_invalid_axes():
+    t=load_templates()[0]
+    with pytest.raises(ValueError,match='duplicate'):validate_templates([t,t])
+    t={**t,'filename':'../escape'}
+    with pytest.raises(ValueError,match='filename'):validate_templates([t])
 
 
-def test_vercel_config_serves_the_static_directory_with_safe_cache_boundaries():
-    config = json.loads((CHARTS_DIR / "vercel.json").read_text(encoding="utf-8"))
-    headers = {rule["source"]: rule["headers"] for rule in config["headers"]}
-
-    assert config["buildCommand"] is None
-    assert config["outputDirectory"] == "."
-    assert "/plotly.min.js" in headers
-    assert "/catalog.json" in headers
-    assert "/:chart.html" in headers
-    assert "max-age=0" in headers["/plotly.min.js"][0]["value"]
-    assert "max-age=0" in headers["/catalog.json"][0]["value"]
-    assert "max-age=0" in headers["/:chart.html"][0]["value"]
-
-
-def test_chart_export_adds_a_meaningful_document_title(tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    figure = go.Figure(go.Scatter(x=[1, 2], y=[1, 2]))
-    figure.update_layout(title="Bitcoin Test Metric")
-
-    charts.save_chart_html(figure, "Bitcoin_Test_Metric")
-
-    document = (tmp_path / "Charts/Bitcoin_Test_Metric.html").read_text(
-        encoding="utf-8"
-    )
-    assert "<title>Bitcoin Test Metric | Secret Satoshis</title>" in document
-    assert 'src="plotly.min.js?v=' in document
+def test_cache_rules_and_vendored_runtime():
+    config=json.loads((CHARTS/'vercel.json').read_text())
+    headers={r['source']:r['headers'] for r in config['headers']}
+    assert '/plotly.min.js' not in headers
+    for key in ('/catalog.json','/:chart.html','/'):
+        assert 'must-revalidate' in headers[key][0]['value']
+    assert 'immutable' in headers['/assets/:asset'][0]['value']
+    assert (CHARTS/'assets/LICENSE').is_file() and (CHARTS/'assets/NOTICE').is_file()
