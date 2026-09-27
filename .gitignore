@@ -51,3 +51,7 @@ build/
 
 # Byte-compiled files
 *.pyc
+
+# Browser tooling and temporary chart builds
+node_modules/
+.chart-stage-*/

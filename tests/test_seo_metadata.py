@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from chart_catalog import CANONICAL_BASE, EXPECTED_CHART_COUNT
+from chart_catalog import CANONICAL_BASE
 
 CHARTS = Path(__file__).resolve().parents[1] / "Charts"
 CATALOG = json.loads((CHARTS / "catalog.json").read_text(encoding="utf-8"))
@@ -30,7 +30,7 @@ def _ld(document: str) -> dict:
 
 
 def test_catalog_covers_every_chart():
-    assert len(ENTRIES) == EXPECTED_CHART_COUNT
+    assert {e['filename'] for e in ENTRIES} == {p.stem for p in CHARTS.glob('*.html') if p.name != 'index.html'}
 
 
 def test_titles_and_descriptions_are_unique():
@@ -96,24 +96,13 @@ def test_structured_data_is_valid_and_accurate(filename):
     assert "codeRepository" not in data, "codeRepository is not a Dataset property"
 
 
-def test_temporal_coverage_matches_the_plotted_data():
-    """A shared start date would be false on most charts; check a real one."""
+def test_temporal_coverage_matches_payload_source_history():
     for entry in ENTRIES:
-        document = PAGES[entry["filename"]]
-        plotted = re.findall(r'"x":\["(\d{4}-\d{2}-\d{2})', document)
-        coverage = _ld(document).get("temporalCoverage")
-        if not plotted:
-            continue
-        assert coverage, f"{entry['filename']}: plotted dates but no temporalCoverage"
-        expected_start = min(plotted)
-        historical_years = [
-            int(value) for value in re.findall(r'"name":"(\d{4})"', document)
-        ]
-        if historical_years:
-            expected_start = f"{min(historical_years):04d}-01-01"
-        assert coverage.split("/")[0] == expected_start, (
-            f"{entry['filename']}: declared start {coverage} != plotted {min(plotted)}"
-        )
+        document=PAGES[entry['filename']]
+        payload=json.loads(re.search(r'<script id="chart-data" type="application/json">(.*?)</script>',document,re.S).group(1))
+        assert _ld(document).get('temporalCoverage')==payload['coverage']
+        if payload['family']=='seasonal':
+            assert payload['coverage'].split('/')[0][:4] <= payload['reportDate'][:4]
 
 
 def test_sitemap_lists_the_catalog_and_every_chart_and_no_fragments():

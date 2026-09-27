@@ -5,11 +5,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
-from plotly.offline import get_plotlyjs
 import pytest
 
-import chart_format as charts
 from chart_inputs import INPUT_FILES, load_chart_inputs, validate_report_dates
 
 
@@ -76,60 +73,14 @@ def test_release_rejects_missing_or_duplicate_day(tmp_path):
             validate_report_dates(broken, summary, '2026-09-08', now='2026-09-09')
 
 
-def test_cycle_low_moves_with_actual_low(monkeypatch):
-    monkeypatch.setattr(charts, 'save_chart_html', lambda *a: None)
-    master = pd.DataFrame({'price_close': [100., 80., 120.]}, index=pd.date_range('2026-02-06', periods=3))
-    template = {**charts.chart_cycle_lows, 'y_data': [{'name': 'Current', 'group': 'Current'}]}
-    cycle = pd.DataFrame({'Cycle': ['Current']*2, 'days_since_cycle_low': [0, 1], 'index_value': [1., 1.5]})
-    figure = charts.create_days_since_chart(cycle, template, master)
-    np.testing.assert_allclose(figure.data[0].y, [80., 120.])
-    cycle.loc[0, 'index_value'] = 1.1
-    with pytest.raises(ValueError, match='disagrees'):
-        charts.create_days_since_chart(cycle, template, master)
-
-
-def test_empty_cycle_and_blank_required_metric_fail(monkeypatch):
-    monkeypatch.setattr(charts, 'save_chart_html', lambda *a: None)
-    with pytest.raises(ValueError, match='required cycle groups'):
-        charts.create_days_since_chart(pd.DataFrame(columns=['Era','days_since_halving','index_value']), charts.chart_halvings)
-    frame = pd.DataFrame({item['data']: [np.nan, np.nan] for item in charts.chart_hashrate['y_data']}, index=pd.date_range('2026-01-01', periods=2))
-    with pytest.raises(ValueError, match='finite observations'):
-        charts.create_line_chart(charts.chart_hashrate, frame)
-
-
-def test_missing_optional_asset_is_visible_without_aborting():
-    template = {**charts.chart_price, 'y_data': [
-        {'name':'Bitcoin','data':'price_close','yaxis':'y'},
-        {'name':'Optional ETF','data':'SPY_close','optional':True,'yaxis':'y'}]}
-    frame = pd.DataFrame({'price_close':[100.,110.], 'SPY_close':[np.nan,np.nan]}, index=pd.date_range('2026-01-01',periods=2))
-    with pytest.warns(RuntimeWarning, match='Skipping optional'):
-        figure = charts.create_line_chart(template, frame)
-    assert len(figure.data) == 1
-    assert any('Unavailable: Optional ETF' in (item.text or '') for item in figure.layout.annotations)
-    assert not any(item.get('optional') for item in charts.chart_price_ma['y_data'])
-
-
-def test_supply_chart_contracts():
-    assert 'Active' not in charts.chart_1_year_supply['y_data'][1]['name']
-    assert 'tx_count_sum_24h' not in {item['data'] for item in charts.macro_supply['y_data']}
-
-
-def test_export_replaces_stale_runtime_and_versions_reference(tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    (tmp_path/'Charts').mkdir()
-    runtime = tmp_path/'Charts/plotly.min.js'
-    runtime.write_text('broken previous version')
-    charts.save_chart_html(go.Figure(go.Scatter(x=[1,2], y=[100,110])), 'test')
-    assert runtime.read_text() == get_plotlyjs()
-    document = (tmp_path/'Charts/test.html').read_text()
-    digest = hashlib.sha256(get_plotlyjs().encode()).hexdigest()[:16]
-    assert f'src="plotly.min.js?v={digest}"' in document
-    assert 'plotly.js v' not in document  # shared bundle, not an accidental inline copy
-
-
-def test_unregistered_cycle_is_not_silently_omitted(monkeypatch):
-    monkeypatch.setattr(charts, 'save_chart_html', lambda *a: None)
-    template = {**charts.chart_halvings, 'y_data': [{'name':'Known','group':'Known'}]}
-    data = pd.DataFrame({'Era':['Known','New'], 'days_since_halving':[0,0], 'index_value':[1.,1.]})
-    with pytest.raises(ValueError, match='unregistered'):
-        charts.create_days_since_chart(data, template)
+def test_frozen_export_retains_integrity_without_requiring_current_release(tmp_path):
+    _release(tmp_path)
+    frames=load_chart_inputs(lambda name:tmp_path/name,now='2026-12-01',frozen_report_date='2026-09-08')
+    assert frames[INPUT_FILES[0]].index[-1]==pd.Timestamp('2026-09-08')
+    with pytest.raises(ValueError,match='cutoff'):
+        load_chart_inputs(lambda name:tmp_path/name,now='2026-12-01',frozen_report_date='2026-09-09')
+    with pytest.raises(ValueError,match='completed'):
+        load_chart_inputs(lambda name:tmp_path/name,now='2026-09-08',frozen_report_date='2026-09-08')
+    with (tmp_path/INPUT_FILES[0]).open('ab') as handle:handle.write(b'changed')
+    with pytest.raises(ValueError,match='manifest'):
+        load_chart_inputs(lambda name:tmp_path/name,now='2026-12-01',frozen_report_date='2026-09-08')

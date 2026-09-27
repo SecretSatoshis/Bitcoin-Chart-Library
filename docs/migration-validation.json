@@ -1,0 +1,24 @@
+{
+  "baseline-metrics.json": {
+    "seconds": 18.072737792041153,
+    "chart_html_bytes": 64845321,
+    "charts": 59,
+    "report_date": "2026-09-24"
+  },
+  "parity-result.json": {
+    "charts": 59,
+    "finite_values": 1384991,
+    "report_date": "2026-09-24",
+    "baseline_sha256": "45316bebc98c7b1ca8f366b04b8fd909bb27ca8f0c0a5e5c3e41b7917886efb0"
+  },
+  "current_build": {
+    "seconds": 7.719,
+    "output_bytes": 50027456,
+    "chart_count": 59,
+    "report_date": "2026-09-26"
+  },
+  "notes": [
+    "Baseline measures chart HTML only; current build measures the full output folder including candle payloads and shared assets.",
+    "Original parity check compared 59 charts and 1,384,991 finite observations before the subsequent daily data refresh."
+  ]
+}

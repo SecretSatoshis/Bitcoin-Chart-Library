@@ -7,6 +7,7 @@ from urllib.request import urlopen
 
 import numpy as np
 import pandas as pd
+from candle_inputs import CANDLE_FILES, validate_candle_inputs
 
 INPUT_FILES = (
     'master_metrics_data.csv.gz', 'drawdown_data.csv', 'cycle_low_data.csv',
@@ -46,7 +47,7 @@ def validate_report_dates(master, summary, report_date, now=None, max_age_days=2
     return date
 
 
-def load_chart_inputs(csv_path, now=None):
+def load_chart_inputs(csv_path, now=None, *, frozen_report_date=None):
     manifest = json.loads(_read_bytes(csv_path(RELEASE_MANIFEST_NAME)))
     if (manifest.get('schema_version') != 1
             or manifest.get('release_id') != manifest.get('report_date')):
@@ -59,13 +60,31 @@ def load_chart_inputs(csv_path, now=None):
         raise ValueError('Release manifest is missing chart input files')
     report_date = manifest.get('report_date')
     frames = {}
-    for filename in INPUT_FILES:
+    optional = set(CANDLE_FILES) & set(records)
+    if optional and optional != set(CANDLE_FILES):
+        raise ValueError('Incomplete optional candle release')
+    for filename in (*INPUT_FILES, *(CANDLE_FILES if optional else ())):
         payload = _read_bytes(csv_path(filename))
         expected = records[filename]
         expected_hash = expected.get('sha256') if isinstance(expected, dict) else expected
         if hashlib.sha256(payload).hexdigest() != expected_hash:
             raise ValueError(f'{filename} does not match the release manifest; retry after publication completes')
-        options = {'compression': 'gzip', 'index_col': 0, 'parse_dates': True, 'low_memory': False} if filename.endswith('.gz') else {}
+        options = {'compression': 'gzip', 'index_col': 0, 'parse_dates': True, 'low_memory': False} if filename.endswith('.gz') and filename != CANDLE_FILES[0] else {'compression':'gzip'} if filename == CANDLE_FILES[0] else {}
         frames[filename] = pd.read_csv(io.BytesIO(payload), **options)
-    validate_report_dates(frames[INPUT_FILES[0]], frames['report_ohlc_summary.csv'], report_date, now)
+    validation_now = now
+    if frozen_report_date is not None:
+        if report_date != frozen_report_date:
+            raise ValueError('Frozen release report date does not match requested cutoff')
+        today = pd.Timestamp.now(tz='UTC') if now is None else pd.Timestamp(now)
+        today = today.tz_convert('UTC').tz_localize(None) if today.tz is not None else today
+        date = pd.Timestamp(report_date)
+        if date.tz is not None or date >= today.normalize():
+            raise ValueError('Frozen release must describe a completed UTC day')
+        # Explicit historical exports retain all integrity checks, with freshness
+        # relative to the requested release instead of the wall clock.
+        validation_now = date + pd.Timedelta(days=1)
+    validate_report_dates(frames[INPUT_FILES[0]], frames['report_ohlc_summary.csv'], report_date, validation_now)
+    if optional:
+        validate_candle_inputs(frames, report_date)
+    frames[INPUT_FILES[0]].attrs['release_manifest'] = manifest
     return frames
