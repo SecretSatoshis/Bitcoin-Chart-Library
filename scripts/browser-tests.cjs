@@ -15,7 +15,7 @@ const root=resolve(process.argv[2]||'Charts'),artifacts=resolve('outputs/browser
  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
  page.on('request',r=>{if(r.url().startsWith('http')&&!r.url().startsWith(base))external.push(r.url());});
  const catalog=JSON.parse(await readFile(join(root,'catalog.json'),'utf8'));
- const examples=new Set(['Bitcoin_On_Chain','Bitcoin_Hashrate_Price','Bitcoin_YTD_Return_Comparison_full','Bitcoin_Equities','Bitcoin_Cycle_Low','MTD_Return_By_Year_Percentage','Bitcoin_YTD_Return_By_Year_Indexed']);
+ const examples=new Set(['Bitcoin_Realized_Price','Bitcoin_Hashrate_Price','Bitcoin_YTD_Return_Comparison_full','Bitcoin_Address_Balance','Bitcoin_Cycle_Low','MTD_Return_By_Year_Percentage','Bitcoin_YTD_Return_By_Year_Indexed']);
  for(const protocol of (process.env.CHART_TEST_FOCUSED?[]:['http','file'])){
   for(const entry of catalog.charts){
    console.log(`${protocol}: ${entry.filename}`);

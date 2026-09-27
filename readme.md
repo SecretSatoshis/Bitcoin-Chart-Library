@@ -1,6 +1,6 @@
 # Secret Satoshis Bitcoin Chart Library
 
-A static, searchable library of 59 Bitcoin charts, rendered with **TradingView
+A static, searchable library of 50 Bitcoin charts, rendered with **TradingView
 Lightweight Charts 5.2.1**. Python prepares verified data and HTML; one shared browser
 renderer supplies the Secret Satoshis theme, interactions and PNG exports.
 
@@ -42,7 +42,7 @@ Report Library release
   → Charts/: catalog, standalone HTML, SEO, manifest, runtime and theme
 ```
 
-Template families are `timeseries` (52 charts), `cycle` (3) and `seasonal` (4).
+Template families are `timeseries` (43 charts), `cycle` (3) and `seasonal` (4).
 Monthly/yearly baselines, cycle scaling, mean/median exclusion and leap-day policies
 retain the previous calculations. The migration was checked against the old output
 for every series, date, finite value and missing observation in all 59 charts.
@@ -151,8 +151,10 @@ builds the complete pack, runs Python and browser checks, and only then uploads 
 artifact for publication. Pull requests check the committed pack. Browser dependencies
 are pinned in `package-lock.json`; they are not needed to generate HTML locally.
 
-The original URL inventory is retained in `tests/fixtures/original-chart-inventory.json`
-as a migration regression check. Additional templates may increase the count.
+The original 59-URL inventory is retained in `tests/fixtures/original-chart-inventory.json`
+as a migration record. `tests/fixtures/retired-chart-inventory.json` lists intentional
+removals; the catalog check still requires every other original chart. New templates
+may increase the count.
 
 Everything is static and retains the current Vercel/GitHub output structure. Hashed
 runtime/style filenames are immutable; HTML and catalog data revalidate. Git history

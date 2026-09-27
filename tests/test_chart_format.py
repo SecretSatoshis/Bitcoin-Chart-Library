@@ -97,7 +97,7 @@ def test_cycle_current_low_reconciliation_and_registered_groups():
 def test_daily_precision_gaps_optional_and_required_series():
     data=frame(pd.date_range('2026-01-01',periods=4),[10.1234567890123,20,30,40])
     data['benchmark']=[np.nan,15,np.inf,35]
-    t=get_template('Bitcoin_On_Chain');t['y_data']=[{'data':'price_close','name':'Bitcoin','axis':'right'}, {'data':'benchmark','name':'Benchmark','axis':'right'}]
+    t=get_template('Bitcoin_Hashrate_Price');t['y_data']=[{'data':'price_close','name':'Bitcoin','axis':'right'}, {'data':'benchmark','name':'Benchmark','axis':'right'}]
     series,_,_=_daily(data,t)
     assert series[0]['values'][0]==10.1234567890123
     assert series[1]['values']==[None,15,None,35]
@@ -118,12 +118,11 @@ def test_dual_axes_units_and_percentage_values_are_explicit():
 
 def test_existing_template_content_is_preserved():
     templates={t['filename']:t for t in load_templates()}
-    assert len(templates['Bitcoin_Equities']['y_data'])==26
-    for name in ('Bitcoin_Transactions','Bitcoin_Hashrate'):
-        assert {s['axis'] for s in templates[name]['y_data']}=={'right'}
+    assert len(templates['Bitcoin_YTD_Return_Comparison_full']['y_data'])==17
+    assert {s['axis'] for s in templates['Bitcoin_Transactions']['y_data']}=={'right'}
     fields={s['data'] for s in templates['Bitcoin_YTD_Return_Comparison_full']['y_data']}
     assert '^SPGSCI_close_YTD_change' in fields and '^BCOM_close_YTD_change' not in fields
-    events={e['name']:e for e in templates['Bitcoin_On_Chain']['events']}
+    events={e['name']:e for e in templates['Bitcoin_Hashrate_Price']['events']}
     assert events['U.S. Strategic Bitcoin Reserve']['dates']==['2025-03-06']
     assert events['Strategy Sells Bitcoin']['dates']==['2026-06-29']
     supply=templates['Bitcoin_Macro_Supply']['y_data']

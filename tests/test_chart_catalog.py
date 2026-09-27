@@ -10,12 +10,15 @@ CHARTS=ROOT/'Charts'
 CATALOG=json.loads((CHARTS/'catalog.json').read_text())
 
 
-def test_catalog_matches_templates_and_retains_every_original_chart():
+def test_catalog_matches_templates_and_intentional_retirements():
     entries=CATALOG['charts'];registered={t['filename'] for t in load_templates()}
     assert CATALOG['chart_count']==len(entries)==len(registered)
     assert {e['filename'] for e in entries}==registered=={p.stem for p in CHARTS.glob('*.html') if p.name!='index.html'}
     original=json.loads((ROOT/'tests/fixtures/original-chart-inventory.json').read_text())
-    assert set(original)<=registered
+    retired=set(json.loads((ROOT/'tests/fixtures/retired-chart-inventory.json').read_text()))
+    assert retired<=set(original)
+    assert not (retired & registered)
+    assert set(original)-retired<=registered
 
 
 @pytest.mark.parametrize('entry',CATALOG['charts'],ids=lambda e:e['filename'])
@@ -31,6 +34,16 @@ def test_every_chart_has_complete_payload_and_local_assets(entry):
         assert s['axis'] in p['axes']
         assert s['start']+len(s['values'])<=len(p['x'])
     for asset in re.findall(r'(?:src|href)="(assets/[^"?#]+)',document):assert (CHARTS/asset).is_file()
+
+
+def test_site_count_and_metadata_follow_catalog():
+    source=(ROOT/'web/catalog/index.html').read_text()
+    document=(CHARTS/'index.html').read_text()
+    count=CATALOG['chart_count']
+    assert 'placeholder="Search Bitcoin charts…"' in source
+    assert f'Search {count} Bitcoin charts…' in document
+    assert f'{count} interactive Bitcoin charts' in document
+    assert 'ss:chart-index' in source and 'ss:head' in source
 
 
 def test_catalog_is_offline_capable_and_uses_one_lazy_iframe():

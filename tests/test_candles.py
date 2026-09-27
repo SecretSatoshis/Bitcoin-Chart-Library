@@ -22,7 +22,7 @@ def candle_fixture():
 
 def test_prepared_periods_preserve_nulls_and_original_event_dates():
     inputs=candle_fixture();validate_candle_inputs(inputs,'2024-01-02')
-    template=get_template('Bitcoin_On_Chain');template['filter_start_date']='2024-01-01'
+    template=get_template('Bitcoin_Hashrate_Price');template['filter_start_date']='2024-01-01'
     template['y_data']=[{'data':'price_close','name':'Bitcoin Price','axis':'right'},{'data':'model','name':'Model','axis':'right'}]
     template['events']=[{'name':'Example event','dates':['2024-01-02']}]
     payload=build_payload(template,inputs);week=payload['candleViews']['weekly']

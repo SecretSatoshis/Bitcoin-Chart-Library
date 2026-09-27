@@ -283,6 +283,7 @@ def write_catalog(output_dir, payloads):
     path=output_dir/'index.html';document=path.read_text()
     document=re.sub(r'<script id="catalog-data".*?</script>','',document,flags=re.S)
     safe=json.dumps(catalog,separators=(',',':')).replace('<','\\u003c')
+    document=document.replace('placeholder="Search Bitcoin charts…"', f'placeholder="Search {catalog["chart_count"]} Bitcoin charts…"')
     document=document.replace('</body>',f'<script id="catalog-data" type="application/json">{safe}</script>\n</body>')
     path.write_text(document)
     return catalog
