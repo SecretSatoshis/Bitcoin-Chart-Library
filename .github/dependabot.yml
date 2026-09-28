@@ -9,6 +9,16 @@ updates:
         patterns:
           - "*"
     open-pull-requests-limit: 5
+  # Pinned Playwright for the browser regression checks.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      browser-tooling:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 5
   - package-ecosystem: github-actions
     directory: /
     schedule:
