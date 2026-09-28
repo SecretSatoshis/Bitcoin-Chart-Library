@@ -122,20 +122,19 @@ The stable capture interface is `await window.SecretSatoshisChart.ready`; call
 repeating timestamps per point. `coverage` describes source history independently of
 seasonal display dates. `build-manifest.json` records each chart's payload and HTML hash.
 
-## Quarterly newsletter integration
+## Frozen single-chart export
 
-The Newsletter Pipeline's quarterly YTD scripts now use `chart_build.build_single`
-and the shared browser export interface. They retain the public source URL and PNG
-filename. A frozen export requires an explicit `frozen_report_date`, matching the
-manifest and source cutoff; all hashes and price/calendar checks still apply. Only
-current-release freshness is replaced by validation against that historical cutoff.
+`chart_build.build_single(csv_dir, filename, output, frozen_report_date=...)` builds one
+chart against an earlier Report Library release, for reports that must show data as of a
+past cutoff. The explicit `frozen_report_date` must match the release manifest and the
+source cutoff; all hashes and price/calendar checks still apply, and only current-release
+freshness is replaced by validation against that historical date.
 
 A single export stages its HTML and required shared assets, checks every asset
 reference, then moves them beside the requested output; a failure leaves the
-destination unchanged. It refuses to write inside the published `Charts/` pack. The pipeline's
-existing Dashboard Playwright runtime can capture it with network requests blocked.
-Coordinate the Chart Library and Newsletter Pipeline updates in the same approved
-cutover: the new caller needs the new producer API.
+destination unchanged. It refuses to write inside the published `Charts/` pack. Capture
+the result as a PNG through the same `window.SecretSatoshisChart` interface described
+above, with network requests blocked.
 
 ## Validation and publication
 
