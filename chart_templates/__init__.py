@@ -7,7 +7,7 @@ import re
 CATEGORY_ORDER = ['Price Models', 'On-chain Valuation', 'Asset Comparisons',
                   'Relative Valuation', 'Cycle Analysis', 'Returns and Performance',
                   'Supply', 'Network Activity', 'Mining and Security', 'Holder Behavior']
-UNITS = {'USD', 'percent', 'ratio', 'BTC', 'BTC/day', 'BTC-days', 'count', 'hashrate', 'sats/USD', 'USD/TH/s/day'}
+UNITS = {'USD', 'percent', 'ratio', 'BTC', 'BTC/day', 'count', 'hashrate', 'sats/USD', 'USD/TH/s/day'}
 
 
 def validate_templates(templates):

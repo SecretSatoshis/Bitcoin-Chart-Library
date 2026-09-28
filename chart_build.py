@@ -138,9 +138,27 @@ def build_pack(csv_dir,output=ROOT/'Charts',*,templates=None,frozen_report_date=
 
 
 def build_single(csv_dir,filename,output,*,frozen_report_date):
-    """Frozen newsletter export: full release integrity with an explicit past cutoff."""
+    """Frozen newsletter export: full release integrity with an explicit past cutoff.
+
+    The page and its shared assets are staged and checked first, then moved beside
+    ``output``; a failure leaves the destination untouched. Hashed asset names never
+    collide across versions, so earlier exports in the same folder keep working.
+    """
     from chart_templates import get_template
+    output=Path(output).resolve()
+    published=(ROOT/'Charts').resolve()
+    if output.parent==published or published in output.parents:
+        raise ValueError('Frozen exports must not be written into the published Charts/ pack')
     payload=build_payload(get_template(filename),_inputs(csv_dir,frozen_report_date))
-    output=Path(output).resolve();output.parent.mkdir(parents=True,exist_ok=True)
-    assets=prepare_assets(output.parent)
-    return write_chart(payload,output.parent,assets,output.name)
+    output.parent.mkdir(parents=True,exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix='.chart-export-',dir=output.parent) as directory:
+        stage=Path(directory)
+        assets=prepare_assets(stage)
+        page=write_chart(payload,stage,assets,output.name)
+        for path in re.findall(r'(?:src|href)="(assets/[^"?#]+)',page.read_text()):
+            if not (stage/path).is_file():raise ValueError(f'Missing asset {path}')
+        (output.parent/'assets').mkdir(exist_ok=True)
+        for asset in (stage/'assets').iterdir():os.replace(asset,output.parent/'assets'/asset.name)
+        os.replace(stage/'favicon.ico',output.parent/'favicon.ico')
+        os.replace(page,output)
+    return output

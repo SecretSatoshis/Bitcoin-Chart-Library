@@ -3,7 +3,10 @@ name: Update Bitcoin Charts
 on:
   pull_request:
   schedule:
-    - cron: "30 1 * * *"
+    # Hourly check rather than a fixed offset after the Report Library: GitHub starts
+    # scheduled jobs hours late and in no guaranteed order. The release job builds only
+    # when a new Report Library release has been published.
+    - cron: "45 * * * *"
   workflow_dispatch:
 
 permissions: {}
@@ -13,7 +16,27 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  release:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      build: ${{ steps.status.outputs.build }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Compare published and charted releases
+        id: status
+        run: python3 scripts/release-status.py
+
   build:
+    needs: release
+    # Pull requests and manual runs always build; scheduled runs only for a new release.
+    if: ${{ !cancelled() && (github.event_name != 'schedule' || needs.release.outputs.build == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:

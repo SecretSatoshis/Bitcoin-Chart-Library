@@ -1,4 +1,4 @@
-// Focused local/CI check for the optional Bitcoin candle presentation.
+// Focused local/CI check for the Bitcoin candle presentation.
 const assert=require('node:assert/strict');
 const {chromium}=require('playwright');
 const {pathToFileURL}=require('node:url');
@@ -10,7 +10,8 @@ const fs=require('node:fs/promises');
  await page.route('https://**/*',r=>r.abort());
  await page.goto(pathToFileURL(resolve('Charts/Bitcoin_Hashrate_Price.html')).href);
  await page.evaluate(()=>SecretSatoshisChart.ready);
- if(!await page.evaluate(()=>Boolean(SecretSatoshisChart.payload.candleViews))){console.log('No candle dataset in this release; line-only compatibility preserved.');return;}
+ // Every release carries the candle bundle; a chart without candle views is a failure.
+ assert.equal(await page.evaluate(()=>Boolean(SecretSatoshisChart.payload.candleViews)),true,'Bitcoin price chart is missing its candle views');
  await page.locator('#bitcoin-style').selectOption('candles');
  for(const interval of ['daily','weekly','monthly']){
   await page.locator('#candle-interval').selectOption(interval);

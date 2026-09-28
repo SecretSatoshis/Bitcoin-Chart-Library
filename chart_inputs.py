@@ -2,7 +2,9 @@
 import hashlib
 import io
 import json
+import time
 from pathlib import Path
+from urllib.parse import quote
 from urllib.request import urlopen
 
 import numpy as np
@@ -13,14 +15,47 @@ INPUT_FILES = (
     'master_metrics_data.csv.gz', 'drawdown_data.csv', 'cycle_low_data.csv',
     'halving_data.csv', 'report_ohlc_summary.csv',
 )
+# The Report Library publishes the candle bundle in every release. A release without it
+# is broken, not a line-only release, so it is required like every other input.
+REQUIRED_FILES = (*INPUT_FILES, *CANDLE_FILES)
 RELEASE_MANIFEST_NAME = 'release_manifest.json'
 
+# GitHub Pages serves every file with a 10-minute CDN cache. Remote reads key each file
+# to its release (and the manifest to the request time) so a cached copy of an older
+# release cannot be mixed in, and retry briefly while a new deployment propagates.
+REMOTE_ATTEMPTS = 3
+REMOTE_RETRY_SECONDS = 20
 
-def _read_bytes(path):
-    if str(path).startswith(('https://', 'http://')):
-        with urlopen(path, timeout=60) as response:
+READ_OPTIONS = {
+    'master_metrics_data.csv.gz': {'compression': 'gzip', 'index_col': 0, 'parse_dates': True, 'low_memory': False},
+    'weekly_metrics_data.csv.gz': {'compression': 'gzip', 'index_col': 0, 'parse_dates': True, 'low_memory': False},
+    'monthly_metrics_data.csv.gz': {'compression': 'gzip', 'index_col': 0, 'parse_dates': True, 'low_memory': False},
+    'bitcoin_candles.csv.gz': {'compression': 'gzip'},
+}
+
+
+def _is_remote(path):
+    return str(path).startswith(('https://', 'http://'))
+
+
+def _read_bytes(path, query=None):
+    if _is_remote(path):
+        url = f'{path}?{query}' if query else str(path)
+        with urlopen(url, timeout=60) as response:
             return response.read()
     return Path(path).read_bytes()
+
+
+def _read_verified(path, filename, expected_hash, release_id):
+    """Read one input and require its manifest hash, retrying remote CDN propagation."""
+    remote = _is_remote(path)
+    for attempt in range(1, (REMOTE_ATTEMPTS if remote else 1) + 1):
+        payload = _read_bytes(path, f'release={quote(str(release_id))}' if remote else None)
+        if hashlib.sha256(payload).hexdigest() == expected_hash:
+            return payload
+        if attempt < REMOTE_ATTEMPTS and remote:
+            time.sleep(REMOTE_RETRY_SECONDS)
+    raise ValueError(f'{filename} does not match the release manifest; retry after publication completes')
 
 
 def validate_report_dates(master, summary, report_date, now=None, max_age_days=2):
@@ -48,7 +83,7 @@ def validate_report_dates(master, summary, report_date, now=None, max_age_days=2
 
 
 def load_chart_inputs(csv_path, now=None, *, frozen_report_date=None):
-    manifest = json.loads(_read_bytes(csv_path(RELEASE_MANIFEST_NAME)))
+    manifest = json.loads(_read_bytes(csv_path(RELEASE_MANIFEST_NAME), f't={time.time_ns()}'))
     if (manifest.get('schema_version') != 1
             or manifest.get('release_id') != manifest.get('report_date')):
         raise ValueError('Missing or unsupported release manifest')
@@ -56,21 +91,16 @@ def load_chart_inputs(csv_path, now=None, *, frozen_report_date=None):
     records = manifest.get('files', {})
     if not isinstance(records, dict):
         raise ValueError('Release manifest files must be an object')
-    if set(INPUT_FILES) - set(records):
-        raise ValueError('Release manifest is missing chart input files')
+    missing = set(REQUIRED_FILES) - set(records)
+    if missing:
+        raise ValueError(f'Release manifest is missing chart input files: {sorted(missing)}')
     report_date = manifest.get('report_date')
     frames = {}
-    optional = set(CANDLE_FILES) & set(records)
-    if optional and optional != set(CANDLE_FILES):
-        raise ValueError('Incomplete optional candle release')
-    for filename in (*INPUT_FILES, *(CANDLE_FILES if optional else ())):
-        payload = _read_bytes(csv_path(filename))
+    for filename in REQUIRED_FILES:
         expected = records[filename]
         expected_hash = expected.get('sha256') if isinstance(expected, dict) else expected
-        if hashlib.sha256(payload).hexdigest() != expected_hash:
-            raise ValueError(f'{filename} does not match the release manifest; retry after publication completes')
-        options = {'compression': 'gzip', 'index_col': 0, 'parse_dates': True, 'low_memory': False} if filename.endswith('.gz') and filename != CANDLE_FILES[0] else {'compression':'gzip'} if filename == CANDLE_FILES[0] else {}
-        frames[filename] = pd.read_csv(io.BytesIO(payload), **options)
+        payload = _read_verified(csv_path(filename), filename, expected_hash, manifest.get('release_id'))
+        frames[filename] = pd.read_csv(io.BytesIO(payload), **READ_OPTIONS.get(filename, {}))
     validation_now = now
     if frozen_report_date is not None:
         if report_date != frozen_report_date:
@@ -84,7 +114,6 @@ def load_chart_inputs(csv_path, now=None, *, frozen_report_date=None):
         # relative to the requested release instead of the wall clock.
         validation_now = date + pd.Timedelta(days=1)
     validate_report_dates(frames[INPUT_FILES[0]], frames['report_ohlc_summary.csv'], report_date, validation_now)
-    if optional:
-        validate_candle_inputs(frames, report_date)
+    validate_candle_inputs(frames, report_date)
     frames[INPUT_FILES[0]].attrs['release_manifest'] = manifest
     return frames

@@ -1,4 +1,4 @@
-"""Validate optional, Report Library-prepared candle inputs. No aggregation here."""
+"""Validate the Report Library-prepared candle inputs every release carries. No aggregation here."""
 import numpy as np
 import pandas as pd
 

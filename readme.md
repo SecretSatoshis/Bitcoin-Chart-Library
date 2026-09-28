@@ -25,9 +25,12 @@ Open http://127.0.0.1:8767/. The optional server binds only to localhost. Use
 You can also double-click `Charts/index.html` or any chart HTML. Keep its `assets/`
 folder alongside it. Embedded data and local fonts work without HTTP access.
 
-The Report Library manifest binds all inputs by SHA-256. Daily builds require a
-completed release within the existing two-day freshness window, a complete master
-calendar, and reconciled report-date prices. Builds are staged and validated before
+The Report Library manifest binds all inputs by SHA-256, including the candle bundle,
+which every release must carry. Daily builds require a completed release within the
+existing two-day freshness window, a complete master calendar, and reconciled
+report-date prices. Remote reads request the manifest with a cache-busting query and
+each file keyed to its release, retrying briefly while GitHub Pages' 10-minute CDN cache
+catches up, so files from two releases are never mixed. Builds are staged and validated before
 replacing the output pack; errors retain the previous pack. Do not edit generated
 `Charts/` files directly.
 
@@ -79,7 +82,7 @@ unit/scale, and assign series accordingly. Optional metrics use `optional: True`
 are visibly disclosed when unavailable. A required metric cannot be silently omitted.
 
 Supported units: `USD`, `percent` (already percentage points), `ratio`, `BTC`,
-`BTC/day`, `BTC-days`, `count`, `hashrate` (source H/s), `sats/USD`, `USD/TH/s/day`.
+`BTC/day`, `count`, `hashrate` (source H/s), `sats/USD`, `USD/TH/s/day`.
 Metadata stays in the template; spacing, colors, formatting and export layout stay
 in the shared theme. Colors derive from stable metric identities, with Bitcoin and
 current-period emphasis in orange. Use the shared events list when appropriate.
@@ -127,7 +130,9 @@ filename. A frozen export requires an explicit `frozen_report_date`, matching th
 manifest and source cutoff; all hashes and price/calendar checks still apply. Only
 current-release freshness is replaced by validation against that historical cutoff.
 
-A single export writes its HTML plus required shared assets beside it. The pipeline's
+A single export stages its HTML and required shared assets, checks every asset
+reference, then moves them beside the requested output; a failure leaves the
+destination unchanged. It refuses to write inside the published `Charts/` pack. The pipeline's
 existing Dashboard Playwright runtime can capture it with network requests blocked.
 Coordinate the Chart Library and Newsletter Pipeline updates in the same approved
 cutover: the new caller needs the new producer API.
@@ -146,9 +151,14 @@ They compare plotted data to payloads across the full inventory, exercise repres
 mobile charts, catalog embeds, axes and PNG exports, and save inspection artifacts
 under ignored `outputs/browser-checks/`. Linux CI installs Chromium with `--with-deps`.
 
-The daily GitHub workflow keeps its 01:30 UTC schedule. It validates the release,
-builds the complete pack, runs Python and browser checks, and only then uploads the
-artifact for publication. Pull requests check the committed pack. Browser dependencies
+The scheduled GitHub workflow checks hourly (at :45) whether the Report Library has
+published a release newer than the one the committed pack was built from
+(`scripts/release-status.py`). GitHub starts scheduled jobs hours late and in no
+guaranteed order, so a fixed offset after the Report Library could chart the previous
+release for a whole day. When a new release exists the workflow validates it, builds
+the complete pack, runs Python and browser checks, and only then uploads the artifact
+for publication; otherwise it stops after the check. A failed build is retried by the
+next hourly run. Pull requests check the committed pack. Browser dependencies
 are pinned in `package-lock.json`; they are not needed to generate HTML locally.
 
 The original 59-URL inventory is retained in `tests/fixtures/original-chart-inventory.json`
@@ -157,11 +167,12 @@ removals; the catalog check still requires every other original chart. New templ
 may increase the count.
 
 Everything is static and retains the current Vercel/GitHub output structure. Hashed
-runtime/style filenames are immutable; HTML and catalog data revalidate. Git history
+runtime/style filenames are immutable; unversioned assets (favicon, logo, license
+texts) are cached for a day; HTML and catalog data revalidate. Git history
 retains the previous implementation and generated release for rollback. Production
 changes must be pushed only after review and explicit authorization.
 
-### Optional Bitcoin candles
+### Bitcoin candles
 
 Charts with an actual `price_close` USD series offer **Bitcoin: Line / Candles** and
 **Daily / Weekly / Monthly** intervals. Line remains the default. Rising candles use muted green and falling candles muted
@@ -172,21 +183,21 @@ indicators. Their unfinished final period is labeled and capped at the report da
 The Report Library publishes `bitcoin_candles.csv.gz`, `weekly_metrics_data.csv.gz`,
 and `monthly_metrics_data.csv.gz` in its checksum manifest. This repository only
 validates/selects those prepared observations and renders them; it never fetches BRK
-or aggregates OHLC. Legacy releases without the entire optional bundle remain
-line-only; a partially supplied or inconsistent bundle fails validation.
+or aggregates OHLC. The bundle is a required input: a release without it, or with an
+inconsistent bundle, fails validation.
 
 `SecretSatoshisChart.setPresentation('candles', 'monthly')` selects the presentation
 for both the browser and common PNG compositor. `exportChart` also accepts
-`{presentation: 'candles', interval: 'monthly'}`. Run the focused optional-feature
-check with `node scripts/check-candles.cjs`. Publish the Report Library producer
-before enabling these controls in a new Chart Library release.
+`{presentation: 'candles', interval: 'monthly'}`. Run the focused candle check with
+`node scripts/check-candles.cjs`; it fails if a Bitcoin price chart has no candle views.
 
 ## Shared dashboard presentation
 
 The Report Library dashboard vendors this same renderer using
 `scripts/sync-dashboard.py ../Bitcoin-Report-Library/dashboard/static/shared-chart`.
-Run it after shared presentation changes; it records source checksums and removes
-obsolete hashed renderer/style versions. Commit the generated dashboard assets in
+Run it after shared presentation changes; it records source checksums, removes
+obsolete hashed renderer/style versions, and writes the dashboard's model line colors
+and historical events to `components/chart-colors.json` and `components/chart-events.json`. Commit the generated dashboard assets in
 the Report Library as part of the same release. The dashboard defaults to weekly
 candles, a linear scale and no gridlines, with scenario cards above the plot and PNG.
 Standalone chart pages retain their own template defaults and site navigation/footer;

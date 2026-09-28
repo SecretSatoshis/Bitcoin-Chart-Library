@@ -22,11 +22,20 @@
       ]
     },
     {
-      "source": "/assets/:asset",
+      "source": "/assets/(.*\\.[0-9a-f]{16}\\.(?:js|css))",
       "headers": [
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(favicon\\.png|logo\\.png|LICENSE|NOTICE|.*-OFL\\.txt)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
         }
       ]
     },

@@ -69,10 +69,15 @@ def test_registry_rejects_duplicates_and_invalid_axes():
 
 
 def test_cache_rules_and_vendored_runtime():
-    config=json.loads((CHARTS/'vercel.json').read_text())
+    # The source config is the one maintained by hand; builds copy it into the pack.
+    config=json.loads((CHARTS.parent/'web/catalog/vercel.json').read_text())
     headers={r['source']:r['headers'] for r in config['headers']}
     assert '/plotly.min.js' not in headers
     for key in ('/catalog.json','/:chart.html','/'):
         assert 'must-revalidate' in headers[key][0]['value']
-    assert 'immutable' in headers['/assets/:asset'][0]['value']
+    hashed = headers['/assets/(.*\\.[0-9a-f]{16}\\.(?:js|css))'][0]['value']
+    assert 'immutable' in hashed
+    # Unversioned assets must stay replaceable, so they are never marked immutable.
+    unversioned = headers['/assets/(favicon\\.png|logo\\.png|LICENSE|NOTICE|.*-OFL\\.txt)'][0]['value']
+    assert 'immutable' not in unversioned
     assert (CHARTS/'assets/LICENSE').is_file() and (CHARTS/'assets/NOTICE').is_file()
