@@ -31,10 +31,11 @@ addEventListener('message',event=>{
 """.replace('RENDERER',json.dumps(assets['RENDERER']))
 (output/'embed-host.js').write_text(bridge)
 metrics=['price_close','realized_price','sth_realized_price','realizedcap_multiple_3','90_day_ma_price_close','364_day_ma_price_close','200_week_ma_price_close']
-(output/'metric-colors.json').write_text(json.dumps({m:_color(m) for m in metrics},indent=2)+'\n')
 components=output.parent.parent/'components'
 components.mkdir(exist_ok=True)
-(components/'chart-colors.json').write_bytes((output/'metric-colors.json').read_bytes())
+# The dashboard component imports this map; it is the only copy the dashboard keeps.
+(components/'chart-colors.json').write_text(json.dumps({m:_color(m) for m in metrics},indent=2)+'\n')
+(output/'metric-colors.json').unlink(missing_ok=True)
 (components/'chart-events.json').write_text(json.dumps(EVENTS,indent=2)+'\n')
 (output/'source-manifest.json').write_text(json.dumps({'source':'Bitcoin-Chart-Library','files':{name:hashlib.sha256((WEB/name).read_bytes()).hexdigest() for name in ('renderer.js','chart.html','chart.css','site.css')},'assets':assets},indent=2)+'\n')
 # Keep only the current content-versioned runtime and theme after a successful sync.
