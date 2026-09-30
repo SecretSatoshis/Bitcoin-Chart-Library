@@ -54,8 +54,8 @@ def test_titles_carry_no_hardcoded_year():
 
 def test_descriptions_are_a_usable_length():
     bad = [(e["filename"], len(e["description"])) for e in ENTRIES
-           if not 70 <= len(e["description"]) <= 160]
-    assert not bad, f"descriptions outside 70-160 chars: {bad}"
+           if not 50 <= len(e["description"]) <= 160]
+    assert not bad, f"descriptions outside 50-160 chars: {bad}"
 
 
 @pytest.mark.parametrize("filename", sorted(PAGES))

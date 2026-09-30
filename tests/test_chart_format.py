@@ -107,10 +107,10 @@ def test_daily_precision_gaps_optional_and_required_series():
 
 
 def test_dual_axes_units_and_percentage_values_are_explicit():
-    t=get_template('Bitcoin_Hashrate_Price')
+    t=get_template('Bitcoin_Hash_Ribbons')
     assert t['axes']['left']['unit']=='hashrate' and t['axes']['right']['unit']=='USD'
     t=get_template('Bitcoin_YTD_Return_Comparison_full');t['y_data']=t['y_data'][:1]
-    data=frame(pd.date_range('2026-01-01',periods=3),[1,2,3]);data['price_close_YTD_change']=[-12.125,0,215.75]
+    data=frame(pd.date_range('2026-01-01',periods=3),[1,2,3]);data['price_close_ytd_change']=[-12.125,0,215.75]
     p=build_payload(t,{'master_metrics_data.csv.gz':data})
     assert p['series'][0]['values']==[-12.125,0,215.75]
     assert p['axes']['right']['unit']=='percent'
@@ -121,7 +121,7 @@ def test_existing_template_content_is_preserved():
     assert len(templates['Bitcoin_YTD_Return_Comparison_full']['y_data'])==17
     assert {s['axis'] for s in templates['Bitcoin_Transactions']['y_data']}=={'right'}
     fields={s['data'] for s in templates['Bitcoin_YTD_Return_Comparison_full']['y_data']}
-    assert '^SPGSCI_close_YTD_change' in fields and '^BCOM_close_YTD_change' not in fields
+    assert '^SPGSCI_close_ytd_change' in fields and '^BCOM_close_ytd_change' not in fields
     events={e['name']:e for e in templates['Bitcoin_Hashrate_Price']['events']}
     assert events['U.S. Strategic Bitcoin Reserve']['dates']==['2025-03-06']
     assert events['Strategy Sells Bitcoin']['dates']==['2026-06-29']

@@ -8,7 +8,7 @@ const fs=require('node:fs/promises');
  const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
  await page.route('https://**/*',r=>r.abort());
- await page.goto(pathToFileURL(resolve('Charts/Bitcoin_Hashrate_Price.html')).href);
+ await page.goto(pathToFileURL(resolve('Charts/Bitcoin_Price.html')).href);
  await page.evaluate(()=>SecretSatoshisChart.ready);
  // Every release carries the candle bundle; a chart without candle views is a failure.
  assert.equal(await page.evaluate(()=>Boolean(SecretSatoshisChart.payload.candleViews)),true,'Bitcoin price chart is missing its candle views');

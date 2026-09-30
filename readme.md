@@ -1,6 +1,6 @@
 # Secret Satoshis Bitcoin Chart Library
 
-A static, searchable library of 50 Bitcoin charts, rendered with **TradingView
+A static, searchable library of 46 Bitcoin charts, rendered with **TradingView
 Lightweight Charts 5.2.1**. Python prepares verified data and HTML; one shared browser
 renderer supplies the Secret Satoshis theme, interactions and PNG exports.
 
@@ -45,7 +45,7 @@ Report Library release
   → Charts/: catalog, standalone HTML, SEO, manifest, runtime and theme
 ```
 
-Template families are `timeseries` (43 charts), `cycle` (3) and `seasonal` (4).
+Template families are `timeseries` (39 charts), `cycle` (3) and `seasonal` (4).
 Monthly/yearly baselines, cycle scaling, mean/median exclusion and leap-day policies
 retain the previous calculations. The migration was checked against the old output
 for every series, date, finite value and missing observation in all 59 charts.
@@ -53,6 +53,27 @@ for every series, date, finite value and missing observation in all 59 charts.
 `web/chart.html`, `web/chart.css` and `web/renderer.js` own the common presentation.
 `web/catalog/` holds the catalog source. The pinned runtime and font licenses live
 under `web/vendor/` and `web/fonts/`. The builder verifies the vendored checksums.
+
+## Catalog categories
+
+Templates assign each chart to one category. `CATEGORY_ORDER` in
+`chart_templates/__init__.py` controls the catalog order; the build generates
+filters, chart headings and metadata from these definitions.
+
+| Category | Charts | Focus |
+| --- | ---: | --- |
+| Price & Trends | 4 | Price, moving averages, purchasing power and volatility |
+| Returns & Comparisons | 6 | Bitcoin returns and performance against other assets |
+| Cycles & Seasonality | 7 | Halving cycles, drawdowns and monthly/yearly patterns |
+| Valuation Models | 6 | On-chain, network, power-law and electricity-cost models |
+| Relative Valuation | 4 | Bitcoin's size relative to metals, companies and base money |
+| Holder Sentiment | 4 | Holder profitability, spending and conviction |
+| Supply | 4 | Issuance, circulating supply and coin age |
+| Network Activity | 5 | Addresses, transactions, transfer volume and fees |
+| Mining & Security | 6 | Hashrate, difficulty and miner economics |
+
+Electricity Cost belongs to Valuation Models. Counts above describe the current
+46-chart collection; adding a template automatically adds its catalog entry.
 
 ## Add a chart
 
@@ -65,7 +86,7 @@ CHARTS = [{
     'filename': 'Bitcoin_New_Comparison',
     'title': 'Bitcoin New Comparison',
     'description': 'A clear description of the comparison, its underlying data, and what a reader can learn.',
-    'category': 'Price Models',
+    'category': 'Price & Trends',
     'featured': False,
     'family': 'timeseries',
     'data_source': 'Data Source: Bitview',
@@ -83,9 +104,36 @@ are visibly disclosed when unavailable. A required metric cannot be silently omi
 
 Supported units: `USD`, `percent` (already percentage points), `ratio`, `BTC`,
 `BTC/day`, `count`, `hashrate` (source H/s), `sats/USD`, `USD/TH/s/day`.
+
+The halving-cycle chart translates each historical cycle's indexed returns into
+USD using the current halving-day closing price. The current cycle therefore
+shows its actual price; prior cycles show rescaled comparisons, not forecasts.
+The existing `Bitcoin_Halving_Cycle.html` URL is unchanged. Cycle-low comparisons
+use the same scaling approach anchored at the current cycle low.
+
+NUPL's lower panel shows labeled sentiment ranges with horizontal boundaries at
+0, 0.25, 0.50 and 0.75. These show daily NUPL against the saved ranges; the
+dashboard sentiment label continues to use its seven-day average.
+Power Law's upper price panel shows shaded valuation ranges bounded by prepared
+0.58×, 1×, 1.73× and 3× model curves from Report Library. Hiding the Power Law
+model hides its range shading; boundary curves remain individually selectable.
+The upper panel keeps its shading without range labels. The lower multiple panel
+uses the exact same numeric-range label renderer as NUPL, with dashed horizontal
+thresholds and right-aligned range labels, without colored fills or a separate
+key. Both track the active price scale; labels hide only when their range is too
+narrow to fit, rather than moving to a different horizontal position.
+These are the dashboard's fixed reviewed thresholds, not forecast confidence
+intervals. Both kinds of range annotations use the same renderer in PNG exports.
 Metadata stays in the template; spacing, colors, formatting and export layout stay
-in the shared theme. Colors derive from stable metric identities, with Bitcoin and
-current-period emphasis in orange. Use the shared events list when appropriate.
+in the shared theme. `chart_style.py` defines a contrasting palette and stable
+metric identities, with Bitcoin and current-period emphasis in orange. Related
+model/multiple pairs share colors across panels, and assets retain their colors
+across comparison charts. Use the shared events list when appropriate.
+
+Legends keep Bitcoin (or the current cycle/year) first, then sort remaining
+readings from highest to lowest within each panel, with unavailable readings last.
+Ordering follows the displayed date during hover and returns to the report date
+when the cursor leaves. PNG legends use the same ordering at the report date.
 
 New chart families require a shared transformation and renderer capability; ordinary
 new metric combinations do not. Run the build and tests before submitting a template.
@@ -97,12 +145,104 @@ report period; seasonal views retain the whole normalized month/year. Cycle char
 use actual integer days, not dates disguised as elapsed time.
 
 Desktop dual-axis charts overlay both scales. At 760px and below they use synchronized
-panels. Range, visibility and axis settings survive layout changes. The legend supports
+panels, unless the template explicitly defines a panel layout. Range, visibility and axis settings survive layout changes. The legend supports
 show/hide, Only, Show all, and Remove all (which retains Bitcoin price). Axis controls
 are labeled Right and Left. Range buttons include YTD / 1Y / 4Y / 10Y / All;
 reset restores defaults. Source values remain precise in the payload.
 Null observations split lines; nonpositive values are omitted on logarithmic axes and
 remain available in linear mode. Readouts do not forward-fill gaps.
+
+**Stacked panel layouts:** `Bitcoin_Metcalfe_Model` uses the approved stacked layout
+on desktop, mobile and in the catalog: price and Any Balance model value above
+(65%, log), with the price/model multiple below (35%, linear). Plot height adapts
+between 570–710px so the plot fits when its top is scrolled into view, without
+reserving space for the controls or page heading. The catalog sends its browser
+viewport height through a validated parent/iframe message, so embedded plots use
+the same dimensions as standalone pages without iframe height feedback. This also
+works in direct-file previews and updates when the window resizes. Fractional-bar ranges stay locked during
+scrolling, dragging and zooming, including beyond the ends of the data. Dates and hover are
+synchronized; only the lower panel shows date ticks. Event labels appear once in
+the upper panel and their lines span both. Price/Multiple scale controls and the
+legend follow the panel grouping. PNG exports preserve the split and selected state.
+The same 65/35 layout is used for Power Law, Moving Averages, Electricity Cost,
+and Volatility. NUPL and Realized Price also use this layout,
+and both default to 10 years. Delta Cap is retired. Remaining charts retain their
+existing layouts.
+
+NVT Price shows Bitcoin alongside 30-day (blue), 90-day (teal) and 365-day (pink)
+valuation models. Report Library smooths BRK transfer volume with each period's
+rolling median before applying the two-year median NVT and dividing by current
+supply. All three models and matching weekly/monthly observations are prepared
+in Report Library; the Chart Library only displays them.
+NVT uses the shared 65/35 stacked layout, with price/models above and a linear
+price-to-model multiple below. Only the 90-day multiple appears in the lower
+panel. A labeled 1.0× reference appears
+only in the multiple panel, including PNG exports. Dates and controls remain synchronized.
+
+| Chart | Layout and defaults |
+| --- | --- |
+| Metcalfe | Price/model above, multiple below; 10 years |
+| Power Law | Price/model above, multiple below; 4-year default |
+| Bitcoin Price | Existing overlay; all history, monthly price candles on log, market cap line on linear |
+| Moving Averages | Price/averages above, 200-day multiple below; 4 years, weekly price candles |
+| Electricity Cost | Price, 4¢/6¢ power expense and Hayes model above; Hayes multiple below; 4-year line defaults |
+| Satoshis Per Dollar | Satoshis only, single axis; all history |
+| Volatility | Price above, both volatility measures below; 4 years, weekly price candles |
+
+Electricity Cost retains the `Bitcoin_Production_Price.html` URL. The separate
+`Bitcoin_Electricity_Cost.html` chart is retired; the consolidated chart replaces
+the former 5¢ power-expense series with the prepared 4¢ and 6¢ series.
+
+Templates can set `default_presentation: 'candles'` and
+`default_interval: 'daily'`, `'weekly'`, or `'monthly'`. Only Bitcoin USD price
+becomes candles; other metrics stay lines using prepared interval observations.
+Older frozen releases without the requested candle data fall back to daily lines.
+
+In Returns & Comparisons, Bitcoin CAGR and Year-Over-Year Return use stacked
+return panels, 10-year defaults and weekly price candles. CAGR vs Other Assets
+retains its 4-year view; MTD and YTD asset comparisons retain their existing setup.
+Both YTD-by-year charts set `default_hidden_series: ['2017']`. This controls initial
+visibility and Reset only: the 2017 data remains in the payload, legend and historical
+averages, and readers can reveal it individually or with Show all. MTD-by-year charts
+are unchanged.
+
+Supply charts use the following layouts: 1+ Year Supply has price above and the
+1+ year share below, with a 10-year default. Supply & Daily Issuance shows issuance
+above and circulating supply below, with all history. Macro Supply and Supply Age
+Distribution show supply metrics alone on a single linear axis, with all history.
+
+Network Activity: Active Addresses shows all address metrics below price with a
+10-year default. Transaction Volume shows all volume metrics below price with a
+4-year default. Transaction Fees uses the same split and retains its 4-year default. Address Balance Distribution removes price and shows all history.
+Transactions defaults to all history on a linear scale.
+
+Holder Sentiment: SOPR and Supply in Profit vs Loss place their metrics below price.
+Reserve Risk uses a lower panel with Bitcoin price alone above. HODL Bank, VOCD
+and MVOCD remain calculation inputs without visible lines. Its public filename stays `Bitcoin_HODL_Bank.html`. These
+charts retain 4-year defaults. Supply-adjusted Days Destroyed is retired.
+
+Mining & Security: Hash Price, Hash Ribbons, Miner Revenue and Puell Multiple
+place their mining metrics below Bitcoin price. Network Difficulty and Hashrate
+show only their own metrics, with price removed. All retain their existing scales
+and 4-year defaults. The Hashrate URL remains `Bitcoin_Hashrate_Price.html`.
+
+Optional `panels` metadata groups series by their existing axis. List order is display
+order; positive `weight` values determine the fixed height proportions. Each axis
+must appear exactly once. For example:
+
+```python
+'panels': [
+    {'axis': 'right', 'label': 'Bitcoin Price & Metcalfe Value',
+     'control_label': 'Price', 'weight': 65},
+    {'axis': 'left', 'label': 'Price / Metcalfe Value',
+     'control_label': 'Multiple', 'weight': 35},
+],
+```
+
+A template with one axis and one panel uses the full height. Panel metadata never
+changes source metrics or calculations. Run `npm run test:panels` after building
+to check this pilot's interactions and exports; review images are saved under the
+ignored `outputs/metcalfe-panels/` folder.
 
 Every chart has an **Export PNG** button. For a scripted 2400×1350 export:
 

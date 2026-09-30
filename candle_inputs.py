@@ -36,8 +36,12 @@ def validate_candle_inputs(frames, report_date):
             raise ValueError('Candle closes disagree with release prices')
         if filename:
             snapshot = frames[filename]
-            if not snapshot.index.equals(dates) or list(snapshot.columns) != list(master.columns):
+            if (not snapshot.index.equals(dates)
+                    or list(snapshot.columns) != ['observation_date', *master.columns]
+                    or not pd.DatetimeIndex(pd.to_datetime(snapshot.observation_date)).equals(
+                        pd.DatetimeIndex(rows.observation_date))):
                 raise ValueError('Period metric snapshot does not match candle calendar/schema')
+            snapshot = snapshot.drop(columns='observation_date')
             expected = master.reindex(pd.DatetimeIndex(rows.observation_date)).copy()
             expected.index = snapshot.index
             pd.testing.assert_frame_equal(snapshot,expected,check_dtype=False,check_freq=False,rtol=1e-9,atol=1e-8)

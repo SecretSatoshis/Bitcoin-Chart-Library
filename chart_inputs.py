@@ -74,10 +74,10 @@ def validate_report_dates(master, summary, report_date, now=None, max_age_days=2
             or not index.is_monotonic_increasing
             or not index.equals(pd.date_range(index[0], date, freq='D'))):
         raise ValueError('Master calendar must be complete, unique and end on the release date')
-    if len(summary) != 1 or pd.Timestamp(summary['Report Date'].iloc[0]) != date:
+    if len(summary) != 1 or pd.Timestamp(summary['date'].iloc[0]) != date:
         raise ValueError('Summary and master must belong to the same report date')
     price = pd.to_numeric(master['price_close'], errors='coerce').iloc[-1]
-    if not np.isfinite(price) or price <= 0 or not np.isclose(price, float(summary['Daily Close'].iloc[0]), rtol=1e-9):
+    if not np.isfinite(price) or price <= 0 or not np.isclose(price, float(summary['daily_close'].iloc[0]), rtol=1e-9):
         raise ValueError('Summary and master report-date prices disagree')
     return date
 

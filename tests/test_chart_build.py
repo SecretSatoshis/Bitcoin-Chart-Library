@@ -12,7 +12,7 @@ def release(monkeypatch):
     frame=pd.DataFrame({'price_close':[100.,110.,120.]},index=pd.date_range('2026-01-01',periods=3))
     frame.attrs['release_manifest']={'report_date':'2026-01-03','files':{}}
     monkeypatch.setattr(chart_build,'_inputs',lambda *a:{'master_metrics_data.csv.gz':frame})
-    t=get_template('Bitcoin_Hashrate_Price');t['y_data']=t['y_data'][:1]
+    t=get_template('Bitcoin_Price');t['y_data']=t['y_data'][:1]
     return t
 
 
@@ -45,7 +45,7 @@ def test_refuses_non_generated_output(tmp_path):
 
 def test_template_discovery_needs_no_other_registry(tmp_path,monkeypatch):
     import chart_templates
-    t=get_template('Bitcoin_Hashrate_Price');t['filename']='New_Discovered_Chart'
+    t=get_template('Bitcoin_Price');t['filename']='New_Discovered_Chart'
     (tmp_path/'extra.py').write_text('CHARTS = '+repr([t]))
     monkeypatch.setattr(chart_templates,'__path__',[str(tmp_path)])
     try:
@@ -53,3 +53,27 @@ def test_template_discovery_needs_no_other_registry(tmp_path,monkeypatch):
     finally:
         import sys
         sys.modules.pop('chart_templates.extra',None)
+
+
+def test_panel_assignment_requires_one_valid_weighted_panel_per_axis():
+    from chart_templates import validate_templates
+    template=get_template('Bitcoin_Metcalfe_Model')
+    validate_templates([template])
+    for panels in ([template['panels'][0]], [template['panels'][0]]*2,
+                   [{**p,'weight':0} for p in template['panels']]):
+        with pytest.raises(ValueError):
+            validate_templates([{**template,'panels':panels}])
+
+
+def test_panel_payload_preserves_existing_observations():
+    from chart_data import build_payload
+    template=get_template('Bitcoin_Metcalfe_Model')
+    data=pd.DataFrame({'price_close':[100.,110.,120.],
+                      'metcalfe_value':[50.,55.,60.],
+                      'metcalfe_price_multiple':[2.,2.,2.]},
+                     index=pd.date_range('2026-01-01',periods=3))
+    with_panels=build_payload(template,{'master_metrics_data.csv.gz':data})
+    legacy=copy.deepcopy(template);legacy.pop('panels')
+    without_panels=build_payload(legacy,{'master_metrics_data.csv.gz':data})
+    assert with_panels.pop('panels')==template['panels']
+    assert with_panels==without_panels

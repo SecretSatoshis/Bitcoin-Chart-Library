@@ -227,7 +227,16 @@ elements.closeViewer.addEventListener('click', () => {
   document.getElementById('catalog').scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
 });
 
-elements.frame.addEventListener('load', () => elements.frameWrap.classList.add('loaded'));
+function sendChartViewport() {
+  const chart=chartFromUrl();
+  if(!chart||elements.viewer.hidden)return;
+  elements.frame.contentWindow?.postMessage({type:'ss-chart-viewport',id:chart.filename,height:window.innerHeight},location.protocol==='file:'?'*':location.origin);
+}
+elements.frame.addEventListener('load', () => {
+  elements.frameWrap.classList.add('loaded');
+  sendChartViewport();
+});
+window.addEventListener('resize',sendChartViewport);
 
 const navToggle = document.getElementById('navToggle');
 const navLinks = document.getElementById('navLinks');
@@ -280,5 +289,6 @@ window.addEventListener('message', event => {
   if(location.protocol === 'file:' ? event.origin !== 'null' : event.origin !== location.origin) return;
   const message=event.data,chart=chartFromUrl();
   if(message?.type !== 'ss-chart-size' || !chart || message.id !== chart.filename || !Number.isFinite(message.height)) return;
+  sendChartViewport();
   elements.frame.style.height = `${Math.max(400,Math.min(3000,message.height))}px`;
 });

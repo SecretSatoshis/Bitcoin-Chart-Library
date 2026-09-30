@@ -29,14 +29,15 @@ def _candle_bundle(master):
     for interval, filename in (('weekly', CANDLE_FILES[1]), ('monthly', CANDLE_FILES[2])):
         chosen = candles.loc[candles.interval.eq(interval)]
         snapshot = master.reindex(pd.DatetimeIndex(chosen.observation_date)).copy()
-        snapshot.index = pd.DatetimeIndex(chosen.period_start, name='time')
+        snapshot.index = pd.DatetimeIndex(chosen.period_start, name='period_start')
+        snapshot.insert(0, 'observation_date', pd.DatetimeIndex(chosen.observation_date))
         snapshots[filename] = snapshot
     return candles, snapshots
 
 
 def _release(tmp_path):
     master = pd.DataFrame({'price_close': [100., 80., 120., 110., 90., 105., 115., 120.]},
-                          index=pd.date_range('2026-09-01', periods=8, name='time'))
+                          index=pd.date_range('2026-09-01', periods=8, name='date'))
     master.to_csv(tmp_path / INPUT_FILES[0])
     candles, snapshots = _candle_bundle(master)
     candles.to_csv(tmp_path / CANDLE_FILES[0], index=False, compression='gzip', date_format='%Y-%m-%d')
@@ -44,7 +45,7 @@ def _release(tmp_path):
         snapshot.to_csv(tmp_path / filename, compression='gzip', date_format='%Y-%m-%d')
     for name in INPUT_FILES[1:4]:
         pd.DataFrame({'test': [1]}).to_csv(tmp_path / name, index=False)
-    summary = pd.DataFrame({'Report Date': ['2026-09-08'], 'Daily Close': [120.]})
+    summary = pd.DataFrame({'date': ['2026-09-08'], 'daily_close': [120.]})
     summary.to_csv(tmp_path / INPUT_FILES[-1], index=False)
     manifest = {
         'schema_version': 1,

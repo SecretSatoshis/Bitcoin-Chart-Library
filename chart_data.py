@@ -1,6 +1,6 @@
 """Renderer-independent transformations. Source values are never filled or rounded."""
 import calendar
-import hashlib
+from chart_style import series_color
 import warnings
 import numpy as np
 import pandas as pd
@@ -101,27 +101,7 @@ def _is_complete_non_leap_year(series):
 
 
 def _color(key, role='normal'):
-    if role == 'highlight' or key == 'price_close':
-        return '#F7931A'
-    if role == 'mean':
-        return '#68C5AF'
-    if role == 'median':
-        return '#DAD9ED'
-    # Curated colors keep commonly overlaid price models visually distinct.
-    price_model_colors = {
-        'realized_price': '#6D9EFF',
-        'sth_realized_price': '#5FD4D0',
-        'realizedcap_multiple_3': '#B5CF74',
-        '90_day_ma_price_close': '#EA90BA',
-        '364_day_ma_price_close': '#B39AEE',
-        '200_week_ma_price_close': '#D5D8E2',
-    }
-    if key in price_model_colors:
-        return price_model_colors[key]
-    # Asset identity is stable across return horizons; hue is independent of order.
-    key = key.split('_close', 1)[0] if '_close' in key else key
-    hue = int(hashlib.sha256(key.encode()).hexdigest()[:8], 16) % 360
-    return f'hsl({hue}, 55%, 70%)'
+    return series_color(key, role)
 
 
 def _series(key, name, x, y, axis='right', role='normal'):
@@ -153,7 +133,9 @@ def _daily(frame, template):
             warnings.warn(f'Skipping optional metric {metric}', RuntimeWarning, stacklevel=2)
             continue
         role = 'highlight' if metric.startswith('price_close') and item.get('axis','right') == 'right' else 'normal'
-        series.append(_series(metric, item['name'], x, values, item.get('axis','right'), role))
+        definition = _series(metric, item['name'], x, values, item.get('axis','right'), role)
+        definition['lineStyle'] = item.get('line_style', definition['lineStyle'])
+        series.append(definition)
     return series, unavailable, f'{x[0]}/{x[-1]}'
 
 
@@ -267,8 +249,17 @@ def build_payload(template, inputs):
                    'Historical years are aligned to the current calendar. Mean and median exclude the current year.' if family=='seasonal' else
                    'Daily observations.'}
 
+    if 'panels' in template:
+        payload['panels'] = [dict(panel) for panel in template['panels']]
+    if 'default_hidden_series' in template:
+        payload['defaultHiddenSeries'] = list(template['default_hidden_series'])
     if family == 'timeseries' and any(s['id'] == 'price_close' and payload['axes'][s['axis']]['unit'] == 'USD' for s in series) and 'bitcoin_candles.csv.gz' in inputs:
         payload['candleViews'] = _candle_views(payload, inputs)
+    # Older frozen releases without candles retain the daily line presentation.
+    interval = template.get('default_interval', 'daily')
+    if template.get('default_presentation') == 'candles' and interval in payload.get('candleViews', {}):
+        payload['defaultPresentation'] = 'candles'
+        payload['defaultInterval'] = interval
     return payload
 
 

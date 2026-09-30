@@ -25,7 +25,7 @@ const root=resolve(process.argv[2]||'Charts'),artifacts=resolve('outputs/browser
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),1440,entry.filename+' overflow');
    assert.equal(await page.evaluate(()=>{const a=SecretSatoshisChart;return a.view.entries.every(e=>{
     const s=e.definition,expected=s.values.flatMap((value,i)=>Number.isFinite(value)&&(a.state.modes[s.axis]!=='log'||value>0)?[{time:a.payload.x[s.start+i],value}]:[]);
-    const actual=e.parts.flatMap(p=>p.api.data());return JSON.stringify(actual.map(p=>({time:p.time,value:p.value})))===JSON.stringify(expected);
+    const actual=e.parts.flatMap(p=>p.api.data());return JSON.stringify(actual.map(p=>({time:p.time,value:p.value??p.close})))===JSON.stringify(expected);
    });}),true,entry.filename+' plotted parity');
    assert.equal(await page.evaluate(()=>document.fonts.check('700 32px Syne')),true);
    if(protocol==='http'&&examples.has(entry.filename)){
