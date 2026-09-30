@@ -290,7 +290,7 @@ def write_catalog(output_dir, payloads):
 
 TAG_RULES = OrderedDict(
     [
-        ("marketcap", "market cap"),
+        ("market cap", "market cap"),
         ("price", "price"),
         ("moving average", "moving averages"),
         ("satoshi", "satoshis"),
