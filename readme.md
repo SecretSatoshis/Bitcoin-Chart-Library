@@ -338,7 +338,8 @@ Run it after shared presentation changes; it records source checksums, removes
 obsolete hashed renderer/style versions, and writes the dashboard's model line colors
 and historical events to `components/chart-colors.json` and `components/chart-events.json`. Commit the generated dashboard assets in
 the Report Library as part of the same release. The dashboard defaults to weekly
-candles, a linear scale and no gridlines, with scenario cards above the plot and PNG.
+candles and a linear scale, with scenario cards above the plot and PNG. No chart draws
+gridlines.
 Standalone chart pages retain their own template defaults and site navigation/footer;
 the catalog embeds the same chart in a matching-width viewer.
 
