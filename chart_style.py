@@ -37,6 +37,8 @@ register(['gold_market_cap_btc_price', 'silver_market_cap_btc_price',
          [PALETTE[i] for i in (5, 7, 2, 1, 3, 0)])
 register(['7_day_ma_price_close', '50_day_ma_price_close', '200_day_ma_price_close',
           '200_week_ma_price_close'], [PALETTE[i] for i in (0, 1, 2, 7)])
+# The dashboard price chart's 3-month and 1-year averages, distinct from its realized-price lines.
+register(['90_day_ma_price_close', '364_day_ma_price_close'], [PALETTE[i] for i in (3, 10)])
 register(['realized_price', 'sth_realized_price', 'lth_realized_price',
           'realizedcap_multiple_2', 'realizedcap_multiple_3', 'realizedcap_multiple_5'],
          [PALETTE[i] for i in (0, 1, 3, 4, 2, 6)])

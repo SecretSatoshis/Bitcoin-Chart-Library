@@ -143,7 +143,7 @@
     return n+(axis||unit==='count'?'':` ${unit}`);
   }
   const dateString=t=>typeof t==='string'?t:typeof t==='number'?new Date(t*1000).toISOString().slice(0,10):`${t.year}-${String(t.month).padStart(2,'0')}-${String(t.day).padStart(2,'0')}`;
-  const xLabel=(x,p)=>p.axisKind==='days'?`Day ${x}`:dateString(x);
+  const xLabel=(x,p)=>p.axisKind==='days'?`${p.xAxisLabel||'Day'} ${x}`:dateString(x);
   const rgba=(color,opacity)=>{
     if(opacity===1)return color;
     if(color.startsWith('hsl('))return color.replace('hsl(','hsla(').replace(')',`, ${opacity})`);
@@ -292,6 +292,7 @@
     return index>=0&&index<series.values.length?series.values[index]:null;
   }
   function orderedSeries(payload,time=payload.readingPoint){
+    if(payload.seriesOrder){const rank=new Map(payload.seriesOrder.map((id,i)=>[id,i]));return payload.series.slice().sort((a,b)=>(rank.get(a.id)??Infinity)-(rank.get(b.id)??Infinity));}
     const priority=s=>s.id==='price_close'?0:s.id.startsWith('price_close')||s.role==='highlight'?1:2;
     const values=new Map(payload.series.map(s=>[s.id,valueAt(s,time,payload)]));
     const compare=(a,b)=>{
@@ -338,7 +339,7 @@
     function readingAt(time){
       reading=time===null?payload.readingPoint:time;
       $('reading-date').textContent=xLabel(reading,payload);
-      $('reading-mode').textContent=time===null?(numeric?'CURRENT CYCLE DAY':'REPORT DATE'):(numeric?'CURSOR DAY':'CURSOR DATE');
+      $('reading-mode').textContent=time===null?(payload.family==='seasonal'?'REPORT DAY':numeric?'CURRENT CYCLE DAY':'REPORT DATE'):(numeric?'CURSOR DAY':'CURSOR DATE');
       for(const s of payload.series)$('value-'+s.id).textContent=format(valueAt(s,reading,payload),payload.axes[s.axis].unit);
       const sorted=orderedSeries(payload,reading),order=sorted.map(s=>s.id).join('|');
       if(order!==legendOrder){
@@ -408,7 +409,7 @@
     rebuild();for(const s of payload.series)setVisible(s,!defaultHidden.has(s.id));readingAt(null);
     mobile.addEventListener('change',()=>rebuild());
     $('chart').addEventListener('mouseleave',()=>readingAt(null));
-    const ranges=numeric?['365D','730D','CURRENT','ALL']:payload.family==='seasonal'?['ALL']:payload.defaultRange==='MTD'?['MTD']:payload.defaultRange==='YTD'?['YTD']:['YTD','1Y','4Y','10Y','ALL'];
+    const ranges=payload.family==='seasonal'?['ALL']:numeric?['365D','730D','CURRENT','ALL']:payload.defaultRange==='MTD'?['MTD']:payload.defaultRange==='YTD'?['YTD']:['YTD','1Y','4Y','10Y','ALL'];
     function selectRange(label){
       let range;
       if(label==='ALL')range={from:payload.x[0],to:payload.x.at(-1)};

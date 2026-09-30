@@ -341,3 +341,9 @@ the Report Library as part of the same release. The dashboard defaults to weekly
 candles, a linear scale and no gridlines, with scenario cards above the plot and PNG.
 Standalone chart pages retain their own template defaults and site navigation/footer;
 the catalog embeds the same chart in a matching-width viewer.
+
+The dashboard uses three synced frames: price outlook, MTD and YTD. Each frame accepts
+data only from its same-origin parent for its own chart ID, reports its height, and posts
+a ready or error message once `SecretSatoshisChart.ready` resolves. `source-manifest.json`
+records the frames and the hash of every source and synced asset. Seasonal payloads with
+numeric days use `xAxisLabel` and show only the All range.
