@@ -14,10 +14,14 @@ assets=prepare_assets(output)
 frames={'frame.html':('dashboard-price-outlook','Bitcoin Price Outlook','Bitcoin Price (USD)'),
         'seasonal-mtd.html':('dashboard-seasonal-mtd','MTD Returns Comparison','Indexed to Month Start ($)'),
         'seasonal-ytd.html':('dashboard-seasonal-ytd','YTD Returns Comparison','Indexed to Year Start ($)')}
+# The dashboard column is 1,120px, narrower than a chart page; a shorter plot keeps the
+# chart pages' proportions on desktop. Phones keep the shared mobile height.
+DASHBOARD_PLOT_STYLE=('<style>@media (min-width:761px){.embedded .plot-wrap{height:520px;min-height:520px}'
+                      '.embedded #legend{max-height:296px}}</style>')
 for filename,(chart_id,title,axis) in frames.items():
     page=(WEB/'chart.html').read_text().replace('<body>',f'<body class="embedded compact-legend" data-chart-id="{chart_id}">')
     page=page.replace('<script defer src="@@RENDERER@@"></script>','<script defer src="embed-host.js"></script>')
-    values={**assets,'HEAD':f'<meta name="viewport" content="width=device-width, initial-scale=1"><title>{title}</title>',
+    values={**assets,'HEAD':f'<meta name="viewport" content="width=device-width, initial-scale=1"><title>{title}</title>'+DASHBOARD_PLOT_STYLE,
             'NAV':'','FOOTER':'','CATEGORY':'MARKET INTELLIGENCE','TITLE':title,'DESCRIPTION':'',
             'DATE':'','AXIS':'RIGHT: '+axis,'SOURCE':'Bitview','NOTE':'Daily observations.', 'PAYLOAD':'null'}
     for key,value in values.items():page=page.replace('@@'+key+'@@',value)
