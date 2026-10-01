@@ -41,13 +41,11 @@ flowchart LR
     subgraph Sites
         C["charts.secretsatoshis.com"]
         D["Market Dashboard"]
-        N["Quarterly report"]
     end
 
     R --> V
     P -->|Vercel| C
     P -.->|shared renderer| D
-    P -.->|frozen chart| N
 ```
 
 Each build checks every input against the release's checksums and refuses a release that is
