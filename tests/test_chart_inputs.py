@@ -1,4 +1,4 @@
-"""Release integrity: manifest hashes, freshness, frozen exports and the refresh check."""
+"""Release integrity: manifest hashes, freshness and frozen exports."""
 import hashlib
 import json
 from pathlib import Path
@@ -160,14 +160,3 @@ def test_frozen_export_refuses_the_chart_pack(tmp_path):
         build_single(tmp_path, 'Bitcoin_Price', ROOT / 'Charts' / 'frozen.html',
                      frozen_report_date='2026-09-08')
 
-
-def test_release_status_reads_published_and_live_release_dates(tmp_path):
-    import importlib.util
-    spec = importlib.util.spec_from_file_location('release_status', Path(__file__).parents[1] / 'scripts/release-status.py')
-    status = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(status)
-    assert status.report_date(tmp_path, 'build-manifest.json') is None
-    (tmp_path / 'release_manifest.json').write_text(json.dumps({'report_date': '2026-09-08'}))
-    (tmp_path / 'build-manifest.json').write_text(json.dumps({'report_date': '2026-09-07'}))
-    assert status.report_date(tmp_path, 'release_manifest.json') == '2026-09-08'
-    assert status.report_date(tmp_path, 'build-manifest.json') == '2026-09-07'

@@ -1,25 +1,22 @@
 name: Update Bitcoin Charts
 
-# Vercel builds and publishes the chart site from `main` on every push. This workflow
-# tests each change against the live release and, hourly, asks Vercel to rebuild once
-# the Report Library publishes a new release.
+# Vercel builds and publishes the chart site from `main` on every push, and the Report
+# Library's workflow asks it to rebuild after each release. This workflow tests every
+# change against the live release; a manual run also rebuilds the site.
 on:
   push:
     branches: [main]
   pull_request:
-  schedule:
-    - cron: "45 * * * *"
   workflow_dispatch:
 
 permissions: {}
 
 concurrency:
-  group: update-charts-${{ github.ref }}-${{ github.event_name == 'schedule' }}
+  group: update-charts-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   test:
-    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -65,27 +62,16 @@ jobs:
           npm run test:candles
           npm run test:panels
 
-  refresh:
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+  rebuild:
+    if: github.event_name == 'workflow_dispatch'
+    needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    permissions:
-      contents: read
+    permissions: {}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          persist-credentials: false
-
-      - name: Compare published and live releases
-        id: status
-        run: python3 scripts/release-status.py
-
-      # A manual run always rebuilds.
       - name: Ask Vercel to rebuild the chart site
-        if: steps.status.outputs.build == 'true' || github.event_name == 'workflow_dispatch'
         env:
-          DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+          DEPLOY_HOOK: ${{ secrets.CHARTS_DEPLOY_HOOK_URL }}
         run: |
-          test -n "$DEPLOY_HOOK" || { echo "::error::VERCEL_DEPLOY_HOOK_URL secret is not set"; exit 1; }
+          test -n "$DEPLOY_HOOK" || { echo "::error::CHARTS_DEPLOY_HOOK_URL secret is not set"; exit 1; }
           curl --fail --silent --show-error -X POST "$DEPLOY_HOOK" > /dev/null
-          echo "Rebuild requested for release ${{ steps.status.outputs.release }}"

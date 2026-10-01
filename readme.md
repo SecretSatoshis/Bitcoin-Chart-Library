@@ -52,8 +52,8 @@ flowchart LR
 
 Each build checks every input against the release's checksums and refuses a release that is
 stale or inconsistent, so a bad release never reaches the site. Vercel builds the site on
-every push to `main`, and an hourly GitHub Actions check asks it to rebuild as soon as the
-Report Library publishes a new release.
+every push to `main`, and the Report Library asks it to rebuild after each release. A manual
+run of the GitHub Actions workflow tests the code and rebuilds the site.
 
 ## Quick start
 
@@ -121,7 +121,7 @@ defaults. Run the build and tests before opening a pull request.
 | `chart_style.py` | Series colours |
 | `chart_build.py`, `chart_catalog.py` | Pages, catalog, search metadata and sitemap |
 | `web/` | Page template, renderer, styles, catalog page, fonts and vendored chart library |
-| `scripts/` | Browser checks, the hourly release check and the dashboard sync |
+| `scripts/` | Browser checks and the dashboard sync |
 | `tests/` | Python tests |
 
 ## Shared with other sites
