@@ -1,4 +1,4 @@
-"""Vendor the canonical Chart Library renderer into the Report dashboard. No market data."""
+"""Copy the chart renderer, colours and events into the Report Library dashboard. No market data."""
 import hashlib
 import json
 import sys

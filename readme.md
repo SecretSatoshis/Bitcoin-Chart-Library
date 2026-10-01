@@ -24,8 +24,8 @@ daily data release and drawn with TradingView Lightweight Charts.
 | **Mining & Security** | Hashrate, difficulty, hash price and miner revenue |
 
 Every chart lets you switch ranges, toggle series, change between log and linear scales
-and export a PNG or the chart's data. Charts of Bitcoin's price can also show candles. Pages also work offline:
-open any HTML file from a build with its `assets/` folder beside it.
+and export a PNG or the chart's data. Charts of Bitcoin's price can also show candles.
+Pages also work offline: open any HTML file from a build with its `assets/` folder beside it.
 
 ## How it works
 
@@ -114,7 +114,7 @@ defaults. Run the build and tests before opening a pull request.
 
 | Path | What's there |
 |------|--------------|
-| `main.py` | Builds the site |
+| `main.py`, `chart_definitions.py` | Builds the site, and where it reads the release from |
 | `chart_inputs.py`, `candle_inputs.py` | Load and verify a Report Library release |
 | `chart_templates/` | Chart definitions, categories and shared events |
 | `chart_data.py` | Turns a template and the release into chart data |
@@ -126,8 +126,8 @@ defaults. Run the build and tests before opening a pull request.
 
 ## Shared with other sites
 
-- **Market Dashboard:** draws its charts with this renderer. After changing anything in
-  `web/`, run `uv run --no-sync python scripts/sync-dashboard.py ../Bitcoin-Report-Library/dashboard/static/shared-chart`
+- **Market Dashboard:** draws its charts with this renderer. After changing `web/`, the
+  series colours or the events, run `uv run --no-sync python scripts/sync-dashboard.py ../Bitcoin-Report-Library/dashboard/static/shared-chart`
   and commit the result in the Report Library.
 - **Quarterly report:** the newsletter uses `chart_build.build_single` to render a chart
   against an earlier, frozen release.

@@ -125,7 +125,7 @@ const http=require('node:http');
   await screenshot('catalog');
   await page.goto(pathToFileURL(resolve(root,'Bitcoin_Metcalfe_Model.html')).href);await page.evaluate(()=>SecretSatoshisChart.ready);
   assert.equal((await panelState()).count,2);
-  // Existing templates still overlay on desktop and split equally on phones.
+  // Charts without panels still overlay their axes on desktop and split them on phones.
   await page.goto(base+'Bitcoin_Price.html');await page.evaluate(()=>SecretSatoshisChart.ready);
   assert.equal(await page.evaluate(()=>SecretSatoshisChart.view.charts.length),1);
   await page.setViewportSize({width:390,height:844});await page.waitForTimeout(150);

@@ -35,7 +35,7 @@ def prepare_assets(output):
     shutil.copy2(WEB/'catalog/assets/favicon.png',output/'assets/favicon.png')
     site_css=(WEB/'site.css').read_text()
     css=(WEB/'chart.css').read_text()+'\n'+site_css
-    # Data fonts in the shared CSS also work under file:// with browser CORS enabled.
+    # Fonts are inlined so pages opened straight from disk (file://) still load them.
     for name in ('JetBrainsMono-400.ttf','JetBrainsMono-600.ttf','Syne-700.ttf'):
         css=css.replace(f'fonts/{name}','data:font/ttf;base64,'+base64.b64encode((WEB/'fonts'/name).read_bytes()).decode())
     catalog_css=output/'assets/catalog.css'
