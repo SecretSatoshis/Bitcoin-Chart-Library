@@ -122,13 +122,15 @@ defaults. Run the build and tests before opening a pull request.
 | `scripts/` | Browser checks and the dashboard sync |
 | `tests/` | Python tests |
 
-## Shared with other sites
+## Market Dashboard
 
-- **Market Dashboard:** draws its charts with this renderer. After changing `web/`, the
-  series colours or the events, run `uv run --no-sync python scripts/sync-dashboard.py ../Bitcoin-Report-Library/dashboard/static/shared-chart`
-  and commit the result in the Report Library.
-- **Quarterly report:** the newsletter uses `chart_build.build_single` to render a chart
-  against an earlier, frozen release.
+The [Market Dashboard](https://dashboard.secretsatoshis.com) draws its charts with this
+renderer. After changing `web/`, the series colours or the events, sync it and commit the
+result in the Report Library:
+
+```bash
+uv run --no-sync python scripts/sync-dashboard.py ../Bitcoin-Report-Library/dashboard/static/shared-chart
+```
 
 ## License
 
