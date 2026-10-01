@@ -33,7 +33,7 @@
       ]
     },
     {
-      "source": "/assets/(favicon\\.png|logo\\.png|LICENSE|NOTICE|.*-OFL\\.txt)",
+      "source": "/assets/(favicon\\.png|LICENSE|NOTICE|.*-OFL\\.txt)",
       "headers": [
         {
           "key": "Cache-Control",

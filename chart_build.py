@@ -32,8 +32,7 @@ def prepare_assets(output):
             raise ValueError(f'Vendor checksum mismatch: {name}')
     result={}
     shutil.copy2(WEB/'catalog/favicon.ico',output/'favicon.ico')
-    for name in ('favicon.png','logo.png'):
-        shutil.copy2(WEB/'catalog/assets'/name,output/'assets'/name)
+    shutil.copy2(WEB/'catalog/assets/favicon.png',output/'assets/favicon.png')
     site_css=(WEB/'site.css').read_text()
     css=(WEB/'chart.css').read_text()+'\n'+site_css
     # Data fonts in the shared CSS also work under file:// with browser CORS enabled.
@@ -119,7 +118,7 @@ def build_pack(csv_dir,output=ROOT/'Charts',*,templates=None,frozen_report_date=
         for name in ('catalog.js','catalog.css'):
             path=stage/'assets'/name;digest=hashlib.sha256(path.read_bytes()).hexdigest()[:16]
             versioned=f'assets/{path.stem}.{digest}{path.suffix}';path.rename(stage/versioned)
-            index=re.sub(r'assets/'+re.escape(name)+r'(?:\?[^"\s]*)?',versioned,index)
+            index=index.replace(f'assets/{name}',versioned)
         (stage/'index.html').write_text(index)
         manifest={'schema_version':1,'renderer':'Lightweight Charts 5.2.1','report_date':catalog['latest_data_date'],
                   'charts':{p['id']:{'payload_sha256':hashlib.sha256(safe_json(p).encode()).hexdigest(),

@@ -1,10 +1,8 @@
 import copy
 import json
-from pathlib import Path
-import pandas as pd
 import pytest
 import chart_build
-from chart_templates import get_template,load_templates
+from chart_templates import get_template
 from candle_inputs import validate_candle_inputs
 from test_candles import candle_fixture
 

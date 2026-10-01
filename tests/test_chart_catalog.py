@@ -1,3 +1,4 @@
+"""The built catalog, chart pages, published URLs and cache rules."""
 import json
 import re
 from pathlib import Path
@@ -77,6 +78,6 @@ def test_cache_rules_and_vendored_runtime():
     hashed = headers['/assets/(.*\\.[0-9a-f]{16}\\.(?:js|css))'][0]['value']
     assert 'immutable' in hashed
     # Unversioned assets must stay replaceable, so they are never marked immutable.
-    unversioned = headers['/assets/(favicon\\.png|logo\\.png|LICENSE|NOTICE|.*-OFL\\.txt)'][0]['value']
+    unversioned = headers['/assets/(favicon\\.png|LICENSE|NOTICE|.*-OFL\\.txt)'][0]['value']
     assert 'immutable' not in unversioned
     assert (CHARTS/'assets/LICENSE').is_file() and (CHARTS/'assets/NOTICE').is_file()

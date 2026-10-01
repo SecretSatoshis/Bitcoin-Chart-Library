@@ -1,9 +1,7 @@
 """Release integrity: manifest hashes, freshness and frozen exports."""
 import hashlib
 import json
-from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import pytest
 

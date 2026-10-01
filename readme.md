@@ -98,7 +98,7 @@ automatically:
     'description': 'What the chart compares and what a reader can learn from it.',
     'category': 'Price & Trends',
     'family': 'timeseries',
-    'data_source': 'Data Source: Bitview',
+    'data_source': 'Data Source: BRK',
     'filter_start_date': '2010-07-01',
     'default_range': '4Y',
     'axes': {'right': {'label': 'Bitcoin Price (USD)', 'unit': 'USD', 'mode': 'log'}},

@@ -4,7 +4,6 @@ import html
 import json
 import re
 from pathlib import Path
-from datetime import datetime,timezone
 from chart_templates import CATEGORY_ORDER
 
 CANONICAL_BASE = "https://charts.secretsatoshis.com"
@@ -17,18 +16,6 @@ HEAD_MARKER_OPEN = "<!-- ss:head -->"
 HEAD_MARKER_CLOSE = "<!-- /ss:head -->"
 NOSCRIPT_MARKER_OPEN = "<!-- ss:chart-index -->"
 NOSCRIPT_MARKER_CLOSE = "<!-- /ss:chart-index -->"
-
-def _date_string(value) -> str:
-    if hasattr(value, "date"):
-        value = value.date()
-    return str(value)[:10]
-
-def _natural_join(values: list[str]) -> str:
-    if len(values) == 1:
-        return values[0]
-    if len(values) == 2:
-        return f"{values[0]} and {values[1]}"
-    return f"{', '.join(values[:-1])}, and {values[-1]}"
 
 def _tags(title: str, category: str, series: list[str]) -> list[str]:
     haystack = " ".join([title, category, *series]).casefold()

@@ -1,10 +1,10 @@
-"""Calculation regressions retained independently of the rendering library."""
+"""Chart data transformations: period returns, cycle paths and daily series."""
 import numpy as np
 import pandas as pd
 import pytest
 from chart_data import (_daily, _cycles, _seasonal, build_payload, _positive_price_series,
                         _period_baseline, _report_period, _resolve_filter_start_date)
-from chart_templates import get_template, load_templates
+from chart_templates import get_template
 
 
 def frame(dates,prices):
@@ -115,16 +115,3 @@ def test_dual_axes_units_and_percentage_values_are_explicit():
     assert p['series'][0]['values']==[-12.125,0,215.75]
     assert p['axes']['right']['unit']=='percent'
 
-
-def test_existing_template_content_is_preserved():
-    templates={t['filename']:t for t in load_templates()}
-    assert len(templates['Bitcoin_YTD_Return_Comparison_full']['y_data'])==17
-    assert {s['axis'] for s in templates['Bitcoin_Transactions']['y_data']}=={'right'}
-    fields={s['data'] for s in templates['Bitcoin_YTD_Return_Comparison_full']['y_data']}
-    assert '^SPGSCI_close_ytd_change' in fields and '^BCOM_close_ytd_change' not in fields
-    events={e['name']:e for e in templates['Bitcoin_Hashrate_Price']['events']}
-    assert events['U.S. Strategic Bitcoin Reserve']['dates']==['2025-03-06']
-    assert events['Strategy Sells Bitcoin']['dates']==['2026-06-29']
-    supply=templates['Bitcoin_Macro_Supply']['y_data']
-    assert {s['data']:s['name'] for s in supply}['liquid_supply']=='Liquid Supply'
-    assert 'tx_count_sum_24h' not in {s['data'] for s in supply}

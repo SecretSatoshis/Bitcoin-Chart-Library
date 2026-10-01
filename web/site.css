@@ -1,6 +1,20 @@
-/* Standard Secret Satoshis site chrome and shared chart width. */
-:root{--chart-content-width:calc(min(100vw, 1680px) - 7.6vw);--nav-height:64px;--max-width:1120px;--gutter:clamp(20px,5vw,60px);--white:#fff;--text-dim:#9090a8;--text-mute:#82829c;--accent:#f7931a;--mono:'JetBrains Mono',monospace}
-.accent{color:var(--accent)}
+/* Standard Secret Satoshis site navigation and footer, shared by chart pages and the catalog. */
+:root {
+  --chart-content-width: calc(min(100vw, 1680px) - 7.6vw);
+  --nav-height: 64px;
+  --max-width: 1120px;
+  --gutter: clamp(20px, 5vw, 60px);
+  --white: #fff;
+  --text-dim: #9090a8;
+  --text-mute: #82829c;
+  --accent: #f7931a;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+.accent {
+  color: var(--accent);
+}
+
 .site-nav {
   position: fixed;
   z-index: 1000;
@@ -16,6 +30,13 @@
   background: rgba(8, 8, 12, 0.8);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+}
+
+.site-nav ul,
+.site-footer ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .nav-logo,
@@ -63,8 +84,28 @@
   line-height: 1;
 }
 
+/* Chart pages carry the catalog's footer with this class added. */
 .site-footer {
+  display: block;
+  margin: 0;
   padding: 80px var(--gutter) 40px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+  line-height: 1.7;
+  letter-spacing: normal;
+}
+
+.site-footer > div {
+  text-align: left;
+}
+
+.site-footer h2,
+.site-footer p {
+  margin-top: 0;
+}
+
+.site-footer .footer-tagline {
+  margin-top: 8px;
 }
 
 .footer-inner {
@@ -77,10 +118,6 @@
   grid-template-columns: minmax(240px, 1.5fr) repeat(3, minmax(130px, 1fr));
   gap: 40px;
   margin-bottom: 60px;
-}
-
-.footer-brand {
-  color: var(--white);
 }
 
 .footer-tagline {
@@ -126,14 +163,69 @@
   font-size: 11px;
 }
 
+/* Chart pages add the TradingView attribution here, so it wraps. */
+.site-footer .footer-bottom {
+  flex-wrap: wrap;
+  gap: 20px;
+}
 
-.site-nav ul,.site-footer ul{margin:0;padding:0;list-style:none}
-.site-footer{display:block;margin:0;border-top:1px solid var(--border);font-size:14px;line-height:1.7;letter-spacing:normal}
-.site-footer>div{text-align:left}.site-footer h2,.site-footer p{margin-top:0}
-.site-footer .footer-tagline{margin-top:8px}.site-footer .footer-bottom{flex-wrap:wrap;gap:20px}
-.chart-attribution{font-size:11px}.chart-attribution details{max-width:650px;text-align:left}
-@media(max-width:680px){
-.site-nav{gap:16px}.nav-links{position:absolute;top:100%;right:0;left:0;display:none!important;padding:16px 0!important;border-bottom:1px solid var(--border);background:var(--bg)}
-.nav-links.open{display:flex!important;flex-direction:column}.nav-links li{padding:12px var(--gutter)}.nav-links a{display:block;padding:8px 0;font-size:16px}.nav-toggle{display:flex}
-.site-footer{padding:48px var(--gutter) 32px}.footer-top{grid-template-columns:1fr;gap:32px}.footer-bottom{flex-direction:column;gap:12px;text-align:center}
+.chart-attribution {
+  font-size: 11px;
+}
+
+.chart-attribution details {
+  max-width: 650px;
+  text-align: left;
+}
+
+@media (max-width: 680px) {
+  .site-nav {
+    gap: 16px;
+  }
+
+  /* !important beats `.site-nav ul`, which is more specific. */
+  .nav-links {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    display: none !important;
+    padding: 16px 0 !important;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .nav-links.open {
+    display: flex !important;
+    flex-direction: column;
+  }
+
+  .nav-links li {
+    padding: 12px var(--gutter);
+  }
+
+  .nav-links a {
+    display: block;
+    padding: 8px 0;
+    font-size: 16px;
+  }
+
+  .nav-toggle {
+    display: flex;
+  }
+
+  .site-footer {
+    padding: 48px var(--gutter) 32px;
+  }
+
+  .footer-top {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
 }

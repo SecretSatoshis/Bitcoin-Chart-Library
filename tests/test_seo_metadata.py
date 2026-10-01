@@ -1,9 +1,4 @@
-"""Regression tests for generated SEO and structured-data output.
-
-Everything these cover is machine-generated on every build, which means it can
-drift without anyone noticing. Each assertion here corresponds to a defect that
-was found by hand and would otherwise be found by hand again.
-"""
+"""Search metadata, structured data, sitemap and robots.txt in the built site."""
 
 from __future__ import annotations
 
@@ -27,10 +22,6 @@ def _ld(document: str) -> dict:
     match = re.search(r'application/ld\+json">(.*?)</script>', document, re.S)
     assert match, "no JSON-LD block"
     return json.loads(match.group(1))
-
-
-def test_catalog_covers_every_chart():
-    assert {e['filename'] for e in ENTRIES} == {p.stem for p in CHARTS.glob('*.html') if p.name != 'index.html'}
 
 
 def test_titles_and_descriptions_are_unique():

@@ -23,7 +23,7 @@ for filename,(chart_id,title,axis) in frames.items():
     page=page.replace('<script defer src="@@RENDERER@@"></script>','<script defer src="embed-host.js"></script>')
     values={**assets,'HEAD':f'<meta name="viewport" content="width=device-width, initial-scale=1"><title>{title}</title>'+DASHBOARD_PLOT_STYLE,
             'NAV':'','FOOTER':'','CATEGORY':'MARKET INTELLIGENCE','TITLE':title,'DESCRIPTION':'',
-            'DATE':'','AXIS':'RIGHT: '+axis,'SOURCE':'Bitview','NOTE':'Daily observations.', 'PAYLOAD':'null'}
+            'DATE':'','AXIS':'RIGHT: '+axis,'SOURCE':'Data Source: BRK','NOTE':'Daily observations.', 'PAYLOAD':'null'}
     for key,value in values.items():page=page.replace('@@'+key+'@@',value)
     if '@@' in page:raise ValueError('Unresolved embed template placeholder')
     (output/filename).write_text('\n'.join(line.rstrip() for line in page.splitlines())+'\n')
