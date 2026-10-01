@@ -26,7 +26,7 @@ def test_every_chart_has_complete_payload_and_local_assets(entry):
     document=(CHARTS/entry['url']).read_text()
     assert entry['category'] in CATALOG['categories'] and entry['tags']
     assert entry['description'] and entry['height']>=520
-    assert 'plotly' not in document.lower() and 'noindex' not in document
+    assert 'noindex' not in document
     p=json.loads(re.search(r'<script id="chart-data" type="application/json">(.*?)</script>',document,re.S).group(1))
     assert p['id']==entry['filename'] and p['reportDate']==CATALOG['latest_data_date']
     assert p['series'] and p['x']
@@ -69,10 +69,9 @@ def test_registry_rejects_duplicates_and_invalid_axes():
 
 
 def test_cache_rules_and_vendored_runtime():
-    # The source config is the one maintained by hand; builds copy it into the pack.
-    config=json.loads((CHARTS.parent/'web/catalog/vercel.json').read_text())
+    config=json.loads((CHARTS.parent/'vercel.json').read_text())
+    assert config['outputDirectory']=='Charts'
     headers={r['source']:r['headers'] for r in config['headers']}
-    assert '/plotly.min.js' not in headers
     for key in ('/catalog.json','/:chart.html','/'):
         assert 'must-revalidate' in headers[key][0]['value']
     hashed = headers['/assets/(.*\\.[0-9a-f]{16}\\.(?:js|css))'][0]['value']

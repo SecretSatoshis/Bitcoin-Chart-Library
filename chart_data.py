@@ -24,21 +24,14 @@ def _price_series(selected_metrics):
     return prices
 
 def _positive_price_series(price_series):
-    """Return sorted, daily, positive prices without changing the source object.
-
-    Ported from Bitcoin-Report-Library/report_tables.py so both repos measure a period
-    return from the same observations.
-    """
+    """Return sorted, daily, positive prices; matches the Report Library's period returns."""
     prices = pd.to_numeric(price_series, errors="coerce").sort_index()
     prices = prices.dropna().loc[lambda values: values > 0]
     return prices.groupby(prices.index.normalize()).last()
 
 def _last_positive_before(price_series, boundary):
-    """Return the final positive price strictly before a calendar boundary.
-
-    This is the baseline a period return is measured from. Using the period's own first
-    observation instead — which this module used to do — erases the first day's move and
-    puts these charts at odds with the dashboard's published MTD/YTD figures.
+    """Return the last positive close before a boundary: the baseline a period return
+    is measured from, so the period's first day counts, as in the published MTD/YTD figures.
     """
     prior = price_series.loc[price_series.index < pd.Timestamp(boundary)]
     return prior.iloc[-1] if not prior.empty else np.nan
@@ -52,22 +45,12 @@ def _period_baseline(price_series, year, month=None):
     return float(baseline)
 
 def _report_period(price_series):
-    """Derive the reporting year and month from the data, never the local clock.
-
-    The charts describe whatever dataset Report Library published; reading `date.today()`
-    makes a run near a month or year boundary describe a period the data does not cover,
-    and makes a local run differ from CI.
-    """
+    """Reporting year and month from the data, never the clock, so every run of a release agrees."""
     as_of = price_series.index.max()
     return as_of.year, as_of.month
 
 def _resolve_filter_start_date(value, index):
-    """Resolve a static or report-period-relative chart start date.
-
-    Return-comparison charts describe the completed Report Library dataset, not the
-    machine clock. This matters when a refresh is delayed or runs across a UTC month or
-    year boundary.
-    """
+    """Resolve a fixed start date or one relative to the release's month or year."""
     if value not in {"report_month_start", "report_year_start"}:
         return pd.to_datetime(value)
 
@@ -100,14 +83,10 @@ def _is_complete_non_leap_year(series):
     return (first.month, first.day) == (1, 1) and (last.month, last.day) == (12, 31)
 
 
-def _color(key, role='normal'):
-    return series_color(key, role)
-
-
 def _series(key, name, x, y, axis='right', role='normal'):
     values = pd.to_numeric(pd.Series(y), errors='coerce').to_numpy(dtype=float)
     return {'id': key, 'name': str(name), 'axis': axis, 'role': role,
-            'color': _color(key, role), 'lineWidth': 3 if role == 'highlight' or key == 'price_close' else 1 if role == 'historical' else 2,
+            'color': series_color(key, role), 'lineWidth': 3 if role == 'highlight' or key == 'price_close' else 1 if role == 'historical' else 2,
             'lineStyle': 'dashed' if role == 'median' else 'solid',
             'opacity': 0.45 if role == 'historical' else 1,
             'x': list(x), 'values': [float(v) if np.isfinite(v) else None for v in values]}
@@ -118,7 +97,7 @@ def _daily(frame, template):
     if not isinstance(dates, pd.DatetimeIndex) or dates.empty or dates.has_duplicates or not dates.is_monotonic_increasing:
         raise ValueError('Time series must have a sorted, unique date index')
     start = _resolve_filter_start_date(template.get('filter_start_date', dates[0]), dates)
-    selected = frame.loc[start:template.get('filter_end_date', dates[-1])]
+    selected = frame.loc[start:]
     if selected.empty:
         raise ValueError('Chart filter contains no observations')
     x = selected.index.strftime('%Y-%m-%d').tolist()
@@ -253,11 +232,12 @@ def build_payload(template, inputs):
         payload['panels'] = [dict(panel) for panel in template['panels']]
     if 'default_hidden_series' in template:
         payload['defaultHiddenSeries'] = list(template['default_hidden_series'])
-    if family == 'timeseries' and any(s['id'] == 'price_close' and payload['axes'][s['axis']]['unit'] == 'USD' for s in series) and 'bitcoin_candles.csv.gz' in inputs:
+    if family == 'timeseries' and any(s['id'] == 'price_close' and payload['axes'][s['axis']]['unit'] == 'USD' for s in series):
         payload['candleViews'] = _candle_views(payload, inputs)
-    # Older frozen releases without candles retain the daily line presentation.
-    interval = template.get('default_interval', 'daily')
-    if template.get('default_presentation') == 'candles' and interval in payload.get('candleViews', {}):
+    if template.get('default_presentation') == 'candles':
+        interval = template.get('default_interval', 'daily')
+        if interval not in payload.get('candleViews', {}):
+            raise ValueError(f'{template["filename"]}: no {interval} candles for its default presentation')
         payload['defaultPresentation'] = 'candles'
         payload['defaultInterval'] = interval
     return payload

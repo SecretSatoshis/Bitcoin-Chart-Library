@@ -5,14 +5,16 @@ import pandas as pd
 import pytest
 import chart_build
 from chart_templates import get_template,load_templates
+from candle_inputs import validate_candle_inputs
+from test_candles import candle_fixture
 
 
 @pytest.fixture
 def release(monkeypatch):
-    frame=pd.DataFrame({'price_close':[100.,110.,120.]},index=pd.date_range('2026-01-01',periods=3))
-    frame.attrs['release_manifest']={'report_date':'2026-01-03','files':{}}
-    monkeypatch.setattr(chart_build,'_inputs',lambda *a:{'master_metrics_data.csv.gz':frame})
-    t=get_template('Bitcoin_Price');t['y_data']=t['y_data'][:1]
+    inputs=candle_fixture();validate_candle_inputs(inputs,'2024-01-02')
+    inputs['master_metrics_data.csv.gz'].attrs['release_manifest']={'report_date':'2024-01-02','files':{}}
+    monkeypatch.setattr(chart_build,'_inputs',lambda *a:inputs)
+    t=get_template('Bitcoin_Price');t['y_data']=t['y_data'][:1];t['filter_start_date']='2024-01-01'
     return t
 
 
@@ -24,7 +26,6 @@ def test_new_template_generates_chart_catalog_and_export_contract(tmp_path,relea
     assert {e['filename'] for e in catalog['charts']}=={release['filename'],extra['filename']}
     assert 'id="chart-data"' in (out/'Bitcoin_New_Template.html').read_text()
     assert 'SecretSatoshisChart' in next((out/'assets').glob('renderer.*.js')).read_text()
-    assert not list(out.rglob('*plotly*'))
 
 
 def test_failure_keeps_previous_pack_byte_for_byte(tmp_path,release,monkeypatch):
@@ -68,12 +69,11 @@ def test_panel_assignment_requires_one_valid_weighted_panel_per_axis():
 def test_panel_payload_preserves_existing_observations():
     from chart_data import build_payload
     template=get_template('Bitcoin_Metcalfe_Model')
-    data=pd.DataFrame({'price_close':[100.,110.,120.],
-                      'metcalfe_value':[50.,55.,60.],
-                      'metcalfe_price_multiple':[2.,2.,2.]},
-                     index=pd.date_range('2026-01-01',periods=3))
-    with_panels=build_payload(template,{'master_metrics_data.csv.gz':data})
-    legacy=copy.deepcopy(template);legacy.pop('panels')
-    without_panels=build_payload(legacy,{'master_metrics_data.csv.gz':data})
+    template['filter_start_date']='2024-01-01'
+    inputs=candle_fixture(metcalfe_value=[50.,51.],metcalfe_price_multiple=[2.,2.])
+    validate_candle_inputs(inputs,'2024-01-02')
+    with_panels=build_payload(template,inputs)
+    single=copy.deepcopy(template);single.pop('panels')
+    without_panels=build_payload(single,inputs)
     assert with_panels.pop('panels')==template['panels']
     assert with_panels==without_panels

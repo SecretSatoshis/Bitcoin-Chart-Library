@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from chart_build import prepare_assets, WEB
-from chart_data import _color
+from chart_style import series_color
 from chart_templates.events import EVENTS
 
 output=Path(sys.argv[1]).resolve()
@@ -48,9 +48,8 @@ addEventListener('message',event=>{
 metrics=['price_close','realized_price','sth_realized_price','realizedcap_multiple_3','90_day_ma_price_close','364_day_ma_price_close','200_week_ma_price_close']
 components=output.parent.parent/'components'
 components.mkdir(exist_ok=True)
-# The dashboard component imports this map; it is the only copy the dashboard keeps.
-(components/'chart-colors.json').write_text(json.dumps({m:_color(m) for m in metrics},indent=2)+'\n')
-(output/'metric-colors.json').unlink(missing_ok=True)
+# The dashboard's price chart colours and event lines come only from these two files.
+(components/'chart-colors.json').write_text(json.dumps({m:series_color(m) for m in metrics},indent=2)+'\n')
 (components/'chart-events.json').write_text(json.dumps(EVENTS,indent=2)+'\n')
 provenance={name:hashlib.sha256((WEB/name).read_bytes()).hexdigest() for name in ('renderer.js','chart.html','chart.css','site.css','vendor-lock.json','fonts/JetBrainsMono-400.ttf','fonts/JetBrainsMono-600.ttf','fonts/Syne-700.ttf')}
 provenance['scripts/sync-dashboard.py']=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()

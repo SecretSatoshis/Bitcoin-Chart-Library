@@ -1,4 +1,4 @@
-"""Release integrity, cycle scaling, missing observations and runtime regressions."""
+"""Release integrity: manifest hashes, freshness, frozen exports and the refresh check."""
 import hashlib
 import json
 from pathlib import Path
@@ -111,10 +111,9 @@ def test_remote_reads_are_release_keyed_and_retry_stale_copies(tmp_path, monkeyp
     assert sum(INPUT_FILES[0] in url for url in requested) == 2
 
 
-def test_legacy_manifest_is_not_accepted(tmp_path):
+def test_missing_release_manifest_is_rejected(tmp_path):
     _release(tmp_path)
     (tmp_path / 'release_manifest.json').unlink()
-    (tmp_path / 'chart_input_manifest.json').write_text('{}')
     with pytest.raises(FileNotFoundError):
         load_chart_inputs(lambda name: tmp_path / name, now='2026-09-09')
 
@@ -155,22 +154,20 @@ def test_frozen_export_retains_integrity_without_requiring_current_release(tmp_p
         load_chart_inputs(lambda name:tmp_path/name,now='2026-12-01',frozen_report_date='2026-09-08')
 
 
-def test_frozen_export_refuses_the_published_pack(tmp_path):
+def test_frozen_export_refuses_the_chart_pack(tmp_path):
     from chart_build import ROOT, build_single
-    with pytest.raises(ValueError, match='published Charts'):
+    with pytest.raises(ValueError, match='Charts/ pack'):
         build_single(tmp_path, 'Bitcoin_Price', ROOT / 'Charts' / 'frozen.html',
                      frozen_report_date='2026-09-08')
 
 
-def test_release_status_builds_only_for_a_new_release(tmp_path, monkeypatch):
+def test_release_status_reads_published_and_live_release_dates(tmp_path):
     import importlib.util
     spec = importlib.util.spec_from_file_location('release_status', Path(__file__).parents[1] / 'scripts/release-status.py')
     status = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(status)
+    assert status.report_date(tmp_path, 'build-manifest.json') is None
     (tmp_path / 'release_manifest.json').write_text(json.dumps({'report_date': '2026-09-08'}))
-    assert status.published_release(tmp_path) == '2026-09-08'
-    pack = tmp_path / 'pack'
-    assert status.charted_release(pack) is None
-    pack.mkdir()
-    (pack / 'build-manifest.json').write_text(json.dumps({'report_date': '2026-09-08'}))
-    assert status.charted_release(pack) == '2026-09-08'
+    (tmp_path / 'build-manifest.json').write_text(json.dumps({'report_date': '2026-09-07'}))
+    assert status.report_date(tmp_path, 'release_manifest.json') == '2026-09-08'
+    assert status.report_date(tmp_path, 'build-manifest.json') == '2026-09-07'

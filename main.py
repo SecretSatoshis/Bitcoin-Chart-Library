@@ -1,4 +1,4 @@
-"""Generate the static Secret Satoshis Chart Library without a browser or Plotly."""
+"""Build the static Secret Satoshis Chart Library from a Report Library release."""
 import argparse
 import json
 from functools import partial

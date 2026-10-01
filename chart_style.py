@@ -16,7 +16,7 @@ ALIASES = {
     'metcalfe_price_multiple': 'metcalfe_value',
     'power_law_price_multiple': 'power_law_price',
     'hayes_network_price_multiple': 'hayes_network_price',
-    **{f'nvt_price_multiple_{days}d': f'nvt_price_{days}d' for days in (30, 90, 365)},
+    'nvt_price_multiple_90d': 'nvt_price_90d',
 }
 
 COLORS = {}
@@ -77,8 +77,8 @@ def metric_identity(key):
         return key
     if '_close' in key:
         return key.split('_close', 1)[0]
-    if key.endswith('_mc_btc_price'):
-        return key.removesuffix('_mc_btc_price')
+    if key.endswith('_market_cap_btc_price'):
+        return key.removesuffix('_market_cap_btc_price')
     return key
 
 

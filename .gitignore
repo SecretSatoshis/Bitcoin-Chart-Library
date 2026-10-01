@@ -52,6 +52,9 @@ build/
 # Byte-compiled files
 *.pyc
 
-# Browser tooling and temporary chart builds
+# Browser tooling, the uv used by Vercel builds, and chart builds (Vercel builds Charts/)
 node_modules/
+.uv/
+Charts/
 .chart-stage-*/
+.chart-export-*/

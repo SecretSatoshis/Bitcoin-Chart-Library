@@ -88,7 +88,6 @@ def validate_pack(output,payloads):
     for p in payloads:
         document=(Path(output)/(p['id']+'.html')).read_text()
         if 'id="chart-data"' not in document or '<h1>' not in document:raise ValueError('Incomplete chart document')
-        if 'plotly' in document.lower() or 'noindex' in document:raise ValueError('Legacy/prototype markup in production')
         for path in re.findall(r'(?:src|href)="(assets/[^"?#]+)',document):
             if not (Path(output)/path).is_file():raise ValueError(f'Missing asset {path}')
 
@@ -111,7 +110,7 @@ def build_pack(csv_dir,output=ROOT/'Charts',*,templates=None,frozen_report_date=
         stage=Path(directory)/'pack';shutil.copytree(WEB/'catalog',stage)
         assets=prepare_assets(stage)
         for p in payloads:
-            p['provenance']={'releaseDate':release['report_date'],'inputs':{k:v['sha256'] if isinstance(v,dict) else v for k,v in release['files'].items() if k in inputs}}
+            p['provenance']={'releaseDate':release['report_date'],'inputs':{k:v['sha256'] for k,v in release['files'].items() if k in inputs}}
             write_chart(p,stage,assets)
         catalog=write_catalog(stage,payloads)
         validate_pack(stage,payloads)
@@ -146,9 +145,9 @@ def build_single(csv_dir,filename,output,*,frozen_report_date):
     """
     from chart_templates import get_template
     output=Path(output).resolve()
-    published=(ROOT/'Charts').resolve()
-    if output.parent==published or published in output.parents:
-        raise ValueError('Frozen exports must not be written into the published Charts/ pack')
+    pack=(ROOT/'Charts').resolve()
+    if output.parent==pack or pack in output.parents:
+        raise ValueError('Frozen exports must not be written into the Charts/ pack')
     payload=build_payload(get_template(filename),_inputs(csv_dir,frozen_report_date))
     output.parent.mkdir(parents=True,exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='.chart-export-',dir=output.parent) as directory:

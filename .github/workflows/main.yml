@@ -1,42 +1,25 @@
 name: Update Bitcoin Charts
 
+# Vercel builds and publishes the chart site from `main` on every push. This workflow
+# tests each change against the live release and, hourly, asks Vercel to rebuild once
+# the Report Library publishes a new release.
 on:
+  push:
+    branches: [main]
   pull_request:
   schedule:
-    # Hourly check rather than a fixed offset after the Report Library: GitHub starts
-    # scheduled jobs hours late and in no guaranteed order. The release job builds only
-    # when a new Report Library release has been published.
     - cron: "45 * * * *"
   workflow_dispatch:
 
 permissions: {}
 
 concurrency:
-  group: update-charts-${{ github.ref }}
+  group: update-charts-${{ github.ref }}-${{ github.event_name == 'schedule' }}
   cancel-in-progress: false
 
 jobs:
-  release:
-    if: github.event_name == 'schedule'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-    outputs:
-      build: ${{ steps.status.outputs.build }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          persist-credentials: false
-
-      - name: Compare published and charted releases
-        id: status
-        run: python3 scripts/release-status.py
-
-  build:
-    needs: release
-    # Pull requests and manual runs always build; scheduled runs only for a new release.
-    if: ${{ !cancelled() && (github.event_name != 'schedule' || needs.release.outputs.build == 'true') }}
+  test:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -59,6 +42,12 @@ jobs:
       - name: Install locked dependencies
         run: uv sync --locked
 
+      - name: Build charts from the live release
+        run: uv run --no-sync python main.py
+
+      - name: Run regression tests
+        run: uv run --no-sync pytest -q
+
       - name: Set up browser tooling
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -70,61 +59,33 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
 
-      - name: Run regression tests
-        run: uv run --no-sync pytest -q
-
-      - name: Generate charts
-        if: github.event_name != 'pull_request'
-        run: |
-          uv run --no-sync python main.py
-          # Validate the files produced by this run. The full suite above
-          # checks the committed output, which is intentionally one release
-          # behind during a scheduled refresh.
-          uv run --no-sync pytest -q
-
       - name: Verify charts in HTTP and direct-file browsers
         run: |
           npm run test:browser
           npm run test:candles
+          npm run test:panels
 
-      - name: Upload generated charts
-        if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: generated-charts-${{ github.run_id }}
-          path: Charts/
-          if-no-files-found: error
-          retention-days: 1
-
-  publish:
-    if: github.event_name != 'pull_request'
-    needs: build
+  refresh:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
-      - name: Clear the previous generated chart pack
-        run: python -c "import shutil; shutil.rmtree('Charts')"
+      - name: Compare published and live releases
+        id: status
+        run: python3 scripts/release-status.py
 
-      - name: Download validated charts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: generated-charts-${{ github.run_id }}
-          path: Charts/
-
-      - name: Commit and push charts
+      # A manual run always rebuilds.
+      - name: Ask Vercel to rebuild the chart site
+        if: steps.status.outputs.build == 'true' || github.event_name == 'workflow_dispatch'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add Charts/
-          git diff --cached --quiet || git commit -m "Update Charts"
-          gh auth setup-git
-          git pull --rebase origin main
-          git push origin HEAD:main
+          test -n "$DEPLOY_HOOK" || { echo "::error::VERCEL_DEPLOY_HOOK_URL secret is not set"; exit 1; }
+          curl --fail --silent --show-error -X POST "$DEPLOY_HOOK" > /dev/null
+          echo "Rebuild requested for release ${{ steps.status.outputs.release }}"

@@ -1,7 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": null,
-  "outputDirectory": ".",
+  "framework": null,
+  "installCommand": "curl -LsSf https://astral.sh/uv/0.12.5/install.sh | env UV_INSTALL_DIR=.uv UV_NO_MODIFY_PATH=1 sh && .uv/uv sync --locked",
+  "buildCommand": ".uv/uv run --no-sync python main.py && .uv/uv run --no-sync pytest -q",
+  "outputDirectory": "Charts",
   "headers": [
     {
       "source": "/catalog.json",

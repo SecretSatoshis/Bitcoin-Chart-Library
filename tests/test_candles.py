@@ -6,8 +6,9 @@ from chart_templates import get_template
 from candle_inputs import validate_candle_inputs
 
 
-def candle_fixture():
-    master=pd.DataFrame({'price_close':[100.,102.],'model':[90.,np.nan]},index=pd.date_range('2024-01-01',periods=2,name='date'))
+def candle_fixture(**metrics):
+    """A two-day release with candles; extra keyword columns are added to every metric frame."""
+    master=pd.DataFrame({'price_close':[100.,102.],'model':[90.,np.nan],**metrics},index=pd.date_range('2024-01-01',periods=2,name='date'))
     rows=[]
     for interval,start,end,observed,o,h,l,c,complete in [
         ('daily','2024-01-01','2024-01-01','2024-01-01',99,101,98,100,True),
@@ -32,10 +33,10 @@ def test_prepared_periods_preserve_nulls_and_original_event_dates():
     assert week['candles'][0]['complete'] is False
     assert week['events'][0]['date']=='2024-01-01'
     assert week['events'][0]['originalDate']=='2024-01-02'
-    del inputs['bitcoin_candles.csv.gz']
-    assert 'candleViews' not in build_payload(template,inputs)
-    inputs=candle_fixture();validate_candle_inputs(inputs,'2024-01-02')
+    # Candles belong to the Bitcoin USD price; a candle default without it is a template error.
     template['y_data']=template['y_data'][1:]
+    with pytest.raises(ValueError,match='no monthly candles'):build_payload(template,inputs)
+    template['default_presentation']='line'
     assert 'candleViews' not in build_payload(template,inputs)
 
 

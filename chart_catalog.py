@@ -15,8 +15,6 @@ SOURCE_REPOSITORY = "https://github.com/SecretSatoshis/Bitcoin-Chart-Library"
 
 HEAD_MARKER_OPEN = "<!-- ss:head -->"
 HEAD_MARKER_CLOSE = "<!-- /ss:head -->"
-BODY_MARKER_OPEN = "<!-- ss:heading -->"
-BODY_MARKER_CLOSE = "<!-- /ss:heading -->"
 NOSCRIPT_MARKER_OPEN = "<!-- ss:chart-index -->"
 NOSCRIPT_MARKER_CLOSE = "<!-- /ss:chart-index -->"
 
@@ -152,7 +150,7 @@ def _write_catalog_head(output_dir: Path, catalog: dict) -> None:
     block = "\n".join(
         [
             HEAD_MARKER_OPEN,
-            f'<meta property="og:type" content="website">',
+            '<meta property="og:type" content="website">',
             f'<meta property="og:site_name" content="{SITE_NAME}">',
             f'<meta property="og:title" content="Bitcoin Chart Library | {SITE_NAME}">',
             '<meta property="og:description" content="'
@@ -239,7 +237,7 @@ def _write_noscript_index(output_dir: Path, catalog: dict) -> None:
     block = "\n".join(
         [
             NOSCRIPT_MARKER_OPEN,
-            f'        <ul class="chart-index">',
+            '        <ul class="chart-index">',
             items,
             "        </ul>",
             NOSCRIPT_MARKER_CLOSE,

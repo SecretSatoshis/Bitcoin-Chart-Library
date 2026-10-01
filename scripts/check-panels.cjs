@@ -1,4 +1,4 @@
-// Focused acceptance check for the template-defined Metcalfe panel pilot.
+// Stacked-panel check on the Metcalfe chart: alignment, controls, candles, mobile, catalog and PNG.
 const assert=require('node:assert/strict');
 const {chromium}=require('playwright');
 const fs=require('node:fs/promises');
@@ -131,6 +131,6 @@ const http=require('node:http');
   await page.setViewportSize({width:390,height:844});await page.waitForTimeout(150);
   assert.equal(await page.evaluate(()=>SecretSatoshisChart.view.charts.length),2);
   assert.deepEqual(errors,[]);
-  console.log('PASS Metcalfe panels: alignment, controls, candles, mobile, catalog, file opening and PNG; legacy chart unchanged.');
+  console.log('PASS Metcalfe panels: alignment, controls, candles, mobile, catalog, file opening and PNG; single-panel chart unchanged.');
  }finally{await browser.close();server.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

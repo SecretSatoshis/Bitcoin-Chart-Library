@@ -97,9 +97,7 @@ def load_chart_inputs(csv_path, now=None, *, frozen_report_date=None):
     report_date = manifest.get('report_date')
     frames = {}
     for filename in REQUIRED_FILES:
-        expected = records[filename]
-        expected_hash = expected.get('sha256') if isinstance(expected, dict) else expected
-        payload = _read_verified(csv_path(filename), filename, expected_hash, manifest.get('release_id'))
+        payload = _read_verified(csv_path(filename), filename, records[filename]['sha256'], manifest.get('release_id'))
         frames[filename] = pd.read_csv(io.BytesIO(payload), **READ_OPTIONS.get(filename, {}))
     validation_now = now
     if frozen_report_date is not None:

@@ -3,7 +3,6 @@
   "private": true,
   "scripts": {
     "test:browser": "node scripts/browser-tests.cjs",
-    "export:png": "node scripts/export-chart.cjs",
     "test:candles": "node scripts/check-candles.cjs",
     "test:panels": "node scripts/check-panels.cjs"
   },
