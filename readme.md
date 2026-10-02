@@ -85,18 +85,6 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-For an ETF-only local review, using the local Report Library release:
-
-```bash
-uv run --no-sync python scripts/preview-etfs.py
-uv run --no-sync python -m http.server 8768 --bind 127.0.0.1 --directory outputs/etf-preview
-```
-
-Open http://127.0.0.1:8768/. This isolated catalog contains the eight ETF charts and
-leaves the production chart pack alone. It reads the published ETF files through
-the same manifest checks as other chart inputs. The ETF observation date is shown
-separately from the overall release date.
-
 ## Add a chart
 
 Add a definition to a `CHARTS` list in `chart_templates/`; the build picks it up
@@ -121,12 +109,8 @@ Series use columns the Report Library already publishes; new calculations belong
 Look at existing templates for second axes, stacked `panels`, value bands and candle
 defaults. Run the build and tests before opening a pull request.
 
-ETF charts (`chart_templates/etfs.py`) build their series in `chart_etf.py`: fund flows
-summed by day, week, month or quarter and drawn as stacked bars, holdings and assets as
-stacked areas, and the labeled entry-price and mark-to-market estimates, which are not
-SEC accounting cost or investor returns. Legend values stay each fund's own figures.
-The build refuses ETF data that trails the release by more than four business days,
-and `catalog_order` sets the charts' order within their category.
+The ETF charts are the exception: `chart_etf.py` builds their series from the Report
+Library's ETF tables.
 
 ## Project layout
 
@@ -139,7 +123,7 @@ and `catalog_order` sets the charts' order within their category.
 | `chart_style.py` | Series colours |
 | `chart_build.py`, `chart_catalog.py` | Pages, catalog, search metadata and sitemap |
 | `web/` | Page template, renderer, styles, catalog page, fonts and vendored chart library |
-| `scripts/` | Browser checks, the dashboard sync and the ETF preview |
+| `scripts/` | Browser checks, the dashboard sync and an ETF-only preview build |
 | `tests/` | Python tests |
 
 ## Market Dashboard
