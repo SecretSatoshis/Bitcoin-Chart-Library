@@ -25,7 +25,7 @@ def register(metrics, colors=PALETTE):
     COLORS.update(zip(metrics, colors))
 
 register(['SPY', 'QQQ', 'XLK', 'XLF', 'VXUS', 'GLD', 'XLE', 'AGG',
-          'VTI', 'MSTR', 'WGMI', 'DX-Y.NYB', 'XLRE', '^SPGSCI', 'XYZ', 'COIN'])
+          'IWM', 'MSTR', 'WGMI', 'DX-Y.NYB', 'XLRE', '^SPGSCI', 'XYZ', 'COIN'])
 register(['META', 'AMZN', 'GOOGL', 'MSFT', 'AAPL'])
 register(['NVDA', 'AVGO', 'TSM', '005930.KS', 'MU'])
 register(['united_states_m0_btc_price', 'china_m0_btc_price', 'eurozone_m0_btc_price',

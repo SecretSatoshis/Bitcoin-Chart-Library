@@ -791,7 +791,7 @@ CHARTS = [{'y_data': [{'name': 'Bitcoin Price USD', 'data': 'price_close', 'axis
  {'y_data': [{'name': 'BTC', 'data': 'price_close_ytd_change', 'axis': 'right'},
              {'name': 'SPY', 'data': 'SPY_close_ytd_change', 'optional': True, 'axis': 'right'},
              {'name': 'QQQ', 'data': 'QQQ_close_ytd_change', 'optional': True, 'axis': 'right'},
-             {'name': 'VTI', 'data': 'VTI_close_ytd_change', 'optional': True, 'axis': 'right'},
+             {'name': 'Russell 2000 Small Caps', 'data': 'IWM_close_ytd_change', 'optional': True, 'axis': 'right'},
              {'name': 'VXUS', 'data': 'VXUS_close_ytd_change', 'optional': True, 'axis': 'right'},
              {'name': 'XLK', 'data': 'XLK_close_ytd_change', 'optional': True, 'axis': 'right'},
              {'name': 'XLF', 'data': 'XLF_close_ytd_change', 'optional': True, 'axis': 'right'},
