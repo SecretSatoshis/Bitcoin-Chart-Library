@@ -9,12 +9,13 @@ daily data release and drawn with TradingView Lightweight Charts.
 
 ## What's in it
 
-46 charts in nine categories:
+54 charts in ten categories:
 
 | Category | Covers |
 |----------|--------|
 | **Price & Trends** | Price, moving averages, purchasing power and volatility |
 | **Returns & Comparisons** | Bitcoin's returns and how they compare with other assets |
+| **Bitcoin ETFs** | US spot ETF flows by day, week, month or quarter, cumulative flows, fund holdings and assets, and estimated entry prices |
 | **Cycles & Seasonality** | Halving cycles, drawdowns, cycle lows and month/year patterns |
 | **Valuation Models** | Realized price, thermocap, NVT, power law, Metcalfe and electricity cost |
 | **Relative Valuation** | Bitcoin's size against precious metals, big tech, chipmakers and base money |
@@ -84,6 +85,18 @@ npx playwright install chromium
 npm run test:browser
 ```
 
+For an ETF-only local review, using the local Report Library release:
+
+```bash
+uv run --no-sync python scripts/preview-etfs.py
+uv run --no-sync python -m http.server 8768 --bind 127.0.0.1 --directory outputs/etf-preview
+```
+
+Open http://127.0.0.1:8768/. This isolated catalog contains the eight ETF charts and
+leaves the production chart pack alone. It reads the published ETF files through
+the same manifest checks as other chart inputs. The ETF observation date is shown
+separately from the overall release date.
+
 ## Add a chart
 
 Add a definition to a `CHARTS` list in `chart_templates/`; the build picks it up
@@ -108,6 +121,13 @@ Series use columns the Report Library already publishes; new calculations belong
 Look at existing templates for second axes, stacked `panels`, value bands and candle
 defaults. Run the build and tests before opening a pull request.
 
+ETF charts (`chart_templates/etfs.py`) build their series in `chart_etf.py`: fund flows
+summed by day, week, month or quarter and drawn as stacked bars, holdings and assets as
+stacked areas, and the labeled entry-price and mark-to-market estimates, which are not
+SEC accounting cost or investor returns. Legend values stay each fund's own figures.
+The build refuses ETF data that trails the release by more than four business days,
+and `catalog_order` sets the charts' order within their category.
+
 ## Project layout
 
 | Path | What's there |
@@ -115,11 +135,11 @@ defaults. Run the build and tests before opening a pull request.
 | `main.py`, `chart_definitions.py` | Builds the site, and where it reads the release from |
 | `chart_inputs.py`, `candle_inputs.py` | Load and verify a Report Library release |
 | `chart_templates/` | Chart definitions, categories and shared events |
-| `chart_data.py` | Turns a template and the release into chart data |
+| `chart_data.py`, `chart_etf.py` | Turn a template and the release into chart data; `chart_etf.py` builds the ETF views |
 | `chart_style.py` | Series colours |
 | `chart_build.py`, `chart_catalog.py` | Pages, catalog, search metadata and sitemap |
 | `web/` | Page template, renderer, styles, catalog page, fonts and vendored chart library |
-| `scripts/` | Browser checks and the dashboard sync |
+| `scripts/` | Browser checks, the dashboard sync and the ETF preview |
 | `tests/` | Python tests |
 
 ## Market Dashboard

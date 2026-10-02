@@ -248,8 +248,12 @@ def catalog_from_payloads(payloads):
     entries = [{'title':p['title'],'filename':p['id'],'url':p['id']+'.html',
                 'category':p['category'],'description':p['description'],
                 'tags':_tags(p['title'],p['category'],[s['name'] for s in p['series']]),
-                'featured':p['featured'],'height':760,'coverage':p['coverage']} for p in payloads]
-    entries.sort(key=lambda e:(categories.index(e['category']),e['title']))
+                'featured':p['featured'],'height':760,'coverage':p['coverage'],
+                'order':p.get('catalogOrder')} for p in payloads]
+    # Within a category, charts with a catalog_order come first in that order; the rest by title.
+    entries.sort(key=lambda e:(categories.index(e['category']),e['order'] is None,e['order'] or 0,e['title']))
+    for entry in entries:
+        del entry['order']
     dates = {p['reportDate'] for p in payloads}
     if len(dates) != 1:
         raise ValueError('Catalog charts must share one release date')

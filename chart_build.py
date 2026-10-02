@@ -65,7 +65,9 @@ def write_chart(payload,output,assets,filename=None):
     attribution='<div class="chart-attribution"><a href="https://www.tradingview.com/" target="_blank" rel="noopener">Charts by TradingView</a><details><summary>Attribution &amp; license</summary><p>@@NOTICE@@</p><a href="@@LICENSE@@">Apache 2.0 license</a> · <a href="@@NOTICEFILE@@">Original notice</a></details></div>'
     footer=footer.replace('<div class="footer-bottom">','<div class="footer-bottom">'+attribution)
     text=text.replace('@@NAV@@',nav).replace('@@FOOTER@@',footer)
-    for key,value in {**assets,'TITLE':payload['title'],'DATE':payload['reportDate'],
+    # ETF charts carry their own observation date, which trails the release.
+    for key,value in {**assets,'TITLE':payload['title'],'DATE':payload.get('dataDate',payload['reportDate']),
+                      'DATE_LABEL':'ETF DATA THROUGH' if 'dataDate' in payload else 'DAILY CLOSE THROUGH',
                       'DESCRIPTION':payload['description'],'CATEGORY':payload['category'].upper(),
                       'AXIS':' · '.join(f'{k.upper()}: {a["label"]}' for k,a in payload['axes'].items()),
                       'SOURCE':payload['source'],'NOTE':payload['note'],
@@ -91,9 +93,10 @@ def validate_pack(output,payloads):
             if not (Path(output)/path).is_file():raise ValueError(f'Missing asset {path}')
 
 
-def _inputs(csv_dir,frozen_report_date=None):
+def _inputs(csv_dir,frozen_report_date=None,templates=()):
     source=str(csv_dir).rstrip('/')
-    return load_chart_inputs(lambda name:source+'/'+name,frozen_report_date=frozen_report_date)
+    extra_files=sorted({name for t in templates for name in t.get('input_files',[])})
+    return load_chart_inputs(lambda name:source+'/'+name,frozen_report_date=frozen_report_date,extra_files=extra_files)
 
 
 def build_pack(csv_dir,output=ROOT/'Charts',*,templates=None,frozen_report_date=None):
@@ -101,7 +104,7 @@ def build_pack(csv_dir,output=ROOT/'Charts',*,templates=None,frozen_report_date=
     if output.exists() and any(output.iterdir()) and not (output/'catalog.json').is_file():
         raise ValueError('Refusing to replace a non-generated directory')
     definitions=validate_templates(templates if templates is not None else load_templates())
-    inputs=_inputs(csv_dir,frozen_report_date)
+    inputs=_inputs(csv_dir,frozen_report_date,definitions)
     payloads=[build_payload(t,inputs) for t in definitions]
     release=inputs['master_metrics_data.csv.gz'].attrs['release_manifest']
     output.parent.mkdir(parents=True,exist_ok=True)
@@ -147,7 +150,8 @@ def build_single(csv_dir,filename,output,*,frozen_report_date):
     pack=(ROOT/'Charts').resolve()
     if output.parent==pack or pack in output.parents:
         raise ValueError('Frozen exports must not be written into the Charts/ pack')
-    payload=build_payload(get_template(filename),_inputs(csv_dir,frozen_report_date))
+    template=get_template(filename)
+    payload=build_payload(template,_inputs(csv_dir,frozen_report_date,[template]))
     output.parent.mkdir(parents=True,exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='.chart-export-',dir=output.parent) as directory:
         stage=Path(directory)

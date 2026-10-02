@@ -198,12 +198,17 @@ def build_payload(template, inputs):
     """Compact, JSON-safe chart contract shared by website and newsletter exports."""
     master = inputs['master_metrics_data.csv.gz']
     family = template['family']
+    extra = {}
     if family == 'timeseries':
         series, unavailable, coverage = _daily(master, template)
     elif family == 'cycle':
         series, unavailable, coverage = _cycles(inputs[template['input']],template,master)
     elif family == 'seasonal':
         series, unavailable, coverage = _seasonal(master,template)
+    elif family == 'etf':
+        from chart_etf import etf_series
+        series, coverage, extra = etf_series(template, inputs)
+        unavailable = []
     else:
         raise ValueError(f'Unknown chart family: {family}')
     if not series or not any(v is not None for s in series for v in s['values']):
@@ -226,7 +231,14 @@ def build_payload(template, inputs):
             'readingPoint':len(series[-1]['values'])-1 if family == 'cycle' else date,
             'note':'Historical paths are rescaled comparisons, not forecasts. Readings compare the same elapsed day.' if family=='cycle' and template.get('price_scale') else
                    'Historical years are aligned to the current calendar. Mean and median exclude the current year.' if family=='seasonal' else
-                   'Daily observations.'}
+                   template.get('note', 'Daily observations.')}
+    payload.update(extra)
+    if 'ranges' in template:
+        payload['ranges'] = list(template['ranges'])
+    if template.get('align_zero'):
+        payload['alignZero'] = True
+    if 'catalog_order' in template:
+        payload['catalogOrder'] = template['catalog_order']
 
     if 'panels' in template:
         payload['panels'] = [dict(panel) for panel in template['panels']]
@@ -240,6 +252,17 @@ def build_payload(template, inputs):
             raise ValueError(f'{template["filename"]}: no {interval} candles for its default presentation')
         payload['defaultPresentation'] = 'candles'
         payload['defaultInterval'] = interval
+    if family == 'etf' and template.get('flow_intervals') and '_flow_interval' not in template:
+        # The payload itself is the default frequency; flowViews holds only the others.
+        payload['flowIntervals'] = list(template['flow_intervals'])
+        payload['defaultFlowInterval'] = template['default_flow_interval']
+        payload['flowViews'] = {}
+        for interval in template['flow_intervals']:
+            if interval == template['default_flow_interval']:
+                continue
+            variant = build_payload({**template, '_flow_interval': interval}, inputs)
+            payload['flowViews'][interval] = {key: variant[key] for key in
+                ('x', 'series', 'readingPoint', 'coverage', 'note', 'dataDate', 'rangeEndDate', 'axes', 'flowInterval')}
     return payload
 
 

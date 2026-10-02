@@ -5,7 +5,7 @@ import pkgutil
 import re
 import math
 
-CATEGORY_ORDER = ['Price & Trends', 'Returns & Comparisons', 'Cycles & Seasonality',
+CATEGORY_ORDER = ['Price & Trends', 'Returns & Comparisons', 'Bitcoin ETFs', 'Cycles & Seasonality',
                   'Valuation Models', 'Relative Valuation', 'Holder Sentiment',
                   'Supply', 'Network Activity', 'Mining & Security']
 UNITS = {'USD', 'percent', 'ratio', 'BTC', 'BTC/day', 'count', 'hashrate', 'sats/USD', 'USD/TH/s/day'}
@@ -21,7 +21,7 @@ def validate_templates(templates):
         for field in ('title', 'description', 'category', 'data_source'):
             if not isinstance(chart.get(field), str) or not chart[field].strip():
                 raise ValueError(f'{name}: missing {field}')
-        if chart['family'] not in ('timeseries', 'cycle', 'seasonal'):
+        if chart['family'] not in ('timeseries', 'cycle', 'seasonal', 'etf'):
             raise ValueError(f'{name}: unsupported family')
         if chart.get('default_presentation', 'line') not in ('line', 'candles'):
             raise ValueError(f'{name}: invalid default presentation')
@@ -69,6 +69,10 @@ def validate_templates(templates):
                     or any(type(v) not in (int, float) or not math.isfinite(v) for v in bounds)
                     or bounds[0] >= bounds[1]):
                     raise ValueError(f'{name}: invalid band display range')
+        if 'ranges' in chart and chart.get('default_range') not in chart['ranges']:
+            raise ValueError(f'{name}: default range is not one of its ranges')
+        if chart.get('flow_intervals') and chart.get('default_flow_interval') not in chart['flow_intervals']:
+            raise ValueError(f'{name}: default flow frequency is not one of its frequencies')
         for series in chart.get('y_data', []):
             if series.get('axis', 'right') not in chart['axes']:
                 raise ValueError(f'{name}: series has no matching axis')

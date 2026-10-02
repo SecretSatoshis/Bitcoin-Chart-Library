@@ -82,7 +82,7 @@ def validate_report_dates(master, summary, report_date, now=None, max_age_days=2
     return date
 
 
-def load_chart_inputs(csv_path, now=None, *, frozen_report_date=None):
+def load_chart_inputs(csv_path, now=None, *, frozen_report_date=None, extra_files=()):
     manifest = json.loads(_read_bytes(csv_path(RELEASE_MANIFEST_NAME), f't={time.time_ns()}'))
     if (manifest.get('schema_version') != 1
             or manifest.get('release_id') != manifest.get('report_date')):
@@ -91,12 +91,13 @@ def load_chart_inputs(csv_path, now=None, *, frozen_report_date=None):
     records = manifest.get('files', {})
     if not isinstance(records, dict):
         raise ValueError('Release manifest files must be an object')
-    missing = set(REQUIRED_FILES) - set(records)
+    requested = tuple(dict.fromkeys((*REQUIRED_FILES, *extra_files)))
+    missing = set(requested) - set(records)
     if missing:
         raise ValueError(f'Release manifest is missing chart input files: {sorted(missing)}')
     report_date = manifest.get('report_date')
     frames = {}
-    for filename in REQUIRED_FILES:
+    for filename in requested:
         payload = _read_verified(csv_path(filename), filename, records[filename]['sha256'], manifest.get('release_id'))
         frames[filename] = pd.read_csv(io.BytesIO(payload), **READ_OPTIONS.get(filename, {}))
     validation_now = now
