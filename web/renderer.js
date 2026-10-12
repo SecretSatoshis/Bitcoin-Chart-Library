@@ -546,7 +546,7 @@
       else{const start=new Date((payload.rangeEndDate||payload.reportDate)+'T00:00:00Z');
         if(label==='MTD')start.setUTCDate(1);else if(label==='YTD')start.setUTCMonth(0,1);
         else if(/^\d+M$/.test(label)){const day=start.getUTCDate();start.setUTCMonth(start.getUTCMonth()-parseInt(label));if(start.getUTCDate()!==day)start.setUTCDate(0);}
-        else{const month=start.getUTCMonth();start.setUTCFullYear(start.getUTCFullYear()-(label==='1Y'?1:label==='10Y'?10:4));if(start.getUTCMonth()!==month)start.setUTCDate(0);}
+        else{const month=start.getUTCMonth();start.setUTCFullYear(start.getUTCFullYear()-(/^\d+Y$/.test(label)?parseInt(label):4));if(start.getUTCMonth()!==month)start.setUTCDate(0);}
         range={from:[payload.x[0],start.toISOString().slice(0,10)].sort().at(-1),to:payload.rangeEndDate||payload.reportDate};}
       state.requestedRange=range;view.setRange(calendarRange(range));$('ranges').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.range===label)));
     }
