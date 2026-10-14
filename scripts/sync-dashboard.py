@@ -26,7 +26,7 @@ for filename,(chart_id,title,axis) in frames.items():
     if filename == 'frame.html':
         page=page.replace('<details class="events-list">', '<details class="events-list" hidden>')
     values={**assets,'HEAD':f'<meta name="viewport" content="width=device-width, initial-scale=1"><title>{title}</title>'+DASHBOARD_PLOT_STYLE,
-            'NAV':'','FOOTER':'','CATEGORY':'MARKET INTELLIGENCE','TITLE':title,'DESCRIPTION':'',
+            'NAV':'','FOOTER':'','CATEGORY':'MARKET DASHBOARD','TITLE':title,'DESCRIPTION':'',
             'DATE':'','DATE_LABEL':'DAILY CLOSE THROUGH','AXIS':'RIGHT: '+axis,'SOURCE':'Data Source: BRK','NOTE':'Daily observations.', 'PAYLOAD':'null'}
     for key,value in values.items():page=page.replace('@@'+key+'@@',value)
     if '@@' in page:raise ValueError('Unresolved embed template placeholder')
