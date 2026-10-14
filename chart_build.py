@@ -33,6 +33,7 @@ def prepare_assets(output):
     result={}
     shutil.copy2(WEB/'catalog/favicon.ico',output/'favicon.ico')
     shutil.copy2(WEB/'catalog/assets/favicon.png',output/'assets/favicon.png')
+    shutil.copy2(WEB/'catalog/assets/analytics.js',output/'assets/analytics.js')
     site_css=(WEB/'site.css').read_text()
     css=(WEB/'chart.css').read_text()+'\n'+site_css
     # Fonts are inlined so pages opened straight from disk (file://) still load them.

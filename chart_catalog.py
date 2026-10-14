@@ -7,7 +7,7 @@ from pathlib import Path
 from chart_templates import CATEGORY_ORDER
 
 CANONICAL_BASE = "https://charts.secretsatoshis.com"
-SOCIAL_IMAGE = "https://secretsatoshis.com/assets/images/social-card.jpg"
+SOCIAL_IMAGE = "https://secretsatoshis.com/assets/images/chart-library-social-card.jpg"
 SITE_NAME = "Secret Satoshis"
 ORGANIZATION_ID = "https://secretsatoshis.com/#organization"
 CATALOG_DESCRIPTION = (
@@ -108,6 +108,7 @@ def _head_block(entry: dict, latest_data_date: str, coverage: str | None) -> str
         [
             HEAD_MARKER_OPEN,
             f'<title>{esc(title)} | {SITE_NAME}</title>',
+            '<script defer src="assets/analytics.js?v=1"></script>',
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
             f'<meta name="description" content="{esc(description, quote=True)}">',
             f'<link rel="canonical" href="{esc(canonical, quote=True)}">',
@@ -167,6 +168,7 @@ def _write_catalog_head(output_dir: Path, catalog: dict) -> None:
     block = "\n".join(
         [
             HEAD_MARKER_OPEN,
+            '<script defer src="assets/analytics.js?v=1"></script>',
             *_social_tags(f"Bitcoin Chart Library | {SITE_NAME}", CATALOG_DESCRIPTION, f"{CANONICAL_BASE}/"),
             '<script type="application/ld+json">'
             + json.dumps(structured, separators=(",", ":"))

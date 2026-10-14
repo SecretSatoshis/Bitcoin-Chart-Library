@@ -31,6 +31,15 @@ def test_titles_and_descriptions_are_unique():
     assert len(set(descriptions)) == len(descriptions), "duplicate description"
 
 
+def test_all_public_chart_pages_load_one_shared_analytics_tag():
+    tag = '<script defer src="assets/analytics.js?v=1"></script>'
+    for document in [*PAGES.values(), (CHARTS / "index.html").read_text()]:
+        assert document.count(tag) == 1
+    index = (CHARTS / "index.html").read_text()
+    assert "script-src 'self' https://secretsatoshis.com https://www.googletagmanager.com" in index
+    assert "https://*.google-analytics.com" in index
+
+
 def test_agent_map_covers_current_catalog_and_every_chart_definition():
     document = (CHARTS / "llms.txt").read_text(encoding="utf-8")
     assert f"Catalog data through {CATALOG['latest_data_date']}." in document
