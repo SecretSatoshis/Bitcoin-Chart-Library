@@ -102,11 +102,12 @@ footer {
 
 .hero {
   position: relative;
-  display: flex;
-  min-height: 540px;
-  align-items: center;
-  padding-top: calc(var(--nav-height) + 72px);
-  padding-bottom: 72px;
+  /* The fixed navigation occupies the first 64px of the page. Match the
+     dashboard's 104px of space below it without vertical centering. */
+  padding-top: calc(var(--nav-height) + 104px);
+  padding-bottom: 96px;
+  font-size: 14px;
+  line-height: 1.7;
   background:
     radial-gradient(circle at 78% 42%, rgba(247, 147, 26, 0.08), transparent 28%),
     linear-gradient(180deg, var(--bg), var(--bg-alt));
@@ -131,7 +132,7 @@ footer {
 
 .hero-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, auto);
+  grid-template-columns: minmax(0, 1fr) 360px;
   gap: clamp(40px, 6vw, 80px);
   align-items: end;
 }
@@ -191,7 +192,7 @@ h2 {
 
 .library-stats {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   border: 1px solid var(--border);
   border-radius: 8px;
   background: rgba(14, 14, 22, 0.72);
@@ -564,15 +565,25 @@ footer {
   padding: 80px var(--gutter) 40px;
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1100px) {
   .hero-grid {
     grid-template-columns: 1fr;
+    align-items: start;
+    gap: 32px;
   }
 
   .library-stats {
-    max-width: 520px;
+    max-width: 440px;
+    margin: 0;
   }
 
+  .hero h1 {
+    white-space: normal;
+  }
+
+}
+
+@media (max-width: 980px) {
   .chart-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -585,14 +596,13 @@ footer {
 
 @media (max-width: 680px) {
   .hero {
-    min-height: 520px;
-    padding-top: calc(var(--nav-height) + 54px);
-    padding-bottom: 54px;
+    padding-top: calc(var(--nav-height) + 56px);
+    padding-bottom: 48px;
   }
 
   h1 {
     white-space: normal;
-    font-size: clamp(38px, 13vw, 58px);
+    font-size: clamp(32px, 10vw, 48px);
   }
 
   .catalog-section {
@@ -665,6 +675,13 @@ footer {
 
   footer {
     padding: 48px var(--gutter) 32px;
+  }
+}
+
+@media (max-width: 360px) {
+  .library-stats div {
+    padding-right: 8px;
+    padding-left: 8px;
   }
 }
 
