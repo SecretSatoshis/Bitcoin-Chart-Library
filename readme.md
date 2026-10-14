@@ -121,7 +121,7 @@ Library's ETF tables.
 | `chart_templates/` | Chart definitions, categories and shared events |
 | `chart_data.py`, `chart_etf.py` | Turn a template and the release into chart data; `chart_etf.py` builds the ETF views |
 | `chart_style.py` | Series colours |
-| `chart_build.py`, `chart_catalog.py` | Pages, catalog, search metadata and sitemap |
+| `chart_build.py`, `chart_catalog.py` | Pages, catalog, search and social metadata, sitemap and the `llms.txt` guide |
 | `web/` | Page template, renderer, styles, catalog page, fonts and vendored chart library |
 | `scripts/` | Browser checks, the dashboard sync and an ETF-only preview build |
 | `tests/` | Python tests |
