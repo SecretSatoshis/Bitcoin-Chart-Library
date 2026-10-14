@@ -31,6 +31,18 @@ def test_titles_and_descriptions_are_unique():
     assert len(set(descriptions)) == len(descriptions), "duplicate description"
 
 
+def test_agent_map_covers_current_catalog_and_every_chart_definition():
+    document = (CHARTS / "llms.txt").read_text(encoding="utf-8")
+    assert f"Catalog data through {CATALOG['latest_data_date']}." in document
+    urls = re.findall(r"https://charts\.secretsatoshis\.com/[^\s)]+\.html", document)
+    assert len(urls) == len(ENTRIES)
+    assert set(urls) == {f"{CANONICAL_BASE}/{entry['url']}" for entry in ENTRIES}
+    for category in CATALOG["categories"]:
+        assert f"## {category}\n" in document
+    for entry in ENTRIES:
+        assert entry["description"] in document
+
+
 def test_titles_fit_a_search_result():
     suffix = len(" | Secret Satoshis")
     too_long = [e["title"] for e in ENTRIES if len(e["title"]) + suffix > 62]

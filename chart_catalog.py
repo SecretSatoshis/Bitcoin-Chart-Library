@@ -281,6 +281,48 @@ def catalog_from_payloads(payloads):
             'chart_count':len(entries),'categories':categories,'charts':entries}
 
 
+def _write_llms(output_dir: Path, catalog: dict) -> None:
+    """Agent discovery map from the maintained catalog, without copied market values."""
+    lines = [
+        f"# {catalog['title']}",
+        "",
+        f"> {CATALOG_DESCRIPTION}",
+        "",
+        f"Catalog data through {catalog['latest_data_date']}. Individual series can have different coverage and gaps; consult each chart's definition and observation dates.",
+        "",
+        "## Library and data",
+        "",
+        f"- [Chart Library]({CANONICAL_BASE}/): searchable interactive Bitcoin charts.",
+        f"- [Chart catalog]({CANONICAL_BASE}/catalog.json): chart titles, descriptions, categories, tags, URLs, and historical coverage.",
+        f"- [Chart sitemap]({CANONICAL_BASE}/sitemap.xml): the library and every standalone chart page.",
+        f"- [Source code]({SOURCE_REPOSITORY}): chart definitions, calculations, and the catalog generator.",
+        "- [Source data](https://secretsatoshis.github.io/Bitcoin-Report-Library/): public Report Library data and CSV downloads.",
+        "- [Source release manifest](https://secretsatoshis.github.io/Bitcoin-Report-Library/csv/release_manifest.json): report date, generation time, and file hashes for the daily data release.",
+    ]
+    for category in catalog["categories"]:
+        lines.extend(["", f"## {category}", ""])
+        for entry in catalog["charts"]:
+            if entry["category"] == category:
+                lines.append(
+                    f"- [{entry['title']}]({CANONICAL_BASE}/{entry['url']}): {entry['description']}"
+                )
+    lines.extend([
+        "",
+        "## Related research and tools",
+        "",
+        "- [Secret Satoshis guide](https://secretsatoshis.com/llms.txt): the newsletter, products, public data releases, and code.",
+        "- [Newsletter](https://newsletter.secretsatoshis.com/): the yearly price outlook, weekly recaps, quarterly reviews, and year-end reviews.",
+        "- [Market Dashboard guide](https://dashboard.secretsatoshis.com/llms.txt): daily indicators, metric definitions, and data files.",
+        "- [Agent 21 guide](https://agent21.secretsatoshis.com/llms.txt): the Bitcoin-native AI agent and its public capabilities.",
+        "",
+        "## Optional",
+        "",
+        "- [Disclaimer and licensing](https://newsletter.secretsatoshis.com/p/secret-satoshis-newsletter-disclaimer): research disclosures and terms. Code is GPL-3.0; third-party data retains its upstream terms. Nothing published here is investment advice.",
+        "",
+    ])
+    (output_dir / "llms.txt").write_text("\n".join(lines), encoding="utf-8")
+
+
 def write_catalog(output_dir, payloads):
     output_dir = Path(output_dir)
     catalog = catalog_from_payloads(payloads)
@@ -289,6 +331,7 @@ def write_catalog(output_dir, payloads):
     _write_robots(output_dir)
     _write_noscript_index(output_dir,catalog)
     _write_catalog_head(output_dir,catalog)
+    _write_llms(output_dir, catalog)
     path=output_dir/'index.html';document=path.read_text()
     document=re.sub(r'<script id="catalog-data".*?</script>','',document,flags=re.S)
     safe=json.dumps(catalog,separators=(',',':')).replace('<','\\u003c')
