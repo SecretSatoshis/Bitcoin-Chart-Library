@@ -9,6 +9,15 @@ from chart_templates import CATEGORY_ORDER
 CANONICAL_BASE = "https://charts.secretsatoshis.com"
 SOCIAL_IMAGE = "https://secretsatoshis.com/assets/images/social-card.jpg"
 SITE_NAME = "Secret Satoshis"
+ORGANIZATION_ID = "https://secretsatoshis.com/#organization"
+CATALOG_DESCRIPTION = (
+    "Explore interactive Bitcoin charts covering price, valuation, ETF flows, "
+    "network activity, supply, and market cycles."
+)
+SOCIAL_IMAGE_ALT = (
+    "The Secret Satoshis Newsletter: a yearly Bitcoin price outlook "
+    "and weekly market analysis that tracks it"
+)
 CODE_LICENSE = "https://www.gnu.org/licenses/gpl-3.0.html"
 SOURCE_REPOSITORY = "https://github.com/SecretSatoshis/Bitcoin-Chart-Library"
 
@@ -16,6 +25,29 @@ HEAD_MARKER_OPEN = "<!-- ss:head -->"
 HEAD_MARKER_CLOSE = "<!-- /ss:head -->"
 NOSCRIPT_MARKER_OPEN = "<!-- ss:chart-index -->"
 NOSCRIPT_MARKER_CLOSE = "<!-- /ss:chart-index -->"
+
+def _social_tags(title: str, description: str, canonical: str) -> list[str]:
+    """Use the same complete social fields for the catalog and chart pages."""
+    esc = html.escape
+    return [
+        '<meta property="og:type" content="website">',
+        f'<meta property="og:site_name" content="{SITE_NAME}">',
+        '<meta property="og:locale" content="en_US">',
+        f'<meta property="og:title" content="{esc(title, quote=True)}">',
+        f'<meta property="og:description" content="{esc(description, quote=True)}">',
+        f'<meta property="og:url" content="{esc(canonical, quote=True)}">',
+        f'<meta property="og:image" content="{SOCIAL_IMAGE}">',
+        '<meta property="og:image:width" content="1200">',
+        '<meta property="og:image:height" content="630">',
+        f'<meta property="og:image:alt" content="{SOCIAL_IMAGE_ALT}">',
+        '<meta name="twitter:card" content="summary_large_image">',
+        '<meta name="twitter:site" content="@SecretSatoshis">',
+        '<meta name="twitter:creator" content="@SecretSatoshis">',
+        f'<meta name="twitter:title" content="{esc(title, quote=True)}">',
+        f'<meta name="twitter:description" content="{esc(description, quote=True)}">',
+        f'<meta name="twitter:image" content="{SOCIAL_IMAGE}">',
+        f'<meta name="twitter:image:alt" content="{SOCIAL_IMAGE_ALT}">',
+    ]
 
 def _tags(title: str, category: str, series: list[str]) -> list[str]:
     haystack = " ".join([title, category, *series]).casefold()
@@ -41,6 +73,7 @@ def _head_block(entry: dict, latest_data_date: str, coverage: str | None) -> str
     structured = {
         "@context": "https://schema.org",
         "@type": "Dataset",
+        "@id": f"{canonical}#dataset",
         "name": title,
         "description": description,
         "url": canonical,
@@ -49,6 +82,7 @@ def _head_block(entry: dict, latest_data_date: str, coverage: str | None) -> str
         "dateModified": latest_data_date,
         "creator": {
             "@type": "Organization",
+            "@id": ORGANIZATION_ID,
             "name": SITE_NAME,
             "url": "https://secretsatoshis.com/",
         },
@@ -63,6 +97,7 @@ def _head_block(entry: dict, latest_data_date: str, coverage: str | None) -> str
         },
         "isPartOf": {
             "@type": "DataCatalog",
+            "@id": f"{CANONICAL_BASE}/#catalog",
             "name": "Secret Satoshis Bitcoin Chart Library",
             "url": f"{CANONICAL_BASE}/",
         },
@@ -77,16 +112,7 @@ def _head_block(entry: dict, latest_data_date: str, coverage: str | None) -> str
             f'<meta name="description" content="{esc(description, quote=True)}">',
             f'<link rel="canonical" href="{esc(canonical, quote=True)}">',
             '<meta name="robots" content="index, follow, max-image-preview:large">',
-            f'<meta property="og:title" content="{esc(title, quote=True)} | {SITE_NAME}">',
-            f'<meta property="og:description" content="{esc(description, quote=True)}">',
-            f'<meta property="og:url" content="{esc(canonical, quote=True)}">',
-            '<meta property="og:type" content="website">',
-            f'<meta property="og:site_name" content="{SITE_NAME}">',
-            f'<meta property="og:image" content="{SOCIAL_IMAGE}">',
-            '<meta property="og:image:alt" content="Secret Satoshis — '
-            'AI-Native Bitcoin Market Intelligence">',
-            '<meta name="twitter:card" content="summary_large_image">',
-            f'<meta name="twitter:image" content="{SOCIAL_IMAGE}">',
+            *_social_tags(f"{title} | {SITE_NAME}", description, canonical),
             '<meta name="theme-color" content="#08080c">',
             '<link rel="icon" href="assets/favicon.png" type="image/png" sizes="180x180">',
             '<link rel="apple-touch-icon" href="assets/favicon.png">',
@@ -111,6 +137,7 @@ def _write_catalog_head(output_dir: Path, catalog: dict) -> None:
     structured = {
         "@context": "https://schema.org",
         "@type": "DataCatalog",
+        "@id": f"{CANONICAL_BASE}/#catalog",
         "name": "Secret Satoshis Bitcoin Chart Library",
         "description": (
             f"{catalog['chart_count']} interactive Bitcoin charts covering price, "
@@ -121,15 +148,18 @@ def _write_catalog_head(output_dir: Path, catalog: dict) -> None:
         "isAccessibleForFree": True,
         "creator": {
             "@type": "Organization",
+            "@id": ORGANIZATION_ID,
             "name": SITE_NAME,
             "url": "https://secretsatoshis.com/",
         },
         "dataset": [
             {
                 "@type": "Dataset",
+                "@id": f"{CANONICAL_BASE}/{entry['url']}#dataset",
                 "name": entry["title"],
                 "description": entry["description"],
                 "url": f"{CANONICAL_BASE}/{entry['url']}",
+                "creator": {"@id": ORGANIZATION_ID},
             }
             for entry in catalog["charts"]
         ],
@@ -137,17 +167,7 @@ def _write_catalog_head(output_dir: Path, catalog: dict) -> None:
     block = "\n".join(
         [
             HEAD_MARKER_OPEN,
-            '<meta property="og:type" content="website">',
-            f'<meta property="og:site_name" content="{SITE_NAME}">',
-            f'<meta property="og:title" content="Bitcoin Chart Library | {SITE_NAME}">',
-            '<meta property="og:description" content="'
-            + html.escape(structured["description"], quote=True) + '">',
-            f'<meta property="og:url" content="{CANONICAL_BASE}/">',
-            f'<meta property="og:image" content="{SOCIAL_IMAGE}">',
-            '<meta property="og:image:alt" content="Secret Satoshis — '
-            'AI-Native Bitcoin Market Intelligence">',
-            '<meta name="twitter:card" content="summary_large_image">',
-            f'<meta name="twitter:image" content="{SOCIAL_IMAGE}">',
+            *_social_tags(f"Bitcoin Chart Library | {SITE_NAME}", CATALOG_DESCRIPTION, f"{CANONICAL_BASE}/"),
             '<script type="application/ld+json">'
             + json.dumps(structured, separators=(",", ":"))
             + "</script>",

@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from chart_catalog import CANONICAL_BASE
+from chart_catalog import CANONICAL_BASE, ORGANIZATION_ID
 
 CHARTS = Path(__file__).resolve().parents[1] / "Charts"
 CATALOG = json.loads((CHARTS / "catalog.json").read_text(encoding="utf-8"))
@@ -69,7 +69,11 @@ def test_social_tags_are_complete(filename):
     document = PAGES[filename]
     for tag in ('property="og:title"', 'property="og:description"',
                 'property="og:image"', 'property="og:image:alt"',
-                'property="og:url"', 'name="twitter:card"'):
+                'property="og:url"', 'property="og:locale"',
+                'property="og:image:width"', 'property="og:image:height"',
+                'name="twitter:card"', 'name="twitter:site"',
+                'name="twitter:creator"', 'name="twitter:title"',
+                'name="twitter:description"', 'name="twitter:image:alt"'):
         assert tag in document, f"{filename}: missing {tag}"
     assert len(re.findall(r'name="twitter:card"', document)) == 1
 
@@ -80,11 +84,24 @@ def test_structured_data_is_valid_and_accurate(filename):
     assert data["@type"] == "Dataset"
     assert data["url"] == f"{CANONICAL_BASE}/{filename}.html"
     assert data["dateModified"] == CATALOG["latest_data_date"]
+    assert data["creator"]["@id"] == ORGANIZATION_ID
+    assert data["isPartOf"]["@id"] == f"{CANONICAL_BASE}/#catalog"
     # The licence belongs to the code, not to third-party market data.
     assert "license" not in data, "Dataset must not claim a licence over upstream data"
     assert data["isBasedOn"]["@type"] == "SoftwareSourceCode"
     assert "codeRepository" in data["isBasedOn"]
     assert "codeRepository" not in data, "codeRepository is not a Dataset property"
+
+
+def test_catalog_and_datasets_share_the_publisher_identity():
+    document = (CHARTS / "index.html").read_text(encoding="utf-8")
+    catalog = _ld(document)
+    assert catalog["creator"]["@id"] == ORGANIZATION_ID
+    for dataset in catalog["dataset"]:
+        assert dataset["creator"]["@id"] == ORGANIZATION_ID
+        assert dataset["@id"] == f"{dataset['url']}#dataset"
+    assert 'name="twitter:title"' in document
+    assert 'name="twitter:description"' in document
 
 
 def test_temporal_coverage_matches_payload_source_history():
