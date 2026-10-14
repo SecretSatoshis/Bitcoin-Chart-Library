@@ -15,8 +15,8 @@ CATALOG_DESCRIPTION = (
     "network activity, supply, and market cycles."
 )
 SOCIAL_IMAGE_ALT = (
-    "The Secret Satoshis Newsletter: a yearly Bitcoin price outlook "
-    "and weekly market analysis that tracks it"
+    "Bitcoin Chart Library: interactive charts covering price, valuation, "
+    "ETF flows, network activity, supply, and market cycles."
 )
 CODE_LICENSE = "https://www.gnu.org/licenses/gpl-3.0.html"
 SOURCE_REPOSITORY = "https://github.com/SecretSatoshis/Bitcoin-Chart-Library"
