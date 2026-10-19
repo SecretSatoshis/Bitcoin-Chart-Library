@@ -58,6 +58,7 @@ jobs:
 
       - name: Verify charts in HTTP and direct-file browsers
         run: |
+          npm run test:reference-levels
           npm run test:browser
           npm run test:candles
           npm run test:panels

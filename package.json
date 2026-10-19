@@ -2,6 +2,7 @@
   "name": "secret-satoshis-chart-library",
   "private": true,
   "scripts": {
+    "test:reference-levels": "node --test tests/reference-levels.test.cjs",
     "test:browser": "node scripts/browser-tests.cjs",
     "test:candles": "node scripts/check-candles.cjs",
     "test:panels": "node scripts/check-panels.cjs"

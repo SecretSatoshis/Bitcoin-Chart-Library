@@ -83,6 +83,7 @@ Browser checks need Node 24:
 npm ci
 npx playwright install chromium
 npm run test:browser
+npm run test:reference-levels
 ```
 
 ## Add a chart
@@ -135,6 +136,21 @@ result in the Report Library:
 ```bash
 uv run --no-sync python scripts/sync-dashboard.py ../Bitcoin-Report-Library/dashboard/static/shared-chart
 ```
+
+The dashboard's `referenceLines` can carry `type`, `startDate`, `lineStyle` and `labelAlign`.
+Dated support/resistance lines start at the supplied event date, using the same one-pixel
+width as the annual cases, with solid strokes and labels above their right end. Dates inside
+a weekly or monthly candle are interpolated between bar coordinates. Annual cases retain
+their full-width dashed lines and left labels. PNG exports use the same drawing code and
+keep only the annual cases in their three-card header.
+The Support / Resistance button toggles technical lines and labels independently of Events
+and annual cases. Its setting carries through chart changes and PNG exports; Reset restores
+the levels. Charts without technical levels hide the button.
+
+Desktop dashboard embeds also switch long legends to two columns before allowing vertical
+scrolling. The sorted series run left to right across each row, then down. This dashboard-only
+layout uses the plot's available height; standalone charts, mobile and newsletter capture
+layouts keep their existing behavior.
 
 ## License
 

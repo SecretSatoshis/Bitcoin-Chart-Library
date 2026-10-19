@@ -17,9 +17,9 @@ frames={'frame.html':('dashboard-price-outlook','Bitcoin Price Outlook','Bitcoin
 # The dashboard column is 1,120px, narrower than a chart page; a shorter plot keeps the
 # chart pages' proportions on desktop. Phones keep the shared mobile height.
 DASHBOARD_PLOT_STYLE=('<style>@media (min-width:761px){.embedded .plot-wrap{height:520px;min-height:520px}'
-                      '.embedded #legend{max-height:296px}}</style>')
+                      '}</style>')
 for filename,(chart_id,title,axis) in frames.items():
-    page=(WEB/'chart.html').read_text().replace('<body>',f'<body class="embedded compact-legend" data-chart-id="{chart_id}">')
+    page=(WEB/'chart.html').read_text().replace('<body>',f'<body class="embedded compact-legend dashboard-legend" data-chart-id="{chart_id}">')
     page=page.replace('<script defer src="@@RENDERER@@"></script>','<script defer src="embed-host.js"></script>')
     # Keep renderer hooks while dashboard chart footers show only their source.
     page=page.replace('<br><span id="observation-note">', '<span id="observation-note" hidden>')
