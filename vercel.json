@@ -59,5 +59,42 @@
         }
       ]
     }
+  ],
+  "redirects": [
+    {
+      "source": "/bitcoin_ath_drawdown.html",
+      "destination": "/Bitcoin_ATH_Drawdown.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_1_year_supply.html",
+      "destination": "/Bitcoin_1_Year_Supply.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_supply_age.html",
+      "destination": "/Bitcoin_Supply_Age.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_active_addresses.html",
+      "destination": "/Bitcoin_Active_Addresses.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_halving_cycle.html",
+      "destination": "/Bitcoin_Halving_Cycle.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_production_price.html",
+      "destination": "/Bitcoin_Production_Price.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_macro_supply.html",
+      "destination": "/Bitcoin_Macro_Supply.html",
+      "permanent": true
+    }
   ]
 }
