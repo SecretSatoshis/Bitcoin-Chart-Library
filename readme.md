@@ -152,6 +152,10 @@ scrolling. The sorted series run left to right across each row, then down. This 
 layout uses the plot's available height; standalone charts, mobile and newsletter capture
 layouts keep their existing behavior.
 
+An optional `rangeAnchorDate` anchors lookback buttons to the latest observation while
+`rangeEndDate` reserves future whitespace. The dashboard price chart uses two years of
+history plus one year ahead; future dates carry no projected prices or model values.
+
 ## License
 
 [GPL-3.0](LICENSE). The data comes from third-party sources and keeps their terms.
