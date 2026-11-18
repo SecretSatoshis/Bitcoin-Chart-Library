@@ -49,7 +49,7 @@ addEventListener('message',event=>{
 });
 """.replace('RENDERER',json.dumps(assets['RENDERER']))
 (output/'embed-host.js').write_text(bridge)
-metrics=['price_close','realized_price','sth_realized_price','realizedcap_multiple_3','90_day_ma_price_close','364_day_ma_price_close','200_week_ma_price_close']
+metrics=['price_close','realized_price','sth_realized_price','realizedcap_multiple_3','90_day_ma_price_close','365_day_ma_price_close','200_week_ma_price_close']
 components=output.parent.parent/'components'
 components.mkdir(exist_ok=True)
 # The dashboard's price chart colours and event lines come only from these two files.
