@@ -32,4 +32,5 @@ def test_dashboard_price_series_colors_are_distinct(tmp_path):
     subprocess.run([sys.executable, str(ROOT / "scripts/sync-dashboard.py"),
                     str(tmp_path / "dashboard/static/shared-chart")], check=True)
     colors = json.loads((tmp_path / "dashboard/components/chart-colors.json").read_text())
-    assert len(colors) == 7 and len(set(colors.values())) == 7, colors
+    # Bitcoin's price, three realized-price lines and four moving averages.
+    assert len(colors) == 8 and len(set(colors.values())) == 8, colors
