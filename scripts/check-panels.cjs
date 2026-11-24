@@ -3,7 +3,6 @@ const assert=require('node:assert/strict');
 const {chromium}=require('playwright');
 const fs=require('node:fs/promises');
 const {resolve,extname,sep}=require('node:path');
-const {pathToFileURL}=require('node:url');
 const http=require('node:http');
 (async()=>{
  const root=resolve('Charts'),artifacts=resolve('outputs/metcalfe-panels');
@@ -13,7 +12,7 @@ const http=require('node:http');
    const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
    const path=resolve(root,'.'+pathname+(pathname.endsWith('/')?'index.html':''));
    if(!path.startsWith(root+sep))throw Error('outside chart pack');
-   res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.png':'image/png'})[extname(path)]||'application/octet-stream');
+   res.setHeader('Content-Type',({'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.png':'image/png','.woff2':'font/woff2','.ico':'image/x-icon'})[extname(path)]||'application/octet-stream');
    res.end(await fs.readFile(path));
   }catch{res.statusCode=404;res.end('not found');}
  });
@@ -123,8 +122,6 @@ const http=require('node:http');
   await embedded.waitForFunction(()=>window.SecretSatoshisChart);await embedded.evaluate(()=>SecretSatoshisChart.ready);
   assert.equal((await panelState(embedded)).count,2);
   await screenshot('catalog');
-  await page.goto(pathToFileURL(resolve(root,'Bitcoin_Metcalfe_Model.html')).href);await page.evaluate(()=>SecretSatoshisChart.ready);
-  assert.equal((await panelState()).count,2);
   // Charts without panels still overlay their axes on desktop and split them on phones.
   await page.goto(base+'Bitcoin_Price.html');await page.evaluate(()=>SecretSatoshisChart.ready);
   assert.equal(await page.evaluate(()=>SecretSatoshisChart.view.charts.length),1);

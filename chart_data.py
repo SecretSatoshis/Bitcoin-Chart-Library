@@ -1,11 +1,14 @@
 """Renderer-independent transformations. Source values are never filled or rounded."""
 import calendar
-from chart_style import series_color
+import re
 import warnings
+
 import numpy as np
 import pandas as pd
+from chart_style import series_color
 
 MIN_RETURN_YEAR = 2014
+
 
 def _price_series(selected_metrics):
     """Return one sorted, numeric Bitcoin price per normalized calendar day."""
@@ -23,11 +26,13 @@ def _price_series(selected_metrics):
         raise ValueError("No valid Bitcoin price data is available.")
     return prices
 
+
 def _positive_price_series(price_series):
     """Return sorted, daily, positive prices; matches the Report Library's period returns."""
     prices = pd.to_numeric(price_series, errors="coerce").sort_index()
     prices = prices.dropna().loc[lambda values: values > 0]
     return prices.groupby(prices.index.normalize()).last()
+
 
 def _last_positive_before(price_series, boundary):
     """Return the last positive close before a boundary: the baseline a period return
@@ -35,6 +40,7 @@ def _last_positive_before(price_series, boundary):
     """
     prior = price_series.loc[price_series.index < pd.Timestamp(boundary)]
     return prior.iloc[-1] if not prior.empty else np.nan
+
 
 def _period_baseline(price_series, year, month=None):
     """Baseline close for a year's MTD (month given) or YTD (month omitted) series."""
@@ -44,10 +50,12 @@ def _period_baseline(price_series, year, month=None):
         return None
     return float(baseline)
 
+
 def _report_period(price_series):
     """Reporting year and month from the data, never the clock, so every run of a release agrees."""
     as_of = price_series.index.max()
     return as_of.year, as_of.month
+
 
 def _resolve_filter_start_date(value, index):
     """Resolve a fixed start date or one relative to the release's month or year."""
@@ -61,10 +69,12 @@ def _resolve_filter_start_date(value, index):
     month = as_of.month if value == "report_month_start" else 1
     return pd.Timestamp(as_of.year, month, 1)
 
+
 def _reference_year_dates(year):
     """Return all 365 month/day slots for a year, excluding February 29."""
     dates = pd.date_range(f"{year}-01-01", f"{year}-12-31", freq="D")
     return dates[~((dates.month == 2) & (dates.day == 29))]
+
 
 def _map_to_reference_year(series, reference_year):
     """Map a dated series to the same month/day in a reference year."""
@@ -73,6 +83,7 @@ def _map_to_reference_year(series, reference_year):
         [pd.Timestamp(reference_year, date.month, date.day) for date in series.index]
     )
     return mapped
+
 
 def _is_complete_non_leap_year(series):
     """Return whether a series has every calendar day except February 29."""
@@ -111,52 +122,115 @@ def _daily(frame, template):
             unavailable.append(item['name'])
             warnings.warn(f'Skipping optional metric {metric}', RuntimeWarning, stacklevel=2)
             continue
-        role = 'highlight' if metric.startswith('price_close') and item.get('axis','right') == 'right' else 'normal'
-        definition = _series(metric, item['name'], x, values, item.get('axis','right'), role)
+        role = 'highlight' if metric.startswith('price_close') and item.get('axis', 'right') == 'right' else 'normal'
+        definition = _series(metric, item['name'], x, values, item.get('axis', 'right'), role)
         definition['lineStyle'] = item.get('line_style', definition['lineStyle'])
         series.append(definition)
     return series, unavailable, f'{x[0]}/{x[-1]}'
 
 
+def _cycle_sort_key(name):
+    match = re.search(r'(\d+)', str(name))
+    return (0, int(match.group(1)), str(name)) if match else (1, 0, str(name))
+
+
 def _cycles(frame, template, master):
-    xcol, ycol, group = template['x_data'], template.get('value_col','index_value'), template.get('group_col','Era')
-    if {xcol,ycol,group} - set(frame.columns):
+    xcol, ycol, group = template['x_data'], template.get('value_col', 'index_value'), template.get('group_col', 'Era')
+    if {xcol, ycol, group} - set(frame.columns):
         raise ValueError('Missing cycle columns')
-    expected = {s['group'] for s in template['y_data']}
-    if frame.empty or set(frame[group]) != expected:
+    if frame.empty:
         raise ValueError('Missing required cycle groups or unregistered groups')
+
+    if template.get('dynamic_groups'):
+        discovered = sorted(frame[group].dropna().astype(str).unique(), key=_cycle_sort_key)
+        if not discovered:
+            raise ValueError('Missing required cycle groups or unregistered groups')
+        labels = template.get('group_labels', {})
+        series_defs = [{'name': labels.get(name, name), 'group': name, 'axis': 'right'} for name in discovered]
+        expected = set(discovered)
+    else:
+        series_defs = template['y_data']
+        expected = {s['group'] for s in series_defs}
+        if set(frame[group]) != expected:
+            raise ValueError('Missing required cycle groups or unregistered groups')
+
     for name in expected:
-        rows = frame.loc[frame[group] == name, [xcol,ycol]].apply(pd.to_numeric, errors='coerce').sort_values(xcol)
+        rows = frame.loc[frame[group] == name, [xcol, ycol]].apply(pd.to_numeric, errors='coerce').sort_values(xcol)
         if not np.isfinite(rows).all().all() or not np.array_equal(rows[xcol], np.arange(len(rows))):
             raise ValueError(f'Cycle {name} requires contiguous integer days starting at zero')
     multiplier = 1.
     if template.get('price_scale'):
-        current = frame.loc[frame[group] == template['y_data'][-1]['group']].sort_values(xcol)
+        current = frame.loc[frame[group] == series_defs[-1]['group']].sort_values(xcol)
         latest, terminal = float(master['price_close'].iloc[-1]), float(current[ycol].iloc[-1])
         if not np.isfinite(latest) or latest <= 0 or terminal <= 0:
             raise ValueError('Current cycle price/index must be positive')
         multiplier = latest / terminal
         dates = master.index[-1] - pd.to_timedelta(current[xcol].iloc[-1] - current[xcol], unit='D')
-        if not np.allclose(current[ycol].to_numpy()*multiplier, master['price_close'].reindex(pd.DatetimeIndex(dates)).to_numpy(), rtol=1e-9):
+        if not np.allclose(current[ycol].to_numpy() * multiplier, master['price_close'].reindex(pd.DatetimeIndex(dates)).to_numpy(), rtol=1e-9):
             raise ValueError('Current cycle path disagrees with the master prices')
     result = []
-    for i, item in enumerate(template['y_data']):
+    for i, item in enumerate(series_defs):
         rows = frame.loc[frame[group] == item['group']].sort_values(xcol)
-        result.append(_series(item['group'],item['name'],rows[xcol].astype(int).tolist(),rows[ycol]*multiplier,
-                              role='highlight' if i == len(template['y_data'])-1 else 'normal'))
+        result.append(_series(item['group'], item['name'], rows[xcol].astype(int).tolist(), rows[ycol] * multiplier,
+                              role='highlight' if i == len(series_defs) - 1 else 'normal'))
     return result, [], None
 
 
-def _seasonal(frame, template):
+def _seasonal_from_canonical(paths_df, frame, template):
+    """Build seasonal series directly from the Report Library's canonical price-paths CSV."""
+    monthly, indexed = template['period'] == 'month', template['indexed']
+    key_col = 'day' if monthly else 'day_of_year'
+    if key_col not in paths_df.columns:
+        raise ValueError(f'Canonical seasonal table missing {key_col} column')
+    as_of = pd.to_datetime(frame.index).max()
+    year, month = as_of.year, as_of.month
+
+    df = paths_df.copy()
+    df[key_col] = pd.to_numeric(df[key_col], errors='raise').astype(int)
+    df = df.set_index(key_col).sort_index()
+    if 0 not in df.index:
+        raise ValueError('Canonical seasonal table must include day 0 baseline row')
+    year_cols = sorted((c for c in df.columns if str(c).isdigit() and int(c) >= MIN_RETURN_YEAR), key=int)
+    if not year_cols or str(year) not in year_cols:
+        raise ValueError(f'Canonical seasonal table missing current year {year}')
+
+    baseline = float(pd.to_numeric(df.loc[0, str(year)], errors='coerce'))
+    if not np.isfinite(baseline) or baseline <= 0:
+        raise ValueError('Canonical seasonal baseline must be positive')
+
+    dates = pd.date_range(pd.Timestamp(year, month, 1), periods=calendar.monthrange(year, month)[1]) if monthly else _reference_year_dates(year)
+    day_numbers = list(range(1, len(dates) + 1))
+    table_indexed = df.reindex(day_numbers)[year_cols].apply(pd.to_numeric, errors='coerce')
+    table = table_indexed if indexed else (table_indexed / baseline - 1.0) * 100.0
+    table.columns = [int(c) for c in year_cols]
+
+    historical = table.drop(columns=[year], errors='ignore')
+    x = dates.strftime('%Y-%m-%d').tolist()
+    result = [_series(str(yr), str(yr), x, historical[yr], role='historical') for yr in historical]
+    if year in table:
+        result.append(_series(str(year), str(year), x, table[year], role='highlight'))
+    prefix = 'MTD' if monthly else 'YTD'
+    result.extend([
+        _series('median', f'Median {prefix} Return', x, historical.median(axis=1), role='median'),
+        _series('mean', f'Average {prefix} Return', x, historical.mean(axis=1), role='mean'),
+    ])
+    return result, [], f'{min(table.columns):04d}-01-01/{frame.index[-1].date()}'
+
+
+def _seasonal(frame, template, inputs=None):
+    monthly, indexed = template['period'] == 'month', template['indexed']
+    canonical_file = 'mtd_price_paths.csv' if monthly else 'ytd_price_paths.csv'
+    if inputs and canonical_file in inputs:
+        return _seasonal_from_canonical(inputs[canonical_file], frame, template)
+
     all_prices = _positive_price_series(_price_series(frame))
     year, month = _report_period(all_prices)
-    monthly, indexed = template['period'] == 'month', template['indexed']
     prices = all_prices if monthly else all_prices[~((all_prices.index.month == 2) & (all_prices.index.day == 29))]
     baseline = _period_baseline(all_prices, year, month if monthly else None)
     if indexed and baseline is None:
-        raise ValueError('No prior positive close; refusing to leave an older indexed '+('MTD' if monthly else 'YTD')+' chart in place')
+        raise ValueError('No prior positive close; refusing to leave an older indexed ' + ('MTD' if monthly else 'YTD') + ' chart in place')
     current = prices[prices.index.year == year]
-    if indexed and not monthly and (current.index[0].month,current.index[0].day) != (1,1):
+    if indexed and not monthly and (current.index[0].month, current.index[0].day) != (1, 1):
         raise ValueError(f'Price data for {year} does not start on January 1')
     aligned = {}
     for yr in prices.index.year.unique():
@@ -166,31 +240,31 @@ def _seasonal(frame, template):
         if selected.empty:
             continue
         if not monthly:
-            if (selected.index[0].month,selected.index[0].day) != (1,1):
+            if (selected.index[0].month, selected.index[0].day) != (1, 1):
                 continue
             if yr != year and not _is_complete_non_leap_year(selected):
                 continue
-        prior = _period_baseline(all_prices,yr,month if monthly else None)
+        prior = _period_baseline(all_prices, yr, month if monthly else None)
         if prior is None:
             continue
-        values = selected/prior*baseline if indexed else (selected/prior-1)*100
+        values = selected / prior * baseline if indexed else (selected / prior - 1) * 100
         if monthly:
             values.index = values.index.day
         else:
-            values = _map_to_reference_year(values,year)
+            values = _map_to_reference_year(values, year)
         aligned[yr] = values
     if not aligned:
         raise ValueError('No complete price series available for period comparison')
-    dates = pd.date_range(pd.Timestamp(year,month,1),periods=calendar.monthrange(year,month)[1]) if monthly else _reference_year_dates(year)
-    table = pd.DataFrame(aligned,index=range(1,len(dates)+1) if monthly else dates)
+    dates = pd.date_range(pd.Timestamp(year, month, 1), periods=calendar.monthrange(year, month)[1]) if monthly else _reference_year_dates(year)
+    table = pd.DataFrame(aligned, index=range(1, len(dates) + 1) if monthly else dates)
     historical = table.drop(columns=[year], errors='ignore')
     x = dates.strftime('%Y-%m-%d').tolist()
-    result = [_series(str(yr),str(yr),x,historical[yr],role='historical') for yr in historical]
+    result = [_series(str(yr), str(yr), x, historical[yr], role='historical') for yr in historical]
     if year in table:
-        result.append(_series(str(year),str(year),x,table[year],role='highlight'))
+        result.append(_series(str(year), str(year), x, table[year], role='highlight'))
     prefix = 'MTD' if monthly else 'YTD'
-    result.extend([_series('median',f'Median {prefix} Return',x,historical.median(axis=1),role='median'),
-                   _series('mean',f'Average {prefix} Return',x,historical.mean(axis=1),role='mean')])
+    result.extend([_series('median', f'Median {prefix} Return', x, historical.median(axis=1), role='median'),
+                   _series('mean', f'Average {prefix} Return', x, historical.mean(axis=1), role='mean')])
     return result, [], f'{min(aligned):04d}-01-01/{frame.index[-1].date()}'
 
 
@@ -202,36 +276,44 @@ def build_payload(template, inputs):
     if family == 'timeseries':
         series, unavailable, coverage = _daily(master, template)
     elif family == 'cycle':
-        series, unavailable, coverage = _cycles(inputs[template['input']],template,master)
+        series, unavailable, coverage = _cycles(inputs[template['input']], template, master)
     elif family == 'seasonal':
-        series, unavailable, coverage = _seasonal(master,template)
+        series, unavailable, coverage = _seasonal(master, template, inputs=inputs)
     elif family == 'etf':
         from chart_etf import etf_series
         series, coverage, extra = etf_series(template, inputs)
         unavailable = []
     else:
         raise ValueError(f'Unknown chart family: {family}')
-    if not series or not any(v is not None for s in series for v in s['values']):
+    if not extra.get('etfUnavailable') and (not series or not any(v is not None for s in series for v in s['values'])):
         raise ValueError(f'{template["filename"]}: no finite observations')
     # One x calendar per chart; series carry only aligned values and their extent.
-    x = sorted({x for s in series for x in s['x']})
+    x = sorted({v for s in series for v in s['x']})
     for s in series:
         s['start'] = x.index(s['x'][0])
         # Ordinary and seasonal series share x; cycle series are contiguous prefixes.
-        if x[s['start']:s['start']+len(s['x'])] != s.pop('x'):
+        if x[s['start']:s['start'] + len(s['x'])] != s.pop('x'):
             raise ValueError('Series calendar is not contiguous within chart calendar')
     date = str(master.index[-1].date())
-    events = sorted([{'date':d, 'name':e['name']} for e in template.get('events',[]) for d in e['dates']
-                     if family != 'cycle' and x[0] <= d <= min(x[-1],date)],key=lambda e:e['date'])
-    payload = {'schemaVersion':2,'id':template['filename'],'family':family,'title':template['title'],
-            'description':template['description'],'category':template['category'], 'featured':template.get('featured',False),
-            'source':template['data_source'],'reportDate':date,'coverage':coverage,
-            'axisKind':'days' if family == 'cycle' else 'time','axes':template['axes'],
-            'defaultRange':template['default_range'],'x':x,'series':series,'events':events,'unavailable':unavailable,
-            'readingPoint':len(series[-1]['values'])-1 if family == 'cycle' else date,
-            'note':'Historical paths are rescaled comparisons, not forecasts. Readings compare the same elapsed day.' if family=='cycle' and template.get('price_scale') else
-                   'Historical years are aligned to the current calendar. Mean and median exclude the current year.' if family=='seasonal' else
-                   template.get('note', 'Daily observations.')}
+    if family == 'cycle':
+        reading_point = len(series[-1]['values']) - 1
+    elif family == 'seasonal' and date not in x:
+        # Leap-day (Feb 29) is excluded from the 365-day seasonal YTD calendar; snap to Feb 28.
+        prior = [d for d in x if d <= date]
+        reading_point = prior[-1] if prior else x[0]
+    else:
+        reading_point = date
+    events = sorted([{'date': d, 'name': e['name']} for e in template.get('events', []) for d in e['dates']
+                     if family != 'cycle' and x[0] <= d <= min(x[-1], date)], key=lambda e: e['date'])
+    payload = {'schemaVersion': 2, 'id': template['filename'], 'family': family, 'title': template['title'],
+               'description': template['description'], 'category': template['category'], 'featured': template.get('featured', False),
+               'source': template['data_source'], 'reportDate': date, 'coverage': coverage,
+               'axisKind': 'days' if family == 'cycle' else 'time', 'axes': template['axes'],
+               'defaultRange': template['default_range'], 'x': x, 'series': series, 'events': events, 'unavailable': unavailable,
+               'readingPoint': reading_point,
+               'note': 'Historical paths are rescaled comparisons, not forecasts. Readings compare the same elapsed day.' if family == 'cycle' and template.get('price_scale') else
+                       'Historical years are aligned to the current calendar. Average and median include all prior years (2017 is hidden by default to preserve scale; toggle it in the legend) and exclude the current year.' if family == 'seasonal' else
+                       template.get('note', 'Daily observations.')}
     payload.update(extra)
     if 'ranges' in template:
         payload['ranges'] = list(template['ranges'])
@@ -252,7 +334,7 @@ def build_payload(template, inputs):
             raise ValueError(f'{template["filename"]}: no {interval} candles for its default presentation')
         payload['defaultPresentation'] = 'candles'
         payload['defaultInterval'] = interval
-    if family == 'etf' and template.get('flow_intervals') and '_flow_interval' not in template:
+    if family == 'etf' and template.get('flow_intervals') and '_flow_interval' not in template and not extra.get('etfUnavailable'):
         # The payload itself is the default frequency; flowViews holds only the others.
         payload['flowIntervals'] = list(template['flow_intervals'])
         payload['defaultFlowInterval'] = template['default_flow_interval']
@@ -266,11 +348,36 @@ def build_payload(template, inputs):
     return payload
 
 
+def build_shared_candles(inputs):
+    """Build one shared, compact candle bundle consumed by all price_close charts."""
+    all_candles = inputs['bitcoin_candles.csv.gz'].copy()
+    for key in ('period_start', 'period_end', 'observation_date'):
+        all_candles[key] = pd.to_datetime(all_candles[key], errors='raise')
+    report_date = str(inputs['master_metrics_data.csv.gz'].index[-1].date())
+    bundle = {'schemaVersion': 1, 'reportDate': report_date}
+    for interval in ('daily', 'weekly', 'monthly'):
+        rows = all_candles.loc[all_candles.interval.eq(interval)]
+        if rows.empty:
+            continue
+        entry = {
+            'x': pd.DatetimeIndex(rows.period_start).strftime('%Y-%m-%d').tolist(),
+            'ohlc': [[float(r.Open), float(r.High), float(r.Low), float(r.Close)] for r in rows.itertuples()],
+        }
+        if interval != 'daily':
+            entry['periodEnd'] = pd.DatetimeIndex(rows.period_end).strftime('%Y-%m-%d').tolist()
+            entry['observationDate'] = pd.DatetimeIndex(rows.observation_date).strftime('%Y-%m-%d').tolist()
+            entry['complete'] = [bool(c) for c in rows.complete]
+        bundle[interval] = entry
+    return bundle
+
+
 def _candle_views(payload, inputs):
     """Select prepared observations; all aggregation stays in the Report Library."""
-    all_candles = inputs['bitcoin_candles.csv.gz']
+    all_candles = inputs['bitcoin_candles.csv.gz'].copy()
+    for key in ('period_start', 'period_end', 'observation_date'):
+        all_candles[key] = pd.to_datetime(all_candles[key], errors='raise')
     views = {}
-    for interval, filename in [('daily','master_metrics_data.csv.gz'),('weekly','weekly_metrics_data.csv.gz'),('monthly','monthly_metrics_data.csv.gz')]:
+    for interval, filename in [('daily', 'master_metrics_data.csv.gz'), ('weekly', 'weekly_metrics_data.csv.gz'), ('monthly', 'monthly_metrics_data.csv.gz')]:
         rows = all_candles.loc[all_candles.interval.eq(interval) & all_candles.period_start.ge(pd.Timestamp(payload['x'][0])) & all_candles.observation_date.le(pd.Timestamp(payload['x'][-1]))]
         if rows.empty:
             continue
@@ -280,18 +387,18 @@ def _candle_views(payload, inputs):
         candles = [{'time': str(row.period_start.date()), 'open': float(row.Open), 'high': float(row.High),
                     'low': float(row.Low), 'close': float(row.Close), 'periodEnd': str(row.period_end.date()),
                     'observationDate': str(row.observation_date.date()), 'complete': bool(row.complete)} for row in rows.itertuples()]
-        series = [{**s, 'start':0, 'values':[float(v) if np.isfinite(v) else None for v in pd.to_numeric(frame[s['id']],errors='coerce')]} for s in payload['series']]
+        series = [{**s, 'start': 0, 'values': [float(v) if np.isfinite(v) else None for v in pd.to_numeric(frame[s['id']], errors='coerce')]} for s in payload['series']]
         events = []
         for event in payload['events']:
-            candle = next((c for c in candles if c['time'] <= event['date'] <= c['observationDate']),None)
+            candle = next((c for c in candles if c['time'] <= event['date'] <= c['observationDate']), None)
             if candle:
-                events.append({**event,'originalDate':event['date'],'date':candle['time'],'name':event['name']+' · '+event['date']})
-        views[interval] = {'x':x,'events':events,'readingPoint':x[-1],'interval':interval}
+                events.append({**event, 'originalDate': event['date'], 'date': candle['time'], 'name': event['name'] + ' · ' + event['date']})
+        views[interval] = {'x': x, 'events': events, 'readingPoint': x[-1], 'interval': interval}
         if interval == 'daily':
             # Reuse embedded daily line values; compact OHLC avoids duplicating dates
             # and metric history in every standalone chart.
             views[interval].update(offset=payload['x'].index(x[0]),
-                                   ohlc=[[c[k] for k in ('open','high','low','close')] for c in candles])
+                                   ohlc=[[c[k] for k in ('open', 'high', 'low', 'close')] for c in candles])
         else:
-            views[interval].update(series=series,candles=candles)
+            views[interval].update(series=series, candles=candles)
     return views

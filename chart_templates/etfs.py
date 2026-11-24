@@ -16,7 +16,7 @@ def chart(order, filename, title, description, view, axes, *, unit='USD', defaul
     return {
         'filename': filename, 'title': title, 'description': description,
         'family': 'etf', 'category': 'Bitcoin ETFs', 'data_source': SOURCE, 'catalog_order': order,
-        'input_files': ['etf_daily.csv', 'etf_totals_daily.csv'],
+        'optional_input_files': ['etf_daily.csv', 'etf_totals_daily.csv'],
         'view': view, 'unit': unit, 'axes': axes, 'y_data': [],
         'default_range': default_range, 'ranges': ['1M', '3M', '6M', 'YTD', '1Y', 'ALL'],
         'note': note, **extra,
@@ -60,7 +60,7 @@ CHARTS = [
           'Bitcoin’s price above net flows in USD, broken down by fund.',
           'flows', {'right': axis('Bitcoin Price (USD)'),
                     'left': axis('Daily Net Flow (USD)', signed=True)}, default_range='3M',
-          **price_and_flows('USD')),
+          featured=True, **price_and_flows('USD')),
     chart(7, 'Bitcoin_ETF_Net_Flows_BTC', 'Bitcoin ETF Net Flows in BTC',
           'Bitcoin’s price above net flows in BTC, broken down by fund.',
           'flows', {'right': axis('Bitcoin Price (USD)'),

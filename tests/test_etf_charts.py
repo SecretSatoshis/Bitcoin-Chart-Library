@@ -70,6 +70,7 @@ def test_inflow_only_keeps_inflows_to_one_fund_on_aggregate_outflow_days():
     # FBTC creates 5 BTC for $1000 on an aggregate redemption day. Those
     # creations must count even though the combined BTC flow is negative.
     data['etf_daily.csv'].loc[lambda d: d.fund.eq('FBTC') & d.date.eq(pd.Timestamp('2025-01-02')), 'flow_usd'] = 1000.
+    data['etf_totals_daily.csv'].loc[lambda d: d.date.eq(pd.Timestamp('2025-01-02')), 'total_flow_usd'] = 0.
     p = payload('entry', data)
     assert values(p, 'etf_inflow_entry')[2] == pytest.approx(3000. / 25.)
     assert values(p, 'etf_inflow_entry')[-1] == pytest.approx(3500. / 30.)
@@ -147,15 +148,86 @@ def test_ytd_is_identical_at_the_cutoff_in_every_frequency_and_splits_new_year_w
         assert values(view(p, interval), 'etf_ytd_flow')[-1] == 0.
 
 
-def test_stale_etf_data_is_refused():
+def test_stale_etf_data_degrades_with_banner_and_respects_nyse_holidays():
     data = inputs()
-    # The release is ten days after the last ETF observation: the tables stopped updating.
-    data['master_metrics_data.csv.gz'].index = pd.to_datetime(['2025-01-13'])
-    with pytest.raises(ValueError, match='stopped updating'):
-        payload('cumulative', data)
+    # The release is ten days after the last ETF observation: warn + stale banner instead of failing all 54 charts.
+    data['master_metrics_data.csv.gz'].index = pd.to_datetime(['2025-01-14'])
+    with pytest.warns(RuntimeWarning, match='stale banner'):
+        stale = payload('cumulative', data)
+    assert stale['stale'] is True
+    assert 'delayed' in stale['staleBanner']
+    assert stale['dataDate'] == '2025-01-03'
     # A weekend between the last trading day and the release is normal.
     data['master_metrics_data.csv.gz'].index = pd.to_datetime(['2025-01-06'])
-    assert payload('cumulative', data)['dataDate'] == '2025-01-03'
+    fresh = payload('cumulative', data)
+    assert fresh['dataDate'] == '2025-01-03'
+    assert 'staleBanner' not in fresh
+    # NYSE holiday calendar: Nov 25 (Wed before Thanksgiving) to Dec 2 (Wed) is only 4 NYSE trading days
+    # (Thanksgiving Thu Nov 26 is closed; Fri 27, Mon 30, Tue 1, Wed 2 = 4 trading days).
+    from chart_etf import nyse_trading_days_between
+    import datetime as dt
+    assert nyse_trading_days_between(dt.date(2026, 11, 25), dt.date(2026, 12, 2)) == 4
+
+
+def test_missing_etf_files_degrade_gracefully_without_breaking_build():
+    master = pd.DataFrame({'price_close': [100.]}, index=pd.to_datetime(['2025-01-04']))
+    with pytest.warns(RuntimeWarning, match='missing'):
+        degraded = payload('cumulative', {'master_metrics_data.csv.gz': master})
+    assert degraded['stale'] is True
+    assert degraded['etfUnavailable'] is True
+    assert 'unavailable' in degraded['staleBanner'].lower()
+
+
+def test_dynamic_etf_fund_discovery_and_ibit_median_price_fallback():
+    data = inputs()
+    # Add an unregistered 13th ETF ticker and drop IBIT's price_usd on the last day.
+    extra = data['etf_daily.csv'].loc[data['etf_daily.csv'].fund.eq('FBTC')].copy()
+    extra['fund'] = 'NEWX'
+    data['etf_daily.csv'] = pd.concat([data['etf_daily.csv'], extra], ignore_index=True)
+    # Recompute totals so aggregate reconciliation passes.
+    totals = data['etf_daily.csv'].groupby('date').agg(
+        total_btc=('btc_held', 'sum'), total_flow_btc=('flow_btc', 'sum'),
+        total_flow_usd=('flow_usd', 'sum'), total_net_assets_usd=('net_assets_usd', 'sum'),
+    )
+    totals['cumulative_flow_btc'] = totals.total_flow_btc.cumsum()
+    totals['cumulative_flow_usd'] = totals.total_flow_usd.cumsum()
+    totals['flow_weighted_entry_price'] = totals.cumulative_flow_usd / totals.cumulative_flow_btc
+    data['etf_totals_daily.csv'] = totals.reset_index()
+    # Drop IBIT price_usd on last day to verify cross-fund median fallback.
+    data['etf_daily.csv'].loc[
+        data['etf_daily.csv'].fund.eq('IBIT') & data['etf_daily.csv'].date.eq(pd.Timestamp('2025-01-03')),
+        'price_usd',
+    ] = float('nan')
+    p = payload('flows', data)
+    assert any(s['id'] == 'etf_NEWX' for s in p['series'])
+    entry = payload('entry', data)
+    assert values(entry, 'price_close_etf')[-1] == 100.0
+
+
+def test_etf_aggregate_validation_rejects_flow_and_aum_mismatch():
+    data = inputs()
+    data['etf_totals_daily.csv'].loc[0, 'total_flow_usd'] += 500.0
+    with pytest.raises(ValueError, match='USD flows disagree'):
+        payload('flows', data)
+    data = inputs()
+    data['etf_totals_daily.csv'].loc[0, 'total_net_assets_usd'] += 5000.0
+    with pytest.raises(ValueError, match='net assets disagree'):
+        payload('holdings', data)
+
+
+def test_preview_etfs_overrides_match_current_catalog_html():
+    import importlib.util
+    from pathlib import Path
+    spec = importlib.util.spec_from_file_location(
+        'preview_etfs', Path(__file__).resolve().parents[1] / 'scripts/preview-etfs.py'
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    page = (Path(__file__).resolve().parents[1] / 'web/catalog/index.html').read_text()
+    updated = module.apply_preview_overrides(page)
+    assert '<title>Bitcoin ETF Charts |' in updated
+    assert '<meta name="robots" content="noindex">' in updated
+
 
 
 def test_etf_charts_keep_their_catalog_order():

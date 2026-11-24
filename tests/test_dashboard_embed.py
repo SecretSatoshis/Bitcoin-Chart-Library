@@ -34,3 +34,16 @@ def test_dashboard_price_series_colors_are_distinct(tmp_path):
     colors = json.loads((tmp_path / "dashboard/components/chart-colors.json").read_text())
     # Bitcoin's price, three realized-price lines and four moving averages.
     assert len(colors) == 8 and len(set(colors.values())) == 8, colors
+
+
+def test_dashboard_sync_check_detects_drift(tmp_path):
+    output = tmp_path / "dashboard/static/shared-chart"
+    subprocess.run([sys.executable, str(ROOT / "scripts/sync-dashboard.py"), str(output)], check=True)
+    ok = subprocess.run([sys.executable, str(ROOT / "scripts/sync-dashboard.py"), "--check", str(output)])
+    assert ok.returncode == 0
+    # Mutate a vendored asset and confirm --check flags drift.
+    renderer = next((output / "assets").glob("renderer.*.js"))
+    renderer.write_text(renderer.read_text() + "\n// drifted\n")
+    drifted = subprocess.run([sys.executable, str(ROOT / "scripts/sync-dashboard.py"), "--check", str(output)])
+    assert drifted.returncode == 1
+

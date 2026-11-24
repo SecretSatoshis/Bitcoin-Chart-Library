@@ -5,8 +5,8 @@
   --max-width: 1120px;
   --gutter: clamp(20px, 5vw, 60px);
   --white: #fff;
-  --text-dim: #9090a8;
-  --text-mute: #82829c;
+  --text-dim: #a4a4bc;
+  --text-mute: #9696b0;
   --accent: #f7931a;
   --mono: 'JetBrains Mono', monospace;
 }

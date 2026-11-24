@@ -1,13 +1,34 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "installCommand": "curl -LsSf https://astral.sh/uv/0.12.5/install.sh | env UV_INSTALL_DIR=.uv UV_NO_MODIFY_PATH=1 sh && .uv/uv sync --locked",
-  "buildCommand": ".uv/uv run --no-sync python main.py && .uv/uv run --no-sync pytest -q",
+  "installCommand": "python3 -m venv .uv-venv && .uv-venv/bin/pip install --no-cache-dir uv==0.13.4 && .uv-venv/bin/uv sync --locked",
+  "buildCommand": ".uv-venv/bin/uv run --no-sync python main.py && .uv-venv/bin/uv run --no-sync pytest -q",
   "outputDirectory": "Charts",
   "headers": [
     {
       "source": "/(.*)",
-      "headers": [{ "key": "X-Content-Type-Options", "value": "nosniff" }]
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' https://secretsatoshis.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://www.googletagmanager.com https://*.google-analytics.com; frame-src 'self'; frame-ancestors 'self' https://secretsatoshis.com https://dashboard.secretsatoshis.com https://agent21.secretsatoshis.com; connect-src 'self' https://www.googletagmanager.com https://*.google-analytics.com https://*.google.com; base-uri 'self'; object-src 'none'"
+        }
+      ]
     },
     {
       "source": "/catalog.json",
@@ -28,7 +49,7 @@
       ]
     },
     {
-      "source": "/assets/(.*\\.[0-9a-f]{16}\\.(?:js|css))",
+      "source": "/assets/(.*\\.[0-9a-f]{16}\\.(?:js|css|json|woff2))",
       "headers": [
         {
           "key": "Cache-Control",
@@ -66,18 +87,13 @@
   ],
   "redirects": [
     {
-      "source": "/bitcoin_ath_drawdown.html",
-      "destination": "/Bitcoin_ATH_Drawdown.html",
-      "permanent": true
-    },
-    {
       "source": "/bitcoin_1_year_supply.html",
       "destination": "/Bitcoin_1_Year_Supply.html",
       "permanent": true
     },
     {
-      "source": "/bitcoin_supply_age.html",
-      "destination": "/Bitcoin_Supply_Age.html",
+      "source": "/bitcoin_ath_drawdown.html",
+      "destination": "/Bitcoin_ATH_Drawdown.html",
       "permanent": true
     },
     {
@@ -86,8 +102,153 @@
       "permanent": true
     },
     {
+      "source": "/bitcoin_address_balance.html",
+      "destination": "/Bitcoin_Address_Balance.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_cagr.html",
+      "destination": "/Bitcoin_CAGR.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_cagr_comparison.html",
+      "destination": "/Bitcoin_CAGR_Comparison.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_cycle_low.html",
+      "destination": "/Bitcoin_Cycle_Low.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_difficulty.html",
+      "destination": "/Bitcoin_Difficulty.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_etf_assets.html",
+      "destination": "/Bitcoin_ETF_Assets.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_etf_cumulative_flows.html",
+      "destination": "/Bitcoin_ETF_Cumulative_Flows.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_etf_entry_price.html",
+      "destination": "/Bitcoin_ETF_Entry_Price.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_etf_flows_since_peak.html",
+      "destination": "/Bitcoin_ETF_Flows_Since_Peak.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_etf_holdings.html",
+      "destination": "/Bitcoin_ETF_Holdings.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_etf_monthly_flows.html",
+      "destination": "/Bitcoin_ETF_Monthly_Flows.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_etf_net_flows_btc.html",
+      "destination": "/Bitcoin_ETF_Net_Flows_BTC.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_etf_net_flows_usd.html",
+      "destination": "/Bitcoin_ETF_Net_Flows_USD.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_gold.html",
+      "destination": "/Bitcoin_Gold.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_hodl_bank.html",
+      "destination": "/Bitcoin_HODL_Bank.html",
+      "permanent": true
+    },
+    {
       "source": "/bitcoin_halving_cycle.html",
       "destination": "/Bitcoin_Halving_Cycle.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_hash_price.html",
+      "destination": "/Bitcoin_Hash_Price.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_hash_ribbons.html",
+      "destination": "/Bitcoin_Hash_Ribbons.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_hashrate_price.html",
+      "destination": "/Bitcoin_Hashrate_Price.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_m0.html",
+      "destination": "/Bitcoin_M0.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_mtd_return_by_month_indexed.html",
+      "destination": "/Bitcoin_MTD_Return_By_Month_Indexed.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_mtd_return_comparison.html",
+      "destination": "/Bitcoin_MTD_Return_Comparison.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_macro_supply.html",
+      "destination": "/Bitcoin_Macro_Supply.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_metcalfe_model.html",
+      "destination": "/Bitcoin_Metcalfe_Model.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_miner_revenue.html",
+      "destination": "/Bitcoin_Miner_Revenue.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_nupl.html",
+      "destination": "/Bitcoin_NUPL.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_nvt_price.html",
+      "destination": "/Bitcoin_NVT_Price.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_power_law_model.html",
+      "destination": "/Bitcoin_Power_Law_Model.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_price.html",
+      "destination": "/Bitcoin_Price.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_price_chart_ma.html",
+      "destination": "/Bitcoin_Price_Chart_MA.html",
       "permanent": true
     },
     {
@@ -96,8 +257,233 @@
       "permanent": true
     },
     {
-      "source": "/bitcoin_macro_supply.html",
-      "destination": "/Bitcoin_Macro_Supply.html",
+      "source": "/bitcoin_puell_multiple.html",
+      "destination": "/Bitcoin_Puell_Multiple.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_rv_semiconductors.html",
+      "destination": "/Bitcoin_RV_Semiconductors.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_rv_stocks.html",
+      "destination": "/Bitcoin_RV_stocks.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_realized_price.html",
+      "destination": "/Bitcoin_Realized_Price.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_sopr.html",
+      "destination": "/Bitcoin_SOPR.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_sats_per_dollar.html",
+      "destination": "/Bitcoin_Sats_Per_Dollar.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_supply.html",
+      "destination": "/Bitcoin_Supply.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_supply_age.html",
+      "destination": "/Bitcoin_Supply_Age.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_supply_profit_loss.html",
+      "destination": "/Bitcoin_Supply_Profit_Loss.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_thermocap_multiples.html",
+      "destination": "/Bitcoin_Thermocap_Multiples.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_transaction_fee.html",
+      "destination": "/Bitcoin_Transaction_Fee.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_transaction_value.html",
+      "destination": "/Bitcoin_Transaction_Value.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_transactions.html",
+      "destination": "/Bitcoin_Transactions.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_volatility.html",
+      "destination": "/Bitcoin_Volatility.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_yoy_return_comparison.html",
+      "destination": "/Bitcoin_YOY_Return_Comparison.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_ytd_return_by_year_indexed.html",
+      "destination": "/Bitcoin_YTD_Return_By_Year_Indexed.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_ytd_return_by_year_percentage.html",
+      "destination": "/Bitcoin_YTD_Return_By_Year_Percentage.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_ytd_return_comparison.html",
+      "destination": "/Bitcoin_YTD_Return_Comparison.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_ytd_return_comparison_full.html",
+      "destination": "/Bitcoin_YTD_Return_Comparison_full.html",
+      "permanent": true
+    },
+    {
+      "source": "/mtd_return_by_year_percentage.html",
+      "destination": "/MTD_Return_By_Year_Percentage.html",
+      "permanent": true
+    },
+    {
+      "source": "/Bitcoin_Adjusted_BDD.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_adjusted_bdd.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/Bitcoin_Delta_Cap.html",
+      "destination": "/Bitcoin_Realized_Price.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_delta_cap.html",
+      "destination": "/Bitcoin_Realized_Price.html",
+      "permanent": true
+    },
+    {
+      "source": "/Bitcoin_Electricity_Cost.html",
+      "destination": "/Bitcoin_Production_Price.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_electricity_cost.html",
+      "destination": "/Bitcoin_Production_Price.html",
+      "permanent": true
+    },
+    {
+      "source": "/Bitcoin_Equities.html",
+      "destination": "/Bitcoin_RV_stocks.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_equities.html",
+      "destination": "/Bitcoin_RV_stocks.html",
+      "permanent": true
+    },
+    {
+      "source": "/Bitcoin_Hashrate.html",
+      "destination": "/Bitcoin_Hashrate_Price.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_hashrate.html",
+      "destination": "/Bitcoin_Hashrate_Price.html",
+      "permanent": true
+    },
+    {
+      "source": "/Bitcoin_On_Chain.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_on_chain.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/Bitcoin_Promo.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_promo.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/Bitcoin_RV.html",
+      "destination": "/Bitcoin_RV_stocks.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_rv.html",
+      "destination": "/Bitcoin_RV_stocks.html",
+      "permanent": true
+    },
+    {
+      "source": "/Bitcoin_RV_Financials.html",
+      "destination": "/Bitcoin_RV_stocks.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_rv_financials.html",
+      "destination": "/Bitcoin_RV_stocks.html",
+      "permanent": true
+    },
+    {
+      "source": "/Bitcoin_RV_M0.html",
+      "destination": "/Bitcoin_M0.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_rv_m0.html",
+      "destination": "/Bitcoin_M0.html",
+      "permanent": true
+    },
+    {
+      "source": "/Bitcoin_RV_Sector_Leaders.html",
+      "destination": "/Bitcoin_RV_stocks.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_rv_sector_leaders.html",
+      "destination": "/Bitcoin_RV_stocks.html",
+      "permanent": true
+    },
+    {
+      "source": "/Bitcoin_RV_metals.html",
+      "destination": "/Bitcoin_Gold.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_rv_metals.html",
+      "destination": "/Bitcoin_Gold.html",
+      "permanent": true
+    },
+    {
+      "source": "/Bitcoin_S2F_Price.html",
+      "destination": "/Bitcoin_Power_Law_Model.html",
+      "permanent": true
+    },
+    {
+      "source": "/bitcoin_s2f_price.html",
+      "destination": "/Bitcoin_Power_Law_Model.html",
       "permanent": true
     }
   ]

@@ -85,13 +85,61 @@ def test_period_comes_from_data_not_clock():
 
 def test_cycle_current_low_reconciliation_and_registered_groups():
     master=frame(['2026-02-06','2026-02-07','2026-02-08'],[100,80,120])
-    template=get_template('Bitcoin_Cycle_Low');template['y_data']=[{'name':'Current','group':'Current'}]
+    template=get_template('Bitcoin_Cycle_Low');template.pop('dynamic_groups', None);template['y_data']=[{'name':'Current','group':'Current'}]
     data=pd.DataFrame({'Cycle':['Current']*2,'days_since_cycle_low':[0,1],'index_value':[1.,1.5]})
     assert _cycles(data,template,master)[0][0]['values']==[80,120]
     data.loc[0,'index_value']=1.1
     with pytest.raises(ValueError,match='disagrees'):_cycles(data,template,master)
     data.loc[0,'Cycle']='Unknown'
     with pytest.raises(ValueError,match='unregistered'):_cycles(data,template,master)
+
+
+def test_dynamic_cycle_discovery_and_multi_digit_era_colors():
+    from chart_style import series_color
+    assert series_color('10th Era').startswith('#')
+    master=frame(['2026-02-06','2026-02-07','2026-02-08'],[100,80,120])
+    template=get_template('Bitcoin_Halving_Cycle')
+    data=pd.DataFrame({
+        'Era':['2nd Era','2nd Era','6th Era','6th Era'],
+        'days_since_halving':[0,1,0,1],
+        'index_value':[1.,1.2,1.,1.5],
+    })
+    series,_,_=_cycles(data,template,master)
+    assert [s['id'] for s in series]==['2nd Era','6th Era']
+    assert [s['name'] for s in series]==['2012–16','6th Era']
+    assert series[-1]['values']==[80,120]
+
+
+def test_feb_29_leap_day_snaps_seasonal_reading_point():
+    dates=pd.date_range('2026-12-31','2028-02-29')
+    data=pd.DataFrame({'price_close':np.linspace(100.,200.,len(dates))},index=dates)
+    template=get_template('Bitcoin_YTD_Return_By_Year_Indexed')
+    payload=build_payload(template,{'master_metrics_data.csv.gz':data})
+    assert payload['readingPoint']=='2028-02-28'
+    assert payload['readingPoint'] in payload['x']
+
+
+def test_canonical_seasonal_csv_includes_2017_and_hides_2017_by_default():
+    master=frame(['2025-12-31','2026-01-01','2026-01-02'],[100.,110.,120.])
+    ytd_csv=pd.DataFrame({
+        'day_of_year':list(range(366)),
+        '2017':[100.]+[900.]*365,
+        '2020':[100.]+[110.]*365,
+        '2021':[100.]+[130.]*365,
+        '2026':[100.,110.,120.]+[np.nan]*363,
+    })
+    for name,indexed in [('Bitcoin_YTD_Return_By_Year_Indexed',True),('Bitcoin_YTD_Return_By_Year_Percentage',False)]:
+        template=get_template(name)
+        p=build_payload(template,{'master_metrics_data.csv.gz':master,'ytd_price_paths.csv':ytd_csv})
+        assert p['defaultHiddenSeries']==['2017']
+        mean_v=next(s['values'][0] for s in p['series'] if s['id']=='mean')
+        med_v=next(s['values'][0] for s in p['series'] if s['id']=='median')
+        if indexed:
+            assert mean_v==pytest.approx((900.+110.+130.)/3)
+            assert med_v==pytest.approx(130.)
+        else:
+            assert mean_v==pytest.approx((800.+10.+30.)/3)
+            assert med_v==pytest.approx(30.)
 
 
 def test_daily_precision_gaps_optional_and_required_series():

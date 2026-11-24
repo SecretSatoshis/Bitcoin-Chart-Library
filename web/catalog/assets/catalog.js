@@ -3,6 +3,7 @@ const state = {
   query: '',
   category: 'All',
   lastTrigger: null,
+  activeChart: null,
 };
 
 const elements = {
@@ -27,6 +28,14 @@ const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 function scrollBehavior() {
   return reducedMotion.matches ? 'auto' : 'smooth';
+}
+
+function safeHistory(method, data, url) {
+  try {
+    history[method](data, '', url);
+  } catch {
+    // Ignore history API restrictions in sandboxed or non-HTTP contexts.
+  }
 }
 
 function formatDate(value) {
@@ -61,6 +70,26 @@ function makeElement(tag, className, text) {
   return element;
 }
 
+function syncQueryParams(push = false) {
+  const url = new URL(window.location.href);
+  const trimmed = state.query.trim();
+  if (trimmed) url.searchParams.set('q', trimmed);
+  else url.searchParams.delete('q');
+  if (state.category !== 'All') url.searchParams.set('category', state.category);
+  else url.searchParams.delete('category');
+  safeHistory(push ? 'pushState' : 'replaceState', { chart: state.activeChart, q: trimmed, category: state.category }, url);
+}
+
+function filterByTag(tag) {
+  state.query = tag;
+  state.category = 'All';
+  elements.search.value = tag;
+  syncQueryParams(true);
+  renderFilters();
+  renderCards();
+  document.getElementById('catalog').scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+}
+
 function renderFilters() {
   elements.filters.replaceChildren();
   ['All', ...state.catalog.categories].forEach(category => {
@@ -70,6 +99,7 @@ function renderFilters() {
     button.setAttribute('aria-pressed', String(category === state.category));
     button.addEventListener('click', () => {
       state.category = category;
+      syncQueryParams(false);
       renderFilters();
       renderCards();
     });
@@ -77,14 +107,26 @@ function renderFilters() {
   });
 }
 
-function createCard(chart) {
-  const article = makeElement('article', 'chart-card');
-  if (chart.featured) article.appendChild(makeElement('span', 'featured-label', 'Featured'));
+function createCard(chart, cardClass = 'chart-card') {
+  const article = makeElement('article', cardClass);
+  if (chart.featured) {
+    article.appendChild(
+      makeElement('span', 'featured-label', cardClass === 'featured-card' ? chart.category : 'Featured')
+    );
+  }
 
   const title = makeElement('h4', '', chart.title);
   const description = makeElement('p', 'card-description', chart.description);
   const tags = makeElement('ul', 'tag-list');
-  chart.tags.slice(0, 4).forEach(tag => tags.appendChild(makeElement('li', '', tag)));
+  chart.tags.slice(0, 4).forEach(tag => {
+    const li = makeElement('li');
+    const tagButton = makeElement('button', 'tag-button', tag);
+    tagButton.type = 'button';
+    tagButton.setAttribute('aria-label', `Filter charts by tag ${tag}`);
+    tagButton.addEventListener('click', () => filterByTag(tag));
+    li.appendChild(tagButton);
+    tags.appendChild(li);
+  });
 
   const actions = makeElement('div', 'card-actions');
   const viewButton = makeElement('button', 'button button-primary', 'View chart');
@@ -101,6 +143,25 @@ function createCard(chart) {
   return article;
 }
 
+function renderFeaturedShelf(fragment) {
+  if (state.category !== 'All' || state.query.trim()) return;
+  const featured = state.catalog.charts.filter(chart => chart.featured);
+  if (!featured.length) return;
+
+  const section = makeElement('section', 'category-group featured-shelf');
+  section.setAttribute('aria-labelledby', 'featured-shelf-heading');
+
+  const header = makeElement('div', 'category-heading');
+  const title = makeElement('h3', 'category-title', 'Featured · Start Here');
+  title.id = 'featured-shelf-heading';
+  header.append(title, makeElement('span', 'category-count', `${featured.length} essential charts`));
+
+  const grid = makeElement('div', 'chart-grid featured-grid');
+  featured.forEach(chart => grid.appendChild(createCard(chart, 'featured-card')));
+  section.append(header, grid);
+  fragment.appendChild(section);
+}
+
 function renderCards() {
   const charts = filteredCharts();
   elements.groups.replaceChildren();
@@ -115,6 +176,7 @@ function renderCards() {
   }
 
   const fragment = document.createDocumentFragment();
+  renderFeaturedShelf(fragment);
   state.catalog.categories.forEach((category, categoryIndex) => {
     const categoryCharts = charts.filter(chart => chart.category === category);
     if (!categoryCharts.length) return;
@@ -129,15 +191,36 @@ function renderCards() {
     header.append(title, makeElement('span', 'category-count', `${categoryCharts.length} charts`));
 
     const grid = makeElement('div', 'chart-grid');
-    categoryCharts.forEach(chart => grid.appendChild(createCard(chart)));
+    categoryCharts.forEach(chart => grid.appendChild(createCard(chart, 'chart-card')));
     section.append(header, grid);
     fragment.appendChild(section);
   });
   elements.groups.appendChild(fragment);
 }
 
+let viewportFrame = 0;
+let lastSentViewportHeight = 0;
+
+function sendChartViewport(force = false) {
+  if (!state.activeChart || elements.viewer.hidden) return;
+  const height = window.innerHeight;
+  if (!force && height === lastSentViewportHeight) return;
+  lastSentViewportHeight = height;
+  elements.frame.contentWindow?.postMessage(
+    { type: 'ss-chart-viewport', id: state.activeChart, height },
+    location.origin
+  );
+}
+
+function scheduleViewportSync() {
+  cancelAnimationFrame(viewportFrame);
+  viewportFrame = requestAnimationFrame(() => sendChartViewport(false));
+}
+
 function openChart(chart, updateHistory, trigger = null) {
   state.lastTrigger = trigger;
+  state.activeChart = chart.filename;
+  lastSentViewportHeight = 0;
   elements.status.textContent = '';
   elements.viewer.hidden = false;
   const accent = makeElement('span', 'accent', '//');
@@ -149,30 +232,33 @@ function openChart(chart, updateHistory, trigger = null) {
   elements.frame.style.height = `${Math.max(520, chart.height)}px`;
   elements.frameWrap.classList.remove('loaded');
 
-  const embeddedUrl=chart.url+'?embed=1';
+  const embeddedUrl = chart.url + '?embed=1';
   if (elements.frame.getAttribute('src') !== embeddedUrl) {
     elements.frame.src = embeddedUrl;
   } else {
     elements.frameWrap.classList.add('loaded');
+    sendChartViewport(true);
   }
 
   if (updateHistory) {
     const url = new URL(window.location.href);
     url.searchParams.set('chart', chart.filename);
-    history.pushState({ chart: chart.filename }, '', url);
+    safeHistory('pushState', { chart: chart.filename }, url);
   }
 
   elements.viewer.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
 }
 
 function closeViewer(updateHistory = true, restoreFocus = false) {
+  state.activeChart = null;
+  lastSentViewportHeight = 0;
   elements.viewer.hidden = true;
   elements.frame.removeAttribute('src');
   elements.frameWrap.classList.remove('loaded');
   if (updateHistory) {
     const url = new URL(window.location.href);
     url.searchParams.delete('chart');
-    history.pushState({}, '', url);
+    safeHistory('pushState', {}, url);
   }
   if (restoreFocus && state.lastTrigger?.isConnected) state.lastTrigger.focus();
 }
@@ -183,8 +269,20 @@ function chartFromUrl() {
   return state.catalog.charts.find(chart => chart.filename === requested) || null;
 }
 
-function syncViewerFromUrl() {
-  const requested = new URL(window.location.href).searchParams.get('chart');
+function syncFromUrl() {
+  const params = new URL(window.location.href).searchParams;
+  const query = params.get('q') || '';
+  const requestedCategory = params.get('category') || 'All';
+  state.query = query;
+  elements.search.value = query;
+  state.category =
+    requestedCategory === 'All' || state.catalog.categories.includes(requestedCategory)
+      ? requestedCategory
+      : 'All';
+  renderFilters();
+  renderCards();
+
+  const requested = params.get('chart');
   const chart = chartFromUrl();
   if (chart) {
     elements.status.textContent = '';
@@ -206,9 +304,7 @@ async function loadCatalog() {
     elements.latestDataDate.textContent = formatDate(state.catalog.latest_data_date);
     elements.totalChartCount.textContent = state.catalog.chart_count.toLocaleString();
     elements.search.placeholder = `Search ${state.catalog.chart_count} Bitcoin charts…`;
-    renderFilters();
-    renderCards();
-    syncViewerFromUrl();
+    syncFromUrl();
   } catch (error) {
     elements.groups.setAttribute('aria-busy', 'false');
     elements.resultsCount.textContent = 'Catalog unavailable';
@@ -219,6 +315,7 @@ async function loadCatalog() {
 
 elements.search.addEventListener('input', event => {
   state.query = event.target.value;
+  syncQueryParams(false);
   renderCards();
 });
 
@@ -227,16 +324,11 @@ elements.closeViewer.addEventListener('click', () => {
   document.getElementById('catalog').scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
 });
 
-function sendChartViewport() {
-  const chart=chartFromUrl();
-  if(!chart||elements.viewer.hidden)return;
-  elements.frame.contentWindow?.postMessage({type:'ss-chart-viewport',id:chart.filename,height:window.innerHeight},location.protocol==='file:'?'*':location.origin);
-}
 elements.frame.addEventListener('load', () => {
   elements.frameWrap.classList.add('loaded');
-  sendChartViewport();
+  sendChartViewport(true);
 });
-window.addEventListener('resize',sendChartViewport);
+window.addEventListener('resize', scheduleViewportSync);
 
 const navToggle = document.getElementById('navToggle');
 const navLinks = document.getElementById('navLinks');
@@ -263,7 +355,7 @@ navLinks.addEventListener('click', event => {
 });
 
 window.addEventListener('popstate', () => {
-  if (state.catalog) syncViewerFromUrl();
+  if (state.catalog) syncFromUrl();
 });
 
 document.addEventListener('keydown', event => {
@@ -285,10 +377,12 @@ document.addEventListener('keydown', event => {
 loadCatalog();
 
 window.addEventListener('message', event => {
-  if(event.source !== elements.frame.contentWindow) return;
-  if(location.protocol === 'file:' ? event.origin !== 'null' : event.origin !== location.origin) return;
-  const message=event.data,chart=chartFromUrl();
-  if(message?.type !== 'ss-chart-size' || !chart || message.id !== chart.filename || !Number.isFinite(message.height)) return;
-  sendChartViewport();
-  elements.frame.style.height = `${Math.max(400,Math.min(3000,message.height))}px`;
+  if (event.source !== elements.frame.contentWindow) return;
+  if (event.origin !== location.origin) return;
+  const message = event.data;
+  if (message?.type !== 'ss-chart-size' || !state.activeChart || message.id !== state.activeChart || !Number.isFinite(message.height)) return;
+  const nextHeight = `${Math.max(400, Math.min(3000, Math.ceil(message.height)))}px`;
+  if (elements.frame.style.height !== nextHeight) {
+    elements.frame.style.height = nextHeight;
+  }
 });

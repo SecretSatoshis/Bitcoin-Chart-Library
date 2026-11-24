@@ -1,5 +1,6 @@
 """Shared series identities and a contrasting palette for the dark chart theme."""
 import hashlib
+import re
 
 BITCOIN_ORANGE = '#F7931A'
 PALETTE = (
@@ -96,7 +97,11 @@ def series_color(key, role='normal'):
         historical = [PALETTE[i] for i in (0, 2, 3, 5, 6, 8, 9, 10, 11, 12, 13, 15)]
         return historical[(int(key) - 2014) % len(historical)]
     if key.startswith(('Drawdown Cycle ', 'Market Cycle ')):
-        return PALETTE[(int(key.rsplit(' ', 1)[1]) - 1) % len(PALETTE)]
+        match = re.search(r'(\d+)$', key)
+        if match:
+            return PALETTE[(int(match.group(1)) - 1) % len(PALETTE)]
     if key.endswith(' Era'):
-        return PALETTE[(int(key[0]) - 2) % len(PALETTE)]
+        match = re.match(r'^(\d+)', key)
+        if match:
+            return PALETTE[(int(match.group(1)) - 2) % len(PALETTE)]
     return COLORS.get(identity, PALETTE[int(hashlib.sha256(identity.encode()).hexdigest()[:8], 16) % len(PALETTE)])

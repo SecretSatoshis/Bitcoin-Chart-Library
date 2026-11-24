@@ -1,8 +1,9 @@
 name: Update Bitcoin Charts
 
 # Vercel builds and publishes the chart site from `main` on every push, and the Report
-# Library's workflow asks it to rebuild after each release. This workflow tests every
-# change against the live release; a manual run also rebuilds the site.
+# Library's workflow asks it to rebuild after each release. Pull requests verify against a
+# checked-in deterministic fixture release so upstream outages never block merges; pushes to
+# `main` and manual dispatches verify against the live Report Library release.
 on:
   push:
     branches: [main]
@@ -56,7 +57,15 @@ jobs:
       - name: Install locked dependencies
         run: uv sync --locked
 
-      - name: Build charts from the live release
+      - name: Lint Python with ruff
+        run: uvx ruff check --select E9,F63,F7,F82,F401 .
+
+      - name: Build charts from deterministic fixture (PR)
+        if: github.event_name == 'pull_request'
+        run: uv run --no-sync python main.py --csv-dir tests/fixtures/sample-release --frozen-report-date 2026-09-29
+
+      - name: Build charts from the live release (main / dispatch)
+        if: github.event_name != 'pull_request'
         run: uv run --no-sync python main.py
 
       - name: Run regression tests
@@ -68,12 +77,18 @@ jobs:
           node-version: "24"
           cache: npm
 
+      - name: Check JS syntax
+        run: |
+          node --check web/renderer.js
+          node --check web/catalog/assets/catalog.js
+          node --check web/catalog/assets/analytics.js
+
       - name: Install pinned browser checks
         run: |
           npm ci
           npx playwright install --with-deps chromium
 
-      - name: Verify charts in HTTP and direct-file browsers
+      - name: Verify charts in browser
         run: |
           npm run test:reference-levels
           npm run test:browser

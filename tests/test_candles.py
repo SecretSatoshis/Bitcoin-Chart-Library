@@ -41,6 +41,12 @@ def test_prepared_periods_preserve_nulls_and_original_event_dates():
 
 
 def test_period_snapshot_and_cutoff_disagreements_rejected():
-    inputs=candle_fixture();inputs['weekly_metrics_data.csv.gz'].iloc[0,2]=90
-    with pytest.raises(AssertionError):validate_candle_inputs(inputs,'2024-01-02')
-    with pytest.raises(ValueError):validate_candle_inputs(candle_fixture(),'2024-01-01')
+    inputs = candle_fixture()
+    original_dtype = inputs['bitcoin_candles.csv.gz']['period_start'].dtype
+    validate_candle_inputs(inputs, '2024-01-02')
+    assert inputs['bitcoin_candles.csv.gz']['period_start'].dtype == original_dtype
+    inputs['weekly_metrics_data.csv.gz'].iloc[0, 2] = 90
+    with pytest.raises(ValueError, match='disagree'):
+        validate_candle_inputs(inputs, '2024-01-02')
+    with pytest.raises(ValueError):
+        validate_candle_inputs(candle_fixture(), '2024-01-01')

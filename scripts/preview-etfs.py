@@ -13,12 +13,25 @@ from chart_templates.etfs import CHARTS
 REPLACEMENTS = [
     ('<title>Bitcoin Chart Library |', '<title>Bitcoin ETF Charts |'),
     ('Bitcoin Chart Library<span', 'Bitcoin ETF Charts<span'),
-    ('//</span> Chart Library', '//</span> Local chart review'),
+    ('//</span> Explore the library', '//</span> Local chart review'),
     ('Explore interactive charts of Bitcoin’s price, valuation, on-chain activity, and market cycles.',
      'Explore ETF flows, holdings, assets, and entry prices. Built from our Report Library data.'),
     ('See how the charts are built and which data they use.', 'Local preview of the ETF charts.'),
-    ('name="robots" content="index, follow, max-image-preview:large"', 'name="robots" content="noindex"'),
 ]
+
+
+def apply_preview_overrides(page: str) -> str:
+    for old, new in REPLACEMENTS:
+        if old not in page:
+            raise ValueError(f'Catalog page no longer contains {old!r}; update the preview text')
+        page = page.replace(old, new)
+    robots_tag = '<meta name="robots" content="noindex">'
+    if 'name="robots"' in page:
+        import re
+        page = re.sub(r'<meta name="robots"[^>]*>', robots_tag, page, count=1)
+    else:
+        page = page.replace('</head>', f'  {robots_tag}\n</head>', 1)
+    return page
 
 
 def main():
@@ -28,12 +41,7 @@ def main():
     args = parser.parse_args()
     result = build_pack(args.csv_dir, args.output, templates=CHARTS)
     path = args.output / 'index.html'
-    page = path.read_text()
-    for old, new in REPLACEMENTS:
-        if old not in page:
-            raise ValueError(f'Catalog page no longer contains {old!r}; update the preview text')
-        page = page.replace(old, new)
-    path.write_text(page)
+    path.write_text(apply_preview_overrides(path.read_text()))
     print(json.dumps(result, indent=2))
 
 

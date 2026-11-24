@@ -9,19 +9,24 @@ from chart_definitions import REPORT_CSV_DIR
 
 
 def main():
-    parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--csv-dir',default=REPORT_CSV_DIR)
-    parser.add_argument('--output',type=Path,default=ROOT/'Charts')
-    parser.add_argument('--serve',action='store_true')
-    parser.add_argument('--port',type=int,default=8767)
-    args=parser.parse_args()
-    print(json.dumps(build_pack(args.csv_dir,args.output),indent=2),flush=True)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--csv-dir', default=REPORT_CSV_DIR)
+    parser.add_argument('--output', type=Path, default=ROOT / 'Charts')
+    parser.add_argument('--frozen-report-date', default=None,
+                        help='Build against a historical or fixture release with this report date.')
+    parser.add_argument('--serve', action='store_true')
+    parser.add_argument('--port', type=int, default=8767)
+    args = parser.parse_args()
+    print(json.dumps(build_pack(args.csv_dir, args.output, frozen_report_date=args.frozen_report_date), indent=2), flush=True)
     if args.serve:
-        handler=partial(SimpleHTTPRequestHandler,directory=str(args.output.resolve()))
-        with ThreadingHTTPServer(('127.0.0.1',args.port),handler) as server:
-            print(f'Preview: http://127.0.0.1:{args.port}/',flush=True)
-            try:server.serve_forever()
-            except KeyboardInterrupt:pass
+        handler = partial(SimpleHTTPRequestHandler, directory=str(args.output.resolve()))
+        with ThreadingHTTPServer(('127.0.0.1', args.port), handler) as server:
+            print(f'Preview: http://127.0.0.1:{args.port}/', flush=True)
+            try:
+                server.serve_forever()
+            except KeyboardInterrupt:
+                pass
 
 
-if __name__=='__main__':main()
+if __name__ == '__main__':
+    main()

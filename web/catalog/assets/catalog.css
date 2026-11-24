@@ -7,8 +7,8 @@
   --border-hi: #2a2a42;
   --border-control: #63637f;
   --text: #e4e4ef;
-  --text-dim: #9090a8;
-  --text-mute: #82829c;
+  --text-dim: #a4a4bc;
+  --text-mute: #9696b0;
   --accent: #f7931a;
   --white: #fff;
   --mono: 'JetBrains Mono', monospace;
@@ -394,7 +394,8 @@ kbd {
   margin-top: 22px;
 }
 
-.chart-card {
+.chart-card,
+.featured-card {
   display: flex;
   min-height: 300px;
   flex-direction: column;
@@ -405,8 +406,15 @@ kbd {
   transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
+.featured-card {
+  border-top: 2px solid var(--accent);
+  background: linear-gradient(180deg, rgba(247, 147, 26, 0.05), var(--surface) 38%);
+}
+
 .chart-card:hover,
-.chart-card:focus-within {
+.chart-card:focus-within,
+.featured-card:hover,
+.featured-card:focus-within {
   transform: translateY(-2px);
   border-color: rgba(247, 147, 26, 0.65);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
@@ -422,7 +430,8 @@ kbd {
   text-transform: uppercase;
 }
 
-.chart-card h4 {
+.chart-card h4,
+.featured-card h4 {
   font-size: 18px;
 }
 
@@ -442,11 +451,25 @@ kbd {
 }
 
 .tag-list li {
+  display: flex;
+}
+
+.tag-button {
+  min-height: 28px;
   padding: 4px 8px;
+  cursor: pointer;
   border: 1px solid var(--border-hi);
   border-radius: 4px;
-  color: var(--text-mute);
-  font-size: 9px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 10px;
+  transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+}
+
+.tag-button:hover {
+  border-color: var(--accent);
+  background: rgba(247, 147, 26, 0.1);
+  color: var(--accent);
 }
 
 .card-actions {

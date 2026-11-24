@@ -49,8 +49,8 @@ def _social_tags(title: str, description: str, canonical: str) -> list[str]:
         f'<meta name="twitter:image:alt" content="{SOCIAL_IMAGE_ALT}">',
     ]
 
-def _tags(title: str, category: str, series: list[str]) -> list[str]:
-    haystack = " ".join([title, category, *series]).casefold()
+def _tags(title: str, category: str, series: list[str], description: str = "") -> list[str]:
+    haystack = " ".join([title, category, description, *series]).casefold()
     tags: list[str] = []
     seen: set[str] = set()
     for needle, tag in TAG_RULES.items():
@@ -118,7 +118,7 @@ def _head_block(entry: dict, latest_data_date: str, coverage: str | None) -> str
             '<link rel="icon" href="assets/favicon.png" type="image/png" sizes="180x180">',
             '<link rel="apple-touch-icon" href="assets/favicon.png">',
             '<script type="application/ld+json">'
-            + json.dumps(structured, separators=(",", ":"))
+            + json.dumps(structured, separators=(",", ":")).replace("<", "\\u003c")
             + "</script>",
             HEAD_MARKER_CLOSE,
         ]
@@ -171,7 +171,7 @@ def _write_catalog_head(output_dir: Path, catalog: dict) -> None:
             '<script defer src="assets/analytics.js?v=1"></script>',
             *_social_tags(f"Bitcoin Chart Library | {SITE_NAME}", CATALOG_DESCRIPTION, f"{CANONICAL_BASE}/"),
             '<script type="application/ld+json">'
-            + json.dumps(structured, separators=(",", ":"))
+            + json.dumps(structured, separators=(",", ":")).replace("<", "\\u003c")
             + "</script>",
             HEAD_MARKER_CLOSE,
         ]
@@ -269,7 +269,7 @@ def catalog_from_payloads(payloads):
     categories = sorted({p['category'] for p in payloads}, key=lambda c: (CATEGORY_ORDER.index(c) if c in CATEGORY_ORDER else len(CATEGORY_ORDER),c))
     entries = [{'title':p['title'],'filename':p['id'],'url':p['id']+'.html',
                 'category':p['category'],'description':p['description'],
-                'tags':_tags(p['title'],p['category'],[s['name'] for s in p['series']]),
+                'tags':_tags(p['title'],p['category'],[s['name'] for s in p['series']],p['description']),
                 'featured':p['featured'],'height':760,'coverage':p['coverage'],
                 'order':p.get('catalogOrder')} for p in payloads]
     # Within a category, charts with a catalog_order come first in that order; the rest by title.
@@ -344,32 +344,60 @@ def write_catalog(output_dir, payloads):
 
 TAG_RULES = OrderedDict(
     [
+        ("etf", "ETF"),
+        ("net flow", "flows"),
+        ("inflow", "flows"),
+        ("flow", "flows"),
+        ("holding", "holdings"),
+        ("held", "holdings"),
+        ("net asset", "assets"),
+        ("entry price", "entry price"),
+        ("mark-to-market", "mark-to-market"),
         ("market cap", "market cap"),
         ("price", "price"),
         ("moving average", "moving averages"),
         ("satoshi", "satoshis"),
         ("volatility", "volatility"),
+        ("issuance", "issuance"),
         ("supply", "supply"),
         ("transaction", "transactions"),
+        ("transfer volume", "transfer volume"),
         ("fee", "fees"),
         ("address", "addresses"),
         ("hash ribbon", "hash ribbons"),
+        ("hashprice", "hashprice"),
+        ("hash price", "hashprice"),
         ("hash rate", "hashrate"),
         ("hashrate", "hashrate"),
         ("difficulty", "difficulty"),
+        ("puell", "Puell Multiple"),
         ("miner", "miners"),
         ("thermocap", "thermocap"),
+        ("mvrv", "MVRV"),
         ("realized", "realized price"),
         ("nvt", "NVT"),
         ("nupl", "NUPL"),
+        ("sopr", "SOPR"),
+        ("reserve risk", "Reserve Risk"),
         ("profit", "profit and loss"),
         ("electric", "energy"),
         ("power law", "power law"),
         ("metcalfe", "Metcalfe"),
-        ("stock-to-flow", "stock-to-flow"),
         ("gold", "gold"),
-        ("equity", "equities"),
+        ("silver", "precious metals"),
+        ("precious metal", "precious metals"),
+        ("big tech", "equities"),
+        ("semiconductor", "semiconductors"),
+        ("technology companies", "equities"),
+        ("stocks", "equities"),
+        ("benchmark", "benchmarks"),
+        ("base money", "money supply"),
+        ("monetary base", "money supply"),
         ("m0", "money supply"),
+        ("seasonal", "seasonality"),
+        ("mtd", "MTD"),
+        ("ytd", "YTD"),
+        ("yoy", "YoY"),
         ("return", "returns"),
         ("cagr", "CAGR"),
         ("drawdown", "drawdowns"),

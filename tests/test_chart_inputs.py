@@ -158,3 +158,62 @@ def test_frozen_export_refuses_the_chart_pack(tmp_path):
         build_single(tmp_path, 'Bitcoin_Price', ROOT / 'Charts' / 'frozen.html',
                      frozen_report_date='2026-09-08')
 
+
+def test_remote_read_bytes_retries_transient_errors_with_backoff(monkeypatch):
+    import http.client
+    from urllib.error import HTTPError, URLError
+
+    calls, sleeps = [], []
+    failures = [
+        URLError('dns blip'),
+        HTTPError('https://example.test/x', 503, 'Service Unavailable', {}, None),
+        http.client.IncompleteRead(b'part'),
+    ]
+
+    class Response:
+        def __enter__(self): return self
+        def __exit__(self, *exc): return False
+        def read(self): return b'ok'
+
+    def fake_urlopen(url, timeout):
+        calls.append(url)
+        if failures:
+            raise failures.pop(0)
+        return Response()
+
+    monkeypatch.setattr(chart_inputs, 'urlopen', fake_urlopen)
+    monkeypatch.setattr(chart_inputs.time, 'sleep', sleeps.append)
+    assert chart_inputs._read_bytes('https://example.test/release_manifest.json', 't=1') == b'ok'
+    assert len(calls) == 4
+    assert sleeps == [2, 4, 8]
+
+
+def test_remote_read_bytes_does_not_retry_404(monkeypatch):
+    from urllib.error import HTTPError
+
+    calls, sleeps = [], []
+
+    def fake_urlopen(url, timeout):
+        calls.append(url)
+        raise HTTPError(url, 404, 'Not Found', {}, None)
+
+    monkeypatch.setattr(chart_inputs, 'urlopen', fake_urlopen)
+    monkeypatch.setattr(chart_inputs.time, 'sleep', sleeps.append)
+    with pytest.raises(HTTPError):
+        chart_inputs._read_bytes('https://example.test/missing.csv')
+    assert len(calls) == 1
+    assert sleeps == []
+
+
+def test_optional_files_warn_when_missing_from_manifest(tmp_path):
+    _release(tmp_path)
+    with pytest.warns(RuntimeWarning, match='optional chart input files'):
+        frames = load_chart_inputs(
+            lambda name: tmp_path / name,
+            now='2026-09-09',
+            optional_files=('etf_daily.csv', 'etf_totals_daily.csv'),
+        )
+    assert 'etf_daily.csv' not in frames
+    assert 'etf_totals_daily.csv' not in frames
+
+

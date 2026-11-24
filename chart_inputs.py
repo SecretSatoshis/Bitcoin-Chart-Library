@@ -1,9 +1,12 @@
 """Load a coherent, completed Report Library release before rendering charts."""
 import hashlib
+import http.client
 import io
 import json
 import time
+import warnings
 from pathlib import Path
+from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import urlopen
 
@@ -25,6 +28,9 @@ RELEASE_MANIFEST_NAME = 'release_manifest.json'
 # release cannot be mixed in, and retry briefly while a new deployment propagates.
 REMOTE_ATTEMPTS = 3
 REMOTE_RETRY_SECONDS = 20
+HTTP_RETRY_ATTEMPTS = 4
+HTTP_RETRY_BACKOFF_SECONDS = 2
+RETRYABLE_HTTP_STATUSES = frozenset({429, 500, 502, 503, 504})
 
 READ_OPTIONS = {
     'master_metrics_data.csv.gz': {'compression': 'gzip', 'index_col': 0, 'parse_dates': True, 'low_memory': False},
@@ -41,8 +47,18 @@ def _is_remote(path):
 def _read_bytes(path, query=None):
     if _is_remote(path):
         url = f'{path}?{query}' if query else str(path)
-        with urlopen(url, timeout=60) as response:
-            return response.read()
+        for attempt in range(1, HTTP_RETRY_ATTEMPTS + 1):
+            try:
+                with urlopen(url, timeout=60) as response:
+                    return response.read()
+            except HTTPError as exc:
+                if exc.code not in RETRYABLE_HTTP_STATUSES or attempt >= HTTP_RETRY_ATTEMPTS:
+                    raise
+                time.sleep(HTTP_RETRY_BACKOFF_SECONDS * (2 ** (attempt - 1)))
+            except (URLError, TimeoutError, http.client.IncompleteRead, OSError):
+                if attempt >= HTTP_RETRY_ATTEMPTS:
+                    raise
+                time.sleep(HTTP_RETRY_BACKOFF_SECONDS * (2 ** (attempt - 1)))
     return Path(path).read_bytes()
 
 
@@ -82,7 +98,7 @@ def validate_report_dates(master, summary, report_date, now=None, max_age_days=2
     return date
 
 
-def load_chart_inputs(csv_path, now=None, *, frozen_report_date=None, extra_files=()):
+def load_chart_inputs(csv_path, now=None, *, frozen_report_date=None, extra_files=(), optional_files=()):
     manifest = json.loads(_read_bytes(csv_path(RELEASE_MANIFEST_NAME), f't={time.time_ns()}'))
     if (manifest.get('schema_version') != 1
             or manifest.get('release_id') != manifest.get('report_date')):
@@ -91,13 +107,24 @@ def load_chart_inputs(csv_path, now=None, *, frozen_report_date=None, extra_file
     records = manifest.get('files', {})
     if not isinstance(records, dict):
         raise ValueError('Release manifest files must be an object')
-    requested = tuple(dict.fromkeys((*REQUIRED_FILES, *extra_files)))
-    missing = set(requested) - set(records)
+    required = tuple(dict.fromkeys((*REQUIRED_FILES, *extra_files)))
+    missing = set(required) - set(records)
     if missing:
         raise ValueError(f'Release manifest is missing chart input files: {sorted(missing)}')
+
+    optional = [name for name in dict.fromkeys(optional_files) if name not in required]
+    missing_optional = [name for name in optional if name not in records]
+    if missing_optional:
+        warnings.warn(
+            f'Release manifest omitted optional chart input files: {sorted(missing_optional)}',
+            RuntimeWarning,
+            stacklevel=2,
+        )
+    to_load = (*required, *(name for name in optional if name in records))
+
     report_date = manifest.get('report_date')
     frames = {}
-    for filename in requested:
+    for filename in to_load:
         payload = _read_verified(csv_path(filename), filename, records[filename]['sha256'], manifest.get('release_id'))
         frames[filename] = pd.read_csv(io.BytesIO(payload), **READ_OPTIONS.get(filename, {}))
     validation_now = now

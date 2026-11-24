@@ -33,6 +33,11 @@ def validate_templates(templates):
         for axis_id, axis in chart['axes'].items():
             if axis['unit'] not in UNITS or axis['mode'] not in ('linear', 'log'):
                 raise ValueError(f'{name}: invalid axis unit/mode')
+            if 'modes' in axis:
+                modes = axis['modes']
+                if (not isinstance(modes, list) or not modes
+                        or set(modes) - {'linear', 'log'} or axis['mode'] not in modes):
+                    raise ValueError(f'{name}: invalid axis modes')
             if 'reference_lines' in axis:
                 lines = axis['reference_lines']
                 if not isinstance(lines, list) or any(
