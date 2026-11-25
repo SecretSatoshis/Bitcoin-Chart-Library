@@ -236,3 +236,11 @@ def test_etf_charts_keep_their_catalog_order():
     catalog = catalog_from_payloads([build_payload(t, inputs()) for t in shuffled])
     assert [c['filename'] for c in catalog['charts']] == [t['filename'] for t in CHARTS]
     assert 'order' not in catalog['charts'][0]
+
+
+def test_etf_aggregate_validation_allows_intentionally_blank_trailing_day_flows():
+    data = inputs()
+    totals = data['etf_totals_daily.csv']
+    totals.loc[totals.index[-1], ['total_flow_btc', 'total_flow_usd']] = float('nan')
+    built = payload('holdings', data)
+    assert built['id'] == 'Bitcoin_ETF_Assets'

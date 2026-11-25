@@ -130,8 +130,17 @@ def _validate_aggregates(daily: pd.DataFrame, totals: pd.DataFrame) -> None:
             continue
         summed = pd.to_numeric(daily[daily_col], errors='coerce').groupby(daily['date']).sum(min_count=1).reindex(totals.index)
         published = pd.to_numeric(totals[total_col], errors='coerce')
-        if not np.allclose(summed.to_numpy(dtype=float), published.to_numpy(dtype=float),
-                           rtol=rtol, atol=atol, equal_nan=True):
+        # Report Library intentionally leaves aggregate flows blank (NaN) on
+        # incomplete trailing days (<80% AUM coverage); validate every day where
+        # a published aggregate exists.
+        published_mask = published.notna()
+        if not np.allclose(
+            summed[published_mask].to_numpy(dtype=float),
+            published[published_mask].to_numpy(dtype=float),
+            rtol=rtol,
+            atol=atol,
+            equal_nan=False,
+        ):
             raise ValueError(f'ETF {label} disagree with the published aggregate')
 
 
